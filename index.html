@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f855a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="飲食紀錄">
+  <title>飲食紀錄</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="src/ui/app.js"></script>
+</head>
+<body>
+  <header>
+    <h1>今天</h1>
+    <p id="today-date"></p>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="water-title">
+      <h2 id="water-title">💧 喝水</h2>
+      <p class="total"><span id="water-total">0</span> ml</p>
+
+      <div class="quick-buttons">
+        <button type="button" data-ml="250">+250ml</button>
+        <button type="button" data-ml="500">+500ml</button>
+      </div>
+
+      <form id="custom-water">
+        <label for="custom-ml">自訂數量</label>
+        <div class="row">
+          <input id="custom-ml" type="number" inputmode="numeric" min="1" step="1" placeholder="例如 350">
+          <span>ml</span>
+          <button type="submit">新增</button>
+        </div>
+      </form>
+
+      <p id="error" class="error" role="alert" hidden></p>
+
+      <ul id="water-list" class="entries"></ul>
+      <p id="water-empty" class="empty">今天還沒有喝水紀錄</p>
+    </section>
+  </main>
+</body>
+</html>
