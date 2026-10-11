@@ -1,0 +1,94 @@
+:root {
+  --bg: #f4f7f5;
+  --card: #ffffff;
+  --text: #1f2a24;
+  --muted: #66756c;
+  --accent: #2f855a;
+  --accent-text: #ffffff;
+  --danger: #c53030;
+  --border: #dde5df;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121714;
+    --card: #1c231f;
+    --text: #e6ede8;
+    --muted: #93a39a;
+    --accent: #48bb78;
+    --accent-text: #0d1a12;
+    --danger: #fc8181;
+    --border: #2c3631;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "PingFang TC", "Noto Sans TC", sans-serif;
+  font-size: 17px;
+}
+
+header { padding: 16px 0 8px; }
+h1 { margin: 0; font-size: 28px; }
+#today-date { margin: 4px 0 0; color: var(--muted); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 12px 0;
+}
+h2 { margin: 0; font-size: 20px; }
+.total { font-size: 36px; font-weight: 700; margin: 8px 0 16px; }
+
+button {
+  font: inherit;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+  min-height: 44px;
+}
+
+.quick-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.quick-buttons button { font-size: 20px; padding: 16px; }
+
+#custom-water { margin-top: 16px; }
+#custom-water label { display: block; color: var(--muted); margin-bottom: 6px; }
+.row { display: flex; align-items: center; gap: 8px; }
+.row input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 44px;
+}
+
+.error { color: var(--danger); margin: 12px 0 0; }
+
+.entries { list-style: none; padding: 0; margin: 16px 0 0; }
+.entries li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.entries .time { color: var(--muted); width: 3.5em; }
+.entries .ml { flex: 1; font-weight: 600; }
+.entries button.delete { background: transparent; color: var(--danger); padding: 8px 12px; }
+
+.empty { color: var(--muted); margin: 16px 0 0; }
