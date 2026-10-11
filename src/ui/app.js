@@ -5,8 +5,10 @@ import { formatNutrient } from "../core/meal.js";
 import { createIndexedDbStorage } from "../adapters/indexeddb-storage.js";
 import { createMealEditor, renderNutrition } from "./meal-editor.js";
 import { byId as $, showMessage } from "./dom.js";
+import { createSettings, renderProgress } from "./goals-view.js";
 
-const storage = await createIndexedDbStorage();
+// 新版 App 要升級資料庫時，重新整理以載入新版。
+const storage = await createIndexedDbStorage({ onOutdated: () => location.reload() });
 const diary = createDiary({ storage, clock: { now: () => new Date() } });
 
 function formatTime(ms) {
@@ -62,6 +64,7 @@ async function render() {
   $("today-date").textContent = new Date(dayRange(day.dayKey).from).toLocaleDateString("zh-TW", {
     year: "numeric", month: "long", day: "numeric", weekday: "long",
   });
+  renderProgress($("goal-progress"), day.progress);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
   $("meals-empty").hidden = day.meals.length > 0;
   $("meal-list").replaceChildren(...day.meals.map(mealRow));
@@ -84,6 +87,9 @@ async function addWater(ml) {
 
 const editor = createMealEditor({ diary, onDone: render });
 $("add-meal").addEventListener("click", () => editor.openNew());
+
+const settings = createSettings({ diary, onSaved: render });
+$("open-settings").addEventListener("click", () => settings.open());
 
 for (const btn of document.querySelectorAll("[data-ml]")) {
   btn.addEventListener("click", () => addWater(Number(btn.dataset.ml)));

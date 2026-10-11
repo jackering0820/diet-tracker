@@ -16,9 +16,18 @@ export const NUTRIENTS = ["kcal", "protein", "carbs", "fat", "veg"];
 
 export const NUTRIENT_LABELS = { kcal: "熱量", protein: "蛋白質", carbs: "碳水", fat: "脂肪", veg: "蔬菜份數" };
 
-// 顯示用：熱量取整數，其他取到小數點後一位。
+// 顯示規則：熱量和喝水量取整數，其他取到小數點後一位。
+function displayDecimals(key) {
+  return key === "kcal" || key === "waterMl" ? 0 : 1;
+}
+
 export function formatNutrient(key, value) {
-  return value.toFixed(key === "kcal" ? 0 : 1);
+  return value.toFixed(displayDecimals(key));
+}
+
+// 依顯示規則四捨五入後的數值，讓判斷結果和畫面上看到的一致。
+export function roundForDisplay(key, value) {
+  return Number(formatNutrient(key, value));
 }
 
 // 檢查一個完整的食物項目，有問題就丟出錯誤（訊息給使用者看）。

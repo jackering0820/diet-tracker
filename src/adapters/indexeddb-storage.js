@@ -1,7 +1,7 @@
 // IndexedDB 版資料儲存：正式使用，介面和記憶體版相同。
 const DB_NAME = "diet-tracker";
-const DB_VERSION = 2;
-const COLLECTIONS = ["water", "meals"];
+const DB_VERSION = 3;
+const COLLECTIONS = ["water", "meals", "settings"];
 
 function openDb() {
   return new Promise((resolve, reject) => {
@@ -27,8 +27,14 @@ function waitForTransaction(tx) {
   });
 }
 
-export async function createIndexedDbStorage() {
+// onOutdated：別的分頁（或新版 App）要升級資料庫時呼叫。
+// 這個連線會先關閉，否則對方的升級會一直卡住。
+export async function createIndexedDbStorage({ onOutdated } = {}) {
   const db = await openDb();
+  db.onversionchange = () => {
+    db.close();
+    onOutdated?.();
+  };
 
   return {
     async get(name, id) {

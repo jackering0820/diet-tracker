@@ -2,9 +2,12 @@
 // 資料儲存（storage）和時間（clock）由外部注入。
 import { dayKeyOf, dayRange } from "./day.js";
 import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
+import { DEFAULT_GOALS, goalProgress, validateGoals } from "./goals.js";
 
 const WATER = "water";
 const MEALS = "meals";
+const SETTINGS = "settings";
+const GOALS_ID = "goals";
 
 const byTime = (a, b) => a.at - b.at;
 
@@ -48,18 +51,30 @@ export function createDiary({ storage, clock }) {
       await storage.delete(MEALS, id);
     },
 
+    async getGoals() {
+      const saved = await storage.get(SETTINGS, GOALS_ID);
+      return saved ? saved.goals : { ...DEFAULT_GOALS };
+    },
+
+    async setGoals(goals) {
+      await storage.put(SETTINGS, { id: GOALS_ID, goals: validateGoals(goals) });
+    },
+
     async getDaySummary(dayKey) {
       const { from, to } = dayRange(dayKey);
       const water = (await storage.listByTime(WATER, from, to)).sort(byTime);
       const meals = (await storage.listByTime(MEALS, from, to))
         .sort(byTime)
         .map((meal) => ({ ...meal, totals: sumNutrients(meal.items) }));
+      const waterTotalMl = water.reduce((sum, w) => sum + w.ml, 0);
+      const nutritionTotals = sumNutrients(meals.flatMap((m) => m.items));
       return {
         dayKey,
         water,
-        waterTotalMl: water.reduce((sum, w) => sum + w.ml, 0),
+        waterTotalMl,
         meals,
-        nutritionTotals: sumNutrients(meals.flatMap((m) => m.items)),
+        nutritionTotals,
+        progress: goalProgress({ ...nutritionTotals, waterMl: waterTotalMl }, await this.getGoals()),
       };
     },
   };

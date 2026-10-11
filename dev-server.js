@@ -1,12 +1,12 @@
 // 本機開發用的靜態網頁伺服器（只用 Node 內建功能）。
-// 執行：npm start，然後打開 http://localhost:8080
+// 執行：npm start，然後打開 http://localhost:8787
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
-const port = Number(process.env.PORT) || 8080;
+const port = Number(process.env.PORT) || 8787;
 
 const types = {
   ".html": "text/html; charset=utf-8",
