@@ -78,3 +78,28 @@ test("修改成無效的日期時間時拒絕，紀錄留在原本那天", async
   const today = await diary.getDaySummary("2026-10-11");
   assert.deepEqual([today.waterTotalMl, today.meals.length], [500, 0]);
 });
+
+test("新紀錄的預設時間：今天是現在；補記過去的日子時，用那一天的「現在這個時刻」", () => {
+  const { diary } = setup(new Date(2026, 9, 11, 7, 41));
+  assert.equal(diary.timeForNewRecord("2026-10-11"), new Date(2026, 9, 11, 7, 41).getTime());
+  assert.equal(diary.timeForNewRecord("2026-10-09"), new Date(2026, 9, 9, 7, 41).getTime());
+});
+
+test("歷史列表的天數必須是正整數", async () => {
+  const { diary } = setup();
+  for (const bad of [0, -1, 1.5, NaN, undefined]) {
+    await assert.rejects(diary.getHistory({ days: bad }), /天數/);
+  }
+});
+
+test("把紀錄改到 23:59 和隔天 00:00，會分屬兩天", async () => {
+  const { diary } = setup(new Date(2026, 9, 11, 12, 0));
+  const late = await diary.addWater(300);
+  const early = await diary.addWater(700);
+  await diary.moveWater(late.id, new Date(2026, 9, 9, 23, 59).getTime());
+  await diary.moveWater(early.id, new Date(2026, 9, 10, 0, 0).getTime());
+
+  assert.equal((await diary.getDaySummary("2026-10-09")).waterTotalMl, 300);
+  assert.equal((await diary.getDaySummary("2026-10-10")).waterTotalMl, 700);
+  assert.equal((await diary.getDaySummary("2026-10-11")).waterTotalMl, 0);
+});

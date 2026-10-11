@@ -15,6 +15,12 @@ export function validateAt(at) {
   return at;
 }
 
+// 某一天的指定時刻（取 time 的時和分），回傳毫秒時間戳。
+export function atTimeOnDay(dayKey, time) {
+  const [y, m, d] = dayKey.split("-").map(Number);
+  return new Date(y, m - 1, d, time.getHours(), time.getMinutes()).getTime();
+}
+
 // "YYYY-MM-DD" 加減天數（n 可以是負數），依當地日曆計算。
 export function addDays(dayKey, n) {
   const [y, m, d] = dayKey.split("-").map(Number);

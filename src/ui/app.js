@@ -18,17 +18,15 @@ function formatTime(ms) {
 
 const showWaterError = (message) => showMessage("water-error", message);
 
-// 正在看的那一天（null 表示今天）。在過去的日子新增紀錄就是補記。
-let viewedDay = null;
-const currentDayKey = () => viewedDay ?? diary.todayKey();
+// 目前的畫面：
+//   { name: "day", pastDay }  某一天；pastDay 是過去某天的 dayKey，null 表示今天
+//   { name: "history" }       歷史列表
+// 所有重新整理都經過 render()，依這個狀態決定顯示什麼。
+let view = { name: "day", pastDay: null };
+const currentDayKey = () => view.pastDay ?? diary.todayKey();
 
-// 新紀錄的時間：今天就是現在；補記過去的日子時，用那一天的「現在這個時刻」。
-function timeForNewRecord() {
-  if (viewedDay === null) return undefined;
-  const now = new Date();
-  const [y, m, d] = viewedDay.split("-").map(Number);
-  return new Date(y, m - 1, d, now.getHours(), now.getMinutes()).getTime();
-}
+// 在過去的日子新增紀錄就是補記，時間規則由日記核心決定。
+const timeForNewRecord = () => diary.timeForNewRecord(currentDayKey());
 
 function waterItem(w) {
   const li = document.createElement("li");
@@ -75,6 +73,20 @@ function mealRow(meal) {
 }
 
 async function render() {
+  const showingHistory = view.name === "history";
+  $("history-view").hidden = !showingHistory;
+  $("day-view").hidden = showingHistory;
+  $("open-history").hidden = showingHistory;
+  if (showingHistory) {
+    $("page-title").textContent = "歷史";
+    $("today-date").textContent = "點一天查看或補記";
+    $("back-to-today").hidden = false;
+    return historyView.open();
+  }
+  return renderDay();
+}
+
+async function renderDay() {
   const day = await diary.getDaySummary(currentDayKey());
   const isToday = day.dayKey === diary.todayKey();
   $("page-title").textContent = isToday ? "今天" : formatDayTitle(day.dayKey);
@@ -127,26 +139,17 @@ $("water-time-form").addEventListener("submit", async (event) => {
 });
 $("close-water-time").addEventListener("click", () => $("water-time").close());
 
-// 歷史列表和某一天之間切換
-function showDayView(dayKey) {
-  viewedDay = dayKey === diary.todayKey() ? null : dayKey;
-  $("history-view").hidden = true;
-  $("day-view").hidden = false;
-  $("open-history").hidden = false;
+// 切換畫面：只改狀態，畫面交給 render()。
+function switchTo(nextView) {
+  view = nextView;
   window.scrollTo(0, 0);
   return render();
 }
-const historyView = createHistory({ diary, onSelect: showDayView });
-$("open-history").addEventListener("click", async () => {
-  $("day-view").hidden = true;
-  $("history-view").hidden = false;
-  $("open-history").hidden = true;
-  $("back-to-today").hidden = false;
-  $("page-title").textContent = "歷史";
-  $("today-date").textContent = "點一天查看或補記";
-  await historyView.open();
-});
-$("back-to-today").addEventListener("click", () => showDayView(diary.todayKey()));
+const showDay = (dayKey) => switchTo({ name: "day", pastDay: dayKey === diary.todayKey() ? null : dayKey });
+
+const historyView = createHistory({ diary, onSelect: showDay });
+$("open-history").addEventListener("click", () => switchTo({ name: "history" }));
+$("back-to-today").addEventListener("click", () => showDay(diary.todayKey()));
 
 const settings = createSettings({ diary, onSaved: render });
 $("open-settings").addEventListener("click", () => settings.open());

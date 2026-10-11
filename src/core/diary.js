@@ -1,6 +1,6 @@
 // 日記核心（Diary Core）：所有業務規則都在這裡，也是唯一的測試 seam。
 // 資料儲存（storage）和時間（clock）由外部注入。
-import { addDays, dayKeyOf, dayRange, validateAt } from "./day.js";
+import { addDays, atTimeOnDay, dayKeyOf, dayRange, validateAt } from "./day.js";
 import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
 import { goalProgress, validateGoals, withDefaults } from "./goals.js";
 
@@ -48,6 +48,12 @@ export function createDiary({ storage, clock }) {
 
   return {
     todayKey,
+
+    // 新紀錄的預設時間：今天就是現在；補記過去的日子時，用那一天的「現在這個時刻」。
+    timeForNewRecord(dayKey) {
+      const now = clock.now();
+      return dayKey === todayKey() ? now.getTime() : atTimeOnDay(dayKey, now);
+    },
 
     // at：補記時指定的時間（毫秒時間戳），沒給就是現在。
     async addWater(ml, at = clock.now().getTime()) {
@@ -103,6 +109,7 @@ export function createDiary({ storage, clock }) {
 
     // 歷史列表：從 before 的前一天（沒給就從今天）往前列出 days 天，新的在前。
     async getHistory({ before, days }) {
+      if (!Number.isInteger(days) || days < 1) throw new Error("歷史列表的天數必須是正整數");
       const newest = before ? addDays(before, -1) : todayKey();
       const keys = Array.from({ length: days }, (_, i) => addDays(newest, -i));
       return Promise.all(keys.map(getDaySummary));

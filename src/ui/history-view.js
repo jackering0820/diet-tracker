@@ -46,11 +46,27 @@ function historyRow(day, onSelect) {
 // onSelect(dayKey)：點進某一天時呼叫。
 export function createHistory({ diary, onSelect }) {
   let oldest = null;
+  let loading = false;
+  // 每次重新打開就換一個編號；舊的載入結果回來時編號不同，直接丟掉。
+  let generation = 0;
 
   async function loadPage() {
-    const days = await diary.getHistory({ before: oldest ?? undefined, days: PAGE_DAYS });
-    oldest = days.at(-1).dayKey;
-    $("history-list").append(...days.map((d) => historyRow(d, onSelect)));
+    if (loading) return; // 避免連按時同一頁載入兩次
+    loading = true;
+    $("load-older").disabled = true;
+    const myGeneration = generation;
+    try {
+      const days = await diary.getHistory({ before: oldest ?? undefined, days: PAGE_DAYS });
+      if (myGeneration !== generation) return;
+      oldest = days.at(-1).dayKey;
+      $("history-list").append(...days.map((d) => historyRow(d, onSelect)));
+    } finally {
+      // 只有同一次打開的載入才解除鎖定，舊的載入不能影響新的。
+      if (myGeneration === generation) {
+        loading = false;
+        $("load-older").disabled = false;
+      }
+    }
   }
 
   $("load-older").addEventListener("click", loadPage);
@@ -58,6 +74,8 @@ export function createHistory({ diary, onSelect }) {
   return {
     // 每次打開都從今天重新載入，資料才會是最新的。
     async open() {
+      generation += 1;
+      loading = false;
       oldest = null;
       $("history-list").replaceChildren();
       await loadPage();
