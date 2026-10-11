@@ -27,9 +27,9 @@ export function createDiary({ storage, clock }) {
       await storage.delete(WATER, id);
     },
 
-    newMealDraft() {
+    newMealDraft({ items, photos } = {}) {
       const now = clock.now();
-      return createMealDraft({ at: now.getTime(), mealType: defaultMealType(now) });
+      return createMealDraft({ at: now.getTime(), mealType: defaultMealType(now), items, photos });
     },
 
     async saveMeal(draft) {
@@ -38,7 +38,7 @@ export function createDiary({ storage, clock }) {
       return meal;
     },
 
-    async editMeal(id) {
+    async loadMealDraft(id) {
       const meal = await storage.get(MEALS, id);
       if (!meal) throw new Error("找不到這一餐");
       return createMealDraft(meal);

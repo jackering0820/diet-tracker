@@ -4,8 +4,7 @@ import { dayRange } from "../core/day.js";
 import { formatNutrient } from "../core/meal.js";
 import { createIndexedDbStorage } from "../adapters/indexeddb-storage.js";
 import { createMealEditor, renderNutrition } from "./meal-editor.js";
-
-const $ = (id) => document.getElementById(id);
+import { byId as $, showMessage } from "./dom.js";
 
 const storage = await createIndexedDbStorage();
 const diary = createDiary({ storage, clock: { now: () => new Date() } });
@@ -14,10 +13,7 @@ function formatTime(ms) {
   return new Date(ms).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
-function showWaterError(message) {
-  $("water-error").textContent = message;
-  $("water-error").hidden = !message;
-}
+const showWaterError = (message) => showMessage("water-error", message);
 
 function waterItem(w) {
   const li = document.createElement("li");

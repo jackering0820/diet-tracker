@@ -82,7 +82,7 @@ test("重新打開已存的一餐修改項目和餐別，存回去後今天只�
   const bento = draft.addItem(BENTO);
   const saved = await diary.saveMeal(draft);
 
-  const editing = await diary.editMeal(saved.id);
+  const editing = await diary.loadMealDraft(saved.id);
   assert.equal(editing.mealType, "午餐");
   assert.deepEqual(editing.totals(), { kcal: 800, protein: 35, carbs: 95, fat: 30, veg: 1.5 });
   editing.mealType = "晚餐";
@@ -125,4 +125,39 @@ test("沒有任何食物的一餐不能儲存", async () => {
   await assert.rejects(diary.saveMeal(diary.newMealDraft()), /至少/);
   const day = await diary.getDaySummary(diary.todayKey());
   assert.equal(day.meals.length, 0);
+});
+
+test("同一份草稿存兩次（例如連按兩次儲存），今天還是只有一餐", async () => {
+  const { diary } = setup();
+  const draft = diary.newMealDraft();
+  draft.addItem(BENTO);
+  await diary.saveMeal(draft);
+  await diary.saveMeal(draft);
+  const day = await diary.getDaySummary(diary.todayKey());
+  assert.equal(day.meals.length, 1);
+});
+
+test("修改不存在的食物項目時明確報錯，草稿不變", () => {
+  const { diary } = setup();
+  const draft = diary.newMealDraft();
+  draft.addItem(SOY_MILK);
+  assert.throws(() => draft.updateItem("not-there", BENTO), /找不到/);
+  assert.deepEqual(draft.items.map((i) => i.name), ["無糖豆漿"]);
+  assert.equal(draft.totals().kcal, 120);
+});
+
+test("草稿可以預先帶入食物和照片；之後打開修改再存，照片仍然保留", async () => {
+  const { diary } = setup();
+  const photos = ["data:image/jpeg;base64,AAAA", "data:image/jpeg;base64,BBBB"];
+  const draft = diary.newMealDraft({ items: [BENTO], photos });
+  assert.equal(draft.totals().kcal, 800);
+  const saved = await diary.saveMeal(draft);
+
+  const editing = await diary.loadMealDraft(saved.id);
+  editing.addItem(SOY_MILK);
+  await diary.saveMeal(editing);
+
+  const [meal] = (await diary.getDaySummary(diary.todayKey())).meals;
+  assert.deepEqual(meal.photos, photos);
+  assert.equal(meal.totals.kcal, 920);
 });

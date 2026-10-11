@@ -44,12 +44,16 @@ export function sumNutrients(items) {
 }
 
 // 草稿：正在編輯、還沒確認儲存的一餐。有 id 表示是在修改已存的一餐。
-export function createMealDraft({ id, at, mealType, items = [], source = "manual" }) {
+// 可以預先帶入食物項目和縮圖照片（例如 AI 分析的結果）。
+export function createMealDraft({ id, at, mealType, items = [], photos = [], source = "manual" }) {
+  const prefilled = items.map((i) => ({ ...i, id: i.id ?? crypto.randomUUID() }));
+  prefilled.forEach(validateItem);
   return {
     id,
     at,
     mealType,
-    items: items.map((i) => ({ ...i })),
+    items: prefilled,
+    photos: [...photos],
     source,
 
     addItem(fields) {
@@ -61,6 +65,7 @@ export function createMealDraft({ id, at, mealType, items = [], source = "manual
 
     updateItem(id, changes) {
       const index = this.items.findIndex((i) => i.id === id);
+      if (index === -1) throw new Error("找不到這項食物");
       const updated = { ...this.items[index], ...changes, id };
       validateItem(updated);
       this.items[index] = updated;
@@ -79,11 +84,14 @@ export function createMealDraft({ id, at, mealType, items = [], source = "manual
     toRecord() {
       if (!MEAL_TYPES.includes(this.mealType)) throw new Error("請選擇餐別");
       if (this.items.length === 0) throw new Error("請至少加入一項食物");
+      // 第一次儲存時才給 id，並記在草稿上，之後再存一次就是更新同一餐。
+      this.id ??= crypto.randomUUID();
       return {
-        id: this.id ?? crypto.randomUUID(),
+        id: this.id,
         at: this.at,
         mealType: this.mealType,
         items: this.items.map((i) => ({ ...i })),
+        photos: [...this.photos],
         source: this.source,
       };
     },

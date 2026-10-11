@@ -1,7 +1,6 @@
 // 一餐的編輯畫面：手動新增和修改共用。之後拍照分析也會把結果放進這裡。
 import { MEAL_TYPES, NUTRIENTS, NUTRIENT_LABELS, formatNutrient } from "../core/meal.js";
-
-const $ = (id) => document.getElementById(id);
+import { byId as $, showMessage } from "./dom.js";
 
 export function renderNutrition(dl, totals) {
   dl.replaceChildren(...NUTRIENTS.flatMap((k) => {
@@ -22,10 +21,6 @@ export function createMealEditor({ diary, onDone }) {
 
   $("meal-type").replaceChildren(...MEAL_TYPES.map((t) => new Option(t, t)));
 
-  function showMessage(id, message) {
-    $(id).textContent = message;
-    $(id).hidden = !message;
-  }
   const showItemError = (message) => showMessage("item-error", message);
   const showError = (message) => showMessage("editor-error", message);
 
@@ -121,9 +116,13 @@ export function createMealEditor({ diary, onDone }) {
 
   $("delete-meal").addEventListener("click", async () => {
     if (!confirm("確定要刪除這一餐嗎？")) return;
-    await diary.deleteMeal(draft.id);
-    dialog.close();
-    await onDone();
+    try {
+      await diary.deleteMeal(draft.id);
+      dialog.close();
+      await onDone();
+    } catch (err) {
+      showError(`刪除失敗：${err.message}`);
+    }
   });
 
   $("close-editor").addEventListener("click", () => dialog.close());
@@ -141,11 +140,13 @@ export function createMealEditor({ diary, onDone }) {
   }
 
   return {
+    // 用預先填好的草稿打開（例如拍照分析的結果）。
+    openDraft: open,
     openNew() {
       open(diary.newMealDraft());
     },
     async openExisting(id) {
-      open(await diary.editMeal(id));
+      open(await diary.loadMealDraft(id));
     },
   };
 }
