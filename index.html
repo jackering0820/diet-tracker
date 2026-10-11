@@ -14,11 +14,19 @@
 </head>
 <body>
   <header>
-    <h1>今天</h1>
+    <div class="header-row">
+      <h1>今天</h1>
+      <button type="button" id="open-settings" class="secondary">⚙️ 設定</button>
+    </div>
     <p id="today-date"></p>
   </header>
 
   <main>
+    <section class="card" aria-labelledby="progress-title">
+      <h2 id="progress-title">🎯 今日目標</h2>
+      <ul id="goal-progress" class="progress-list"></ul>
+    </section>
+
     <section class="card" aria-labelledby="meals-title">
       <h2 id="meals-title">🍱 吃了什麼</h2>
       <dl id="nutrition-totals" class="nutrition"></dl>
@@ -51,6 +59,23 @@
       <p id="water-empty" class="empty">今天還沒有喝水紀錄</p>
     </section>
   </main>
+
+  <dialog id="settings" aria-labelledby="settings-title">
+    <form id="goals-form" class="editor" novalidate>
+      <h2 id="settings-title">設定</h2>
+      <h3>每日目標</h3>
+      <p class="hint">留空表示不設定這一項，也不判斷是否達標。</p>
+      <label class="field"><span>熱量上限（大卡）</span><input name="kcal" type="number" inputmode="decimal" min="0" step="any"></label>
+      <label class="field"><span>蛋白質至少（g）</span><input name="protein" type="number" inputmode="decimal" min="0" step="any"></label>
+      <label class="field"><span>蔬菜至少（份）</span><input name="veg" type="number" inputmode="decimal" min="0" step="any"></label>
+      <label class="field"><span>喝水至少（ml）</span><input name="waterMl" type="number" inputmode="numeric" min="0" step="1"></label>
+      <p id="goals-error" class="error" role="alert" hidden></p>
+      <div class="editor-actions">
+        <button type="submit">儲存</button>
+        <button type="button" id="close-settings" class="secondary">取消</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="meal-editor" aria-labelledby="editor-title">
     <div class="editor">

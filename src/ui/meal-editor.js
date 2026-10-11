@@ -1,5 +1,6 @@
 // 一餐的編輯畫面：手動新增和修改共用。之後拍照分析也會把結果放進這裡。
-import { MEAL_TYPES, NUTRIENTS, NUTRIENT_LABELS, formatNutrient } from "../core/meal.js";
+import { MEAL_TYPES, NUTRIENTS, NUTRIENT_LABELS } from "../core/meal.js";
+import { formatNutrient } from "../core/format.js";
 import { byId as $, showMessage } from "./dom.js";
 
 export function renderNutrition(dl, totals) {

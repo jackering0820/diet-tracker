@@ -167,3 +167,19 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 
 .editor-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
 .editor-actions .danger { grid-column: 1 / -1; }
+
+/* 標題列與設定 */
+.header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.header-row button { padding: 8px 12px; font-size: 15px; }
+.hint { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+
+/* 今日目標的進度條 */
+.progress-list { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 14px; }
+.progress-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.progress-head .status { font-size: 14px; min-width: 4.5em; text-align: right; }
+.bar { height: 10px; border-radius: 5px; background: var(--border); overflow: hidden; }
+.bar > div { height: 100%; border-radius: 5px; background: var(--muted); }
+.achieved .bar > div { background: var(--accent); }
+.over .bar > div { background: var(--danger); }
+.over .status { color: var(--danger); }
+.unset .status { color: var(--muted); }

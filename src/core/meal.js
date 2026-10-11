@@ -16,11 +16,6 @@ export const NUTRIENTS = ["kcal", "protein", "carbs", "fat", "veg"];
 
 export const NUTRIENT_LABELS = { kcal: "熱量", protein: "蛋白質", carbs: "碳水", fat: "脂肪", veg: "蔬菜份數" };
 
-// 顯示用：熱量取整數，其他取到小數點後一位。
-export function formatNutrient(key, value) {
-  return value.toFixed(key === "kcal" ? 0 : 1);
-}
-
 // 檢查一個完整的食物項目，有問題就丟出錯誤（訊息給使用者看）。
 function validateItem(item) {
   if (typeof item.name !== "string" || item.name.trim() === "") {
