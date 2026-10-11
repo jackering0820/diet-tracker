@@ -1,4 +1,5 @@
 // 一餐的規則：餐別預設、草稿編輯、總數計算。
+import { validateAt } from "./day.js";
 
 export const MEAL_TYPES = ["早餐", "午餐", "晚餐", "點心"];
 
@@ -77,6 +78,7 @@ export function createMealDraft({ id, at, mealType, items = [], photos = [], sou
 
     // 轉成要儲存的資料（不含方法，也不存總數）。
     toRecord() {
+      validateAt(this.at);
       if (!MEAL_TYPES.includes(this.mealType)) throw new Error("請選擇餐別");
       if (this.items.length === 0) throw new Error("請至少加入一項食物");
       // 第一次儲存時才給 id，並記在草稿上，之後再存一次就是更新同一餐。

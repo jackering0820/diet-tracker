@@ -4,8 +4,9 @@ import { dayRange } from "../core/day.js";
 import { formatNutrient } from "../core/format.js";
 import { createIndexedDbStorage } from "../adapters/indexeddb-storage.js";
 import { createMealEditor, renderNutrition } from "./meal-editor.js";
-import { byId as $, showMessage } from "./dom.js";
+import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
 import { createSettings, renderProgress } from "./goals-view.js";
+import { createHistory, formatDayTitle } from "./history-view.js";
 
 // 新版 App 要升級資料庫時，重新整理以載入新版。
 const storage = await createIndexedDbStorage({ onOutdated: () => location.reload() });
@@ -17,11 +18,26 @@ function formatTime(ms) {
 
 const showWaterError = (message) => showMessage("water-error", message);
 
+// 正在看的那一天（null 表示今天）。在過去的日子新增紀錄就是補記。
+let viewedDay = null;
+const currentDayKey = () => viewedDay ?? diary.todayKey();
+
+// 新紀錄的時間：今天就是現在；補記過去的日子時，用那一天的「現在這個時刻」。
+function timeForNewRecord() {
+  if (viewedDay === null) return undefined;
+  const now = new Date();
+  const [y, m, d] = viewedDay.split("-").map(Number);
+  return new Date(y, m - 1, d, now.getHours(), now.getMinutes()).getTime();
+}
+
 function waterItem(w) {
   const li = document.createElement("li");
-  const time = document.createElement("span");
-  time.className = "time";
+  const time = document.createElement("button");
+  time.type = "button";
+  time.className = "time link";
   time.textContent = formatTime(w.at);
+  time.setAttribute("aria-label", `修改 ${formatTime(w.at)} 的 ${w.ml} ml 的時間`);
+  time.addEventListener("click", () => openWaterTime(w));
   const ml = document.createElement("span");
   ml.className = "ml";
   ml.textContent = `${w.ml} ml`;
@@ -59,7 +75,10 @@ function mealRow(meal) {
 }
 
 async function render() {
-  const day = await diary.getDaySummary(diary.todayKey());
+  const day = await diary.getDaySummary(currentDayKey());
+  const isToday = day.dayKey === diary.todayKey();
+  $("page-title").textContent = isToday ? "今天" : formatDayTitle(day.dayKey);
+  $("back-to-today").hidden = isToday;
   // 標題日期由日記核心的 dayKey 推算，和資料用的是同一個時間來源。
   $("today-date").textContent = new Date(dayRange(day.dayKey).from).toLocaleDateString("zh-TW", {
     year: "numeric", month: "long", day: "numeric", weekday: "long",
@@ -75,7 +94,7 @@ async function render() {
 
 async function addWater(ml) {
   try {
-    await diary.addWater(ml);
+    await diary.addWater(ml, timeForNewRecord());
     showWaterError("");
     await render();
     return true;
@@ -86,7 +105,48 @@ async function addWater(ml) {
 }
 
 const editor = createMealEditor({ diary, onDone: render });
-$("add-meal").addEventListener("click", () => editor.openNew());
+$("add-meal").addEventListener("click", () => editor.openNew(timeForNewRecord()));
+
+// 修改喝水時間的視窗
+let movingWater = null;
+function openWaterTime(w) {
+  movingWater = w;
+  $("water-time-form").elements.at.value = toLocalInputValue(w.at);
+  showMessage("water-time-error", "");
+  $("water-time").showModal();
+}
+$("water-time-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    await diary.moveWater(movingWater.id, fromLocalInputValue(event.target.elements.at.value));
+    $("water-time").close();
+    await render();
+  } catch (err) {
+    showMessage("water-time-error", err.message);
+  }
+});
+$("close-water-time").addEventListener("click", () => $("water-time").close());
+
+// 歷史列表和某一天之間切換
+function showDayView(dayKey) {
+  viewedDay = dayKey === diary.todayKey() ? null : dayKey;
+  $("history-view").hidden = true;
+  $("day-view").hidden = false;
+  $("open-history").hidden = false;
+  window.scrollTo(0, 0);
+  return render();
+}
+const historyView = createHistory({ diary, onSelect: showDayView });
+$("open-history").addEventListener("click", async () => {
+  $("day-view").hidden = true;
+  $("history-view").hidden = false;
+  $("open-history").hidden = true;
+  $("back-to-today").hidden = false;
+  $("page-title").textContent = "歷史";
+  $("today-date").textContent = "點一天查看或補記";
+  await historyView.open();
+});
+$("back-to-today").addEventListener("click", () => showDayView(diary.todayKey()));
 
 const settings = createSettings({ diary, onSaved: render });
 $("open-settings").addEventListener("click", () => settings.open());
@@ -109,6 +169,13 @@ document.addEventListener("visibilitychange", () => {
 
 await render();
 
+// 本機開發時不使用 service worker，避免一直拿到快取裡的舊檔案。
+const isLocalDev = ["localhost", "127.0.0.1"].includes(location.hostname);
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
+  if (isLocalDev) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((r) => r.unregister()));
+  } else {
+    navigator.serviceWorker.register("sw.js");
+  }
 }

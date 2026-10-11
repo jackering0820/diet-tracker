@@ -32,22 +32,24 @@ export function withDefaults(saved) {
 //   achieved 達標
 //   over     超過上限（熱量）
 //   missed   還沒達到下限（蛋白質、蔬菜、喝水）
+//   noRecords 這一天完全沒有紀錄，不判斷（避免沒吃東西也被標成熱量達標）
 // 刻意用「顯示出來的數字」判斷：畫面寫「1800 / 1800」就一定是達標，
 // 不會因為實際是 1800.4 而顯示超過，讓使用者困惑。
-function goalStatus(key, value, goal) {
+function goalStatus(key, value, goal, hasRecords) {
   if (goal === null) return "unset";
+  if (!hasRecords) return "noRecords";
   const shown = roundForDisplay(key, value);
   if (CEILINGS.has(key)) return shown <= goal ? "achieved" : "over";
   return shown >= goal ? "achieved" : "missed";
 }
 
-// 計算 4 項目標的進度。
-export function goalProgress(values, goals) {
+// 計算 4 項目標的進度。hasRecords：這一天有沒有任何餐點或喝水紀錄。
+export function goalProgress(values, goals, hasRecords) {
   return Object.fromEntries(
     Object.keys(DEFAULT_GOALS).map((key) => {
       const value = values[key];
       const goal = goals[key];
-      return [key, { value, goal, status: goalStatus(key, value, goal) }];
+      return [key, { value, goal, status: goalStatus(key, value, goal, hasRecords) }];
     }),
   );
 }

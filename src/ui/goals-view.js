@@ -10,7 +10,7 @@ const GOAL_ROWS = [
 ];
 
 // 狀態由日記核心判斷，這裡只負責顯示。
-const STATUS_TEXT = { unset: "未設定", achieved: "✅ 達標", over: "❌ 超過", missed: "❌ 未達標" };
+const STATUS_TEXT = { unset: "未設定", achieved: "✅ 達標", over: "❌ 超過", missed: "❌ 未達標", noRecords: "無紀錄" };
 
 export function renderProgress(list, progress) {
   list.replaceChildren(...GOAL_ROWS.map(({ key, label, unit }) => {

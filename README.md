@@ -22,7 +22,9 @@ npm test
 npm start
 ```
 
-然後用瀏覽器打開 <http://localhost:8787>。IndexedDB 和 service worker 需要透過網頁伺服器才能運作，直接雙擊 `index.html` 打不開。
+然後用瀏覽器打開 <http://localhost:8787>。IndexedDB 需要透過網頁伺服器才能運作，直接雙擊 `index.html` 打不開。
+
+在 `localhost` 上不會啟用 service worker（避免開發時一直拿到快取的舊檔案），所以離線功能要在 GitHub Pages 上的正式網址測試。
 
 ## 架構
 

@@ -9,6 +9,18 @@ export function dayKeyOf(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+// 紀錄的時間（毫秒時間戳）必須是有效的數字。
+export function validateAt(at) {
+  if (typeof at !== "number" || !Number.isFinite(at)) throw new Error("請選擇有效的日期時間");
+  return at;
+}
+
+// "YYYY-MM-DD" 加減天數（n 可以是負數），依當地日曆計算。
+export function addDays(dayKey, n) {
+  const [y, m, d] = dayKey.split("-").map(Number);
+  return dayKeyOf(new Date(y, m - 1, d + n));
+}
+
 // "YYYY-MM-DD" → 當天 0:00 與隔天 0:00 的毫秒時間戳
 export function dayRange(dayKey) {
   const [y, m, d] = dayKey.split("-").map(Number);

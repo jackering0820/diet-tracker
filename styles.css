@@ -183,3 +183,35 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 .over .bar > div { background: var(--danger); }
 .over .status { color: var(--danger); }
 .unset .status { color: var(--muted); }
+
+/* 標題列按鈕、回到今天 */
+.header-buttons { display: flex; gap: 8px; }
+#back-to-today { padding: 4px 0; min-height: 0; }
+
+.two-columns { display: grid; grid-template-columns: 1fr 1.4fr; gap: 0 12px; }
+
+/* 喝水紀錄的時間可以點來修改 */
+.entries .time.link { padding: 0; min-height: 0; text-align: left; text-decoration: underline dotted; }
+
+/* 歷史列表 */
+.history-list { list-style: none; padding: 0; margin: 0; }
+.history-list li + li { border-top: 1px solid var(--border); }
+.history-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 0;
+  background: transparent;
+  color: var(--text);
+  font-weight: 400;
+  border-radius: 0;
+  text-align: left;
+}
+.history-date { font-weight: 700; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; padding: 2px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); }
+.chip.over, .chip.missed { color: var(--danger); }
+.empty-inline { color: var(--muted); font-size: 14px; }
+.noRecords .status { color: var(--muted); }

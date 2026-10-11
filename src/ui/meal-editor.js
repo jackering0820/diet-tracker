@@ -1,7 +1,7 @@
 // 一餐的編輯畫面：手動新增和修改共用。之後拍照分析也會把結果放進這裡。
 import { MEAL_TYPES, NUTRIENTS, NUTRIENT_LABELS } from "../core/meal.js";
 import { formatNutrient } from "../core/format.js";
-import { byId as $, showMessage } from "./dom.js";
+import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
 
 export function renderNutrition(dl, totals) {
   dl.replaceChildren(...NUTRIENTS.flatMap((k) => {
@@ -105,6 +105,11 @@ export function createMealEditor({ diary, onDone }) {
     draft.mealType = event.target.value;
   });
 
+  // 修改日期時間：儲存後這一餐會移到新的那一天。
+  $("meal-at").addEventListener("change", (event) => {
+    draft.at = fromLocalInputValue(event.target.value);
+  });
+
   $("save-meal").addEventListener("click", async () => {
     try {
       await diary.saveMeal(draft);
@@ -134,6 +139,7 @@ export function createMealEditor({ diary, onDone }) {
     $("editor-title").textContent = isExisting ? "修改這一餐" : "新增一餐";
     $("delete-meal").hidden = !isExisting;
     $("meal-type").value = draft.mealType;
+    $("meal-at").value = toLocalInputValue(draft.at);
     resetItemForm();
     showError("");
     renderDraft();
@@ -143,8 +149,9 @@ export function createMealEditor({ diary, onDone }) {
   return {
     // 用預先填好的草稿打開（例如拍照分析的結果）。
     openDraft: open,
-    openNew() {
-      open(diary.newMealDraft());
+    // at：這一餐的時間；補記過去的日子時由畫面指定。
+    openNew(at) {
+      open(diary.newMealDraft({ at }));
     },
     async openExisting(id) {
       open(await diary.loadMealDraft(id));
