@@ -1,7 +1,7 @@
 // 畫面層（UI Shell）：只處理畫面，所有規則交給日記核心。
 import { createDiary } from "../core/diary.js";
 import { dayRange } from "../core/day.js";
-import { formatNutrient } from "../core/meal.js";
+import { formatNutrient } from "../core/format.js";
 import { createIndexedDbStorage } from "../adapters/indexeddb-storage.js";
 import { createMealEditor, renderNutrition } from "./meal-editor.js";
 import { byId as $, showMessage } from "./dom.js";

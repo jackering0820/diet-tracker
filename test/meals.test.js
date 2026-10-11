@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { setup } from "./helpers.js";
-import { formatNutrient } from "../src/core/meal.js";
+import { formatNutrient } from "../src/core/format.js";
 
 test("依建立時間預設餐別，每個時間邊界都正確", () => {
   const cases = [

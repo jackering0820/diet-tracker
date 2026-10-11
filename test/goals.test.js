@@ -13,10 +13,10 @@ test("第一次使用時蔬菜目標是 3 份，其他目標未設定也不判�
   await diary.saveMeal(meal);
   const { progress } = await diary.getDaySummary(diary.todayKey());
 
-  assert.deepEqual(progress.veg, { value: 3, goal: 3, achieved: true });
-  assert.deepEqual(progress.kcal, { value: 180, goal: null, achieved: null });
-  assert.equal(progress.protein.achieved, null);
-  assert.equal(progress.waterMl.achieved, null);
+  assert.deepEqual(progress.veg, { value: 3, goal: 3, status: "achieved" });
+  assert.deepEqual(progress.kcal, { value: 180, goal: null, status: "unset" });
+  assert.equal(progress.protein.status, "unset");
+  assert.equal(progress.waterMl.status, "unset");
 });
 
 test("設定的目標會保存，重新打開 App 後仍然存在；留空表示未設定", async () => {
@@ -39,41 +39,61 @@ test("目標是負數或不是數字時拒絕儲存，原本的目標不變", as
   assert.deepEqual(await diary.getGoals(), { kcal: 1800, protein: 90, veg: 3, waterMl: 2000 });
 });
 
-// 建立一天：一餐（指定熱量、蛋白質、蔬菜）加一筆喝水，回傳 4 項是否達標。
+// 建立一天：一餐（指定熱量、蛋白質、蔬菜）加一筆喝水，回傳 4 項的狀態。
 async function achievedFor({ kcal, protein, veg, waterMl }) {
   const { diary } = setup();
   await diary.setGoals({ kcal: 1800, protein: 90, veg: 3, waterMl: 2000 });
   await diary.saveMeal(diary.newMealDraft({ items: [{ name: "一天的飲食", portion: "", kcal, protein, carbs: 0, fat: 0, veg }] }));
   await diary.addWater(waterMl);
   const { progress } = await diary.getDaySummary(diary.todayKey());
-  return Object.fromEntries(Object.entries(progress).map(([k, p]) => [k, p.achieved]));
+  return Object.fromEntries(Object.entries(progress).map(([k, p]) => [k, p.status]));
 }
 
 test("剛好等於目標：4 項都達標", async () => {
   assert.deepEqual(
     await achievedFor({ kcal: 1800, protein: 90, veg: 3, waterMl: 2000 }),
-    { kcal: true, protein: true, veg: true, waterMl: true },
+    { kcal: "achieved", protein: "achieved", veg: "achieved", waterMl: "achieved" },
   );
 });
 
 test("略高於目標：熱量超過上限未達標，其他 3 項達標", async () => {
   assert.deepEqual(
     await achievedFor({ kcal: 1801, protein: 90.5, veg: 3.5, waterMl: 2250 }),
-    { kcal: false, protein: true, veg: true, waterMl: true },
+    { kcal: "over", protein: "achieved", veg: "achieved", waterMl: "achieved" },
   );
 });
 
 test("略低於目標：熱量在上限內達標，其他 3 項未達標", async () => {
   assert.deepEqual(
     await achievedFor({ kcal: 1799, protein: 89.5, veg: 2.5, waterMl: 1750 }),
-    { kcal: true, protein: false, veg: false, waterMl: false },
+    { kcal: "achieved", protein: "missed", veg: "missed", waterMl: "missed" },
   );
 });
 
-test("達標判斷和畫面顯示一致：顯示成剛好等於目標的數字，就算剛好達標", async () => {
+test("刻意的設計：用顯示出來的數字判斷，畫面上剛好等於目標就算達標（不用未四捨五入的原始數字）", async () => {
   // 熱量 1800.4 顯示為「1800」、蛋白質 89.96 顯示為「90.0」，看起來都剛好等於目標。
   assert.deepEqual(
     await achievedFor({ kcal: 1800.4, protein: 89.96, veg: 3, waterMl: 2000 }),
-    { kcal: true, protein: true, veg: true, waterMl: true },
+    { kcal: "achieved", protein: "achieved", veg: "achieved", waterMl: "achieved" },
   );
+});
+
+test("每一項回傳狀態：熱量超過上限是 over，下限未達到是 missed，未設定是 unset", async () => {
+  const { diary } = setup();
+  await diary.setGoals({ kcal: 1800, protein: 90, veg: 3, waterMl: null });
+  await diary.saveMeal(diary.newMealDraft({ items: [{ name: "大餐", portion: "", kcal: 1900, protein: 95, carbs: 0, fat: 0, veg: 2 }] }));
+  const { progress } = await diary.getDaySummary(diary.todayKey());
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(progress).map(([k, p]) => [k, p.status])),
+    { kcal: "over", protein: "achieved", veg: "missed", waterMl: "unset" },
+  );
+});
+
+test("設定了目標之後又清空，那一項就不再判斷達標", async () => {
+  const { diary } = setup();
+  await diary.setGoals({ kcal: 1800, protein: 90, veg: 3, waterMl: 2000 });
+  await diary.setGoals({ kcal: 1800, protein: null, veg: 3, waterMl: 2000 });
+  const { progress } = await diary.getDaySummary(diary.todayKey());
+  assert.equal(progress.protein.goal, null);
+  assert.equal(progress.protein.status, "unset");
 });

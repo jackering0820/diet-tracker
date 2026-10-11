@@ -2,7 +2,7 @@
 // 資料儲存（storage）和時間（clock）由外部注入。
 import { dayKeyOf, dayRange } from "./day.js";
 import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
-import { DEFAULT_GOALS, goalProgress, validateGoals } from "./goals.js";
+import { goalProgress, validateGoals, withDefaults } from "./goals.js";
 
 const WATER = "water";
 const MEALS = "meals";
@@ -12,6 +12,11 @@ const GOALS_ID = "goals";
 const byTime = (a, b) => a.at - b.at;
 
 export function createDiary({ storage, clock }) {
+  async function getGoals() {
+    const saved = await storage.get(SETTINGS, GOALS_ID);
+    return withDefaults(saved?.goals);
+  }
+
   return {
     todayKey() {
       return dayKeyOf(clock.now());
@@ -51,10 +56,7 @@ export function createDiary({ storage, clock }) {
       await storage.delete(MEALS, id);
     },
 
-    async getGoals() {
-      const saved = await storage.get(SETTINGS, GOALS_ID);
-      return saved ? saved.goals : { ...DEFAULT_GOALS };
-    },
+    getGoals,
 
     async setGoals(goals) {
       await storage.put(SETTINGS, { id: GOALS_ID, goals: validateGoals(goals) });
@@ -74,7 +76,7 @@ export function createDiary({ storage, clock }) {
         waterTotalMl,
         meals,
         nutritionTotals,
-        progress: goalProgress({ ...nutritionTotals, waterMl: waterTotalMl }, await this.getGoals()),
+        progress: goalProgress({ ...nutritionTotals, waterMl: waterTotalMl }, await getGoals()),
       };
     },
   };
