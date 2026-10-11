@@ -1,7 +1,7 @@
 // IndexedDB 版資料儲存：正式使用，介面和記憶體版相同。
 const DB_NAME = "diet-tracker";
-const DB_VERSION = 1;
-const COLLECTIONS = ["water"];
+const DB_VERSION = 2;
+const COLLECTIONS = ["water", "meals"];
 
 function openDb() {
   return new Promise((resolve, reject) => {
@@ -31,6 +31,12 @@ export async function createIndexedDbStorage() {
   const db = await openDb();
 
   return {
+    async get(name, id) {
+      const tx = db.transaction(name, "readonly");
+      const req = tx.objectStore(name).get(id);
+      await waitForTransaction(tx);
+      return req.result;
+    },
     async put(name, record) {
       const tx = db.transaction(name, "readwrite");
       tx.objectStore(name).put(record);

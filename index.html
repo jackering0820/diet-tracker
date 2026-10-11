@@ -19,6 +19,14 @@
   </header>
 
   <main>
+    <section class="card" aria-labelledby="meals-title">
+      <h2 id="meals-title">🍱 吃了什麼</h2>
+      <dl id="nutrition-totals" class="nutrition"></dl>
+      <ul id="meal-list" class="entries"></ul>
+      <p id="meals-empty" class="empty">今天還沒有餐點紀錄</p>
+      <button type="button" id="add-meal" class="wide">＋ 新增一餐</button>
+    </section>
+
     <section class="card" aria-labelledby="water-title">
       <h2 id="water-title">💧 喝水</h2>
       <p class="total"><span id="water-total">0</span> ml</p>
@@ -37,11 +45,55 @@
         </div>
       </form>
 
-      <p id="error" class="error" role="alert" hidden></p>
+      <p id="water-error" class="error" role="alert" hidden></p>
 
       <ul id="water-list" class="entries"></ul>
       <p id="water-empty" class="empty">今天還沒有喝水紀錄</p>
     </section>
   </main>
+
+  <dialog id="meal-editor" aria-labelledby="editor-title">
+    <div class="editor">
+      <h2 id="editor-title">新增一餐</h2>
+
+      <label class="field">
+        <span>餐別</span>
+        <select id="meal-type"></select>
+      </label>
+
+      <h3>食物</h3>
+      <ul id="item-list" class="entries"></ul>
+      <p id="items-empty" class="empty">還沒有食物，請在下方新增</p>
+
+      <form id="item-form" class="item-form" novalidate>
+        <h3 id="item-form-title">新增食物</h3>
+        <label class="field"><span>名稱</span><input name="name" placeholder="例如 雞腿便當"></label>
+        <label class="field"><span>份量</span><input name="portion" placeholder="例如 一個、大杯微糖"></label>
+        <div class="nutrient-inputs">
+          <label class="field"><span>熱量（大卡）</span><input name="kcal" type="number" inputmode="decimal" min="0" step="any"></label>
+          <label class="field"><span>蛋白質（g）</span><input name="protein" type="number" inputmode="decimal" min="0" step="any"></label>
+          <label class="field"><span>碳水（g）</span><input name="carbs" type="number" inputmode="decimal" min="0" step="any"></label>
+          <label class="field"><span>脂肪（g）</span><input name="fat" type="number" inputmode="decimal" min="0" step="any"></label>
+          <label class="field"><span>蔬菜（份）</span><input name="veg" type="number" inputmode="decimal" min="0" step="any"></label>
+        </div>
+        <p id="item-error" class="error" role="alert" hidden></p>
+        <div class="row">
+          <button type="submit" id="item-submit">加入這一項</button>
+          <button type="button" id="item-cancel" class="secondary" hidden>取消修改</button>
+        </div>
+      </form>
+
+      <h3>這餐總計</h3>
+      <dl id="draft-totals" class="nutrition"></dl>
+
+      <p id="editor-error" class="error" role="alert" hidden></p>
+
+      <div class="editor-actions">
+        <button type="button" id="save-meal">儲存這一餐</button>
+        <button type="button" id="close-editor" class="secondary">取消</button>
+        <button type="button" id="delete-meal" class="danger" hidden>刪除這一餐</button>
+      </div>
+    </div>
+  </dialog>
 </body>
 </html>

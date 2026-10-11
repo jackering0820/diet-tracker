@@ -1,9 +1,10 @@
 // 畫面層（UI Shell）：只處理畫面，所有規則交給日記核心。
 import { createDiary } from "../core/diary.js";
 import { dayRange } from "../core/day.js";
+import { formatNutrient } from "../core/meal.js";
 import { createIndexedDbStorage } from "../adapters/indexeddb-storage.js";
-
-const $ = (id) => document.getElementById(id);
+import { createMealEditor, renderNutrition } from "./meal-editor.js";
+import { byId as $, showMessage } from "./dom.js";
 
 const storage = await createIndexedDbStorage();
 const diary = createDiary({ storage, clock: { now: () => new Date() } });
@@ -12,10 +13,7 @@ function formatTime(ms) {
   return new Date(ms).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
-function showError(message) {
-  $("error").textContent = message;
-  $("error").hidden = !message;
-}
+const showWaterError = (message) => showMessage("water-error", message);
 
 function waterItem(w) {
   const li = document.createElement("li");
@@ -38,12 +36,35 @@ function waterItem(w) {
   return li;
 }
 
+function mealRow(meal) {
+  const li = document.createElement("li");
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "meal-row";
+  const time = document.createElement("span");
+  time.className = "time";
+  time.textContent = formatTime(meal.at);
+  const type = document.createElement("span");
+  type.className = "grow";
+  type.textContent = meal.mealType;
+  const kcal = document.createElement("span");
+  kcal.textContent = `${formatNutrient("kcal", meal.totals.kcal)} 大卡 ›`;
+  button.append(time, type, kcal);
+  button.setAttribute("aria-label", `修改 ${formatTime(meal.at)} 的${meal.mealType}`);
+  button.addEventListener("click", () => editor.openExisting(meal.id));
+  li.append(button);
+  return li;
+}
+
 async function render() {
   const day = await diary.getDaySummary(diary.todayKey());
   // 標題日期由日記核心的 dayKey 推算，和資料用的是同一個時間來源。
   $("today-date").textContent = new Date(dayRange(day.dayKey).from).toLocaleDateString("zh-TW", {
     year: "numeric", month: "long", day: "numeric", weekday: "long",
   });
+  renderNutrition($("nutrition-totals"), day.nutritionTotals);
+  $("meals-empty").hidden = day.meals.length > 0;
+  $("meal-list").replaceChildren(...day.meals.map(mealRow));
   $("water-total").textContent = day.waterTotalMl.toLocaleString("zh-TW");
   $("water-empty").hidden = day.water.length > 0;
   $("water-list").replaceChildren(...day.water.map(waterItem));
@@ -52,14 +73,17 @@ async function render() {
 async function addWater(ml) {
   try {
     await diary.addWater(ml);
-    showError("");
+    showWaterError("");
     await render();
     return true;
   } catch (err) {
-    showError(err.message);
+    showWaterError(err.message);
     return false;
   }
 }
+
+const editor = createMealEditor({ diary, onDone: render });
+$("add-meal").addEventListener("click", () => editor.openNew());
 
 for (const btn of document.querySelectorAll("[data-ml]")) {
   btn.addEventListener("click", () => addWater(Number(btn.dataset.ml)));

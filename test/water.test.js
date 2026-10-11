@@ -1,13 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createDiary } from "../src/core/diary.js";
-import { createMemoryStorage } from "../src/adapters/memory-storage.js";
-
-function setup(now = new Date(2026, 9, 11, 12, 0)) {
-  const storage = createMemoryStorage();
-  const clock = { now: () => now };
-  return { diary: createDiary({ storage, clock }), storage, clock };
-}
+import { setup } from "./helpers.js";
 
 test("記錄一筆 250ml 喝水後，今天的喝水總量是 250ml", async () => {
   const { diary } = setup();
