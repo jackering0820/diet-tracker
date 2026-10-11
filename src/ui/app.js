@@ -1,5 +1,6 @@
 // 畫面層（UI Shell）：只處理畫面，所有規則交給日記核心。
 import { createDiary } from "../core/diary.js";
+import { dayRange } from "../core/day.js";
 import { createIndexedDbStorage } from "../adapters/indexeddb-storage.js";
 
 const $ = (id) => document.getElementById(id);
@@ -39,7 +40,8 @@ function waterItem(w) {
 
 async function render() {
   const day = await diary.getDaySummary(diary.todayKey());
-  $("today-date").textContent = new Date().toLocaleDateString("zh-TW", {
+  // 標題日期由日記核心的 dayKey 推算，和資料用的是同一個時間來源。
+  $("today-date").textContent = new Date(dayRange(day.dayKey).from).toLocaleDateString("zh-TW", {
     year: "numeric", month: "long", day: "numeric", weekday: "long",
   });
   $("water-total").textContent = day.waterTotalMl.toLocaleString("zh-TW");

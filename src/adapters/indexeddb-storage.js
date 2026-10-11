@@ -19,7 +19,7 @@ function openDb() {
   });
 }
 
-function done(tx) {
+function waitForTransaction(tx) {
   return new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
@@ -34,18 +34,18 @@ export async function createIndexedDbStorage() {
     async put(name, record) {
       const tx = db.transaction(name, "readwrite");
       tx.objectStore(name).put(record);
-      await done(tx);
+      await waitForTransaction(tx);
     },
     async delete(name, id) {
       const tx = db.transaction(name, "readwrite");
       tx.objectStore(name).delete(id);
-      await done(tx);
+      await waitForTransaction(tx);
     },
     // 回傳 at 介於 [from, to) 的紀錄（毫秒時間戳），不保證順序。
     async listByTime(name, from, to) {
       const tx = db.transaction(name, "readonly");
       const req = tx.objectStore(name).index("at").getAll(IDBKeyRange.bound(from, to, false, true));
-      await done(tx);
+      await waitForTransaction(tx);
       return req.result;
     },
   };
