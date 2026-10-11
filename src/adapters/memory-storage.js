@@ -8,6 +8,10 @@ export function createMemoryStorage() {
   }
 
   return {
+    async get(name, id) {
+      const record = collection(name).get(id);
+      return record ? structuredClone(record) : undefined;
+    },
     async put(name, record) {
       collection(name).set(record.id, structuredClone(record));
     },

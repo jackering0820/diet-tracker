@@ -92,3 +92,78 @@ button {
 .entries button.delete { background: transparent; color: var(--danger); padding: 8px 12px; }
 
 .empty { color: var(--muted); margin: 16px 0 0; }
+
+/* 營養總數：5 格 */
+.nutrition {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin: 12px 0 0;
+  text-align: center;
+}
+.nutrition dt { grid-row: 1; color: var(--muted); font-size: 12px; }
+.nutrition dd { grid-row: 2; margin: 0; font-weight: 700; font-size: 18px; }
+
+button.wide { width: 100%; margin-top: 16px; }
+button.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+button.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+button.link { background: transparent; color: var(--accent); padding: 8px; }
+.grow { flex: 1; min-width: 0; }
+
+.entries li:has(> .meal-row) { padding: 0; }
+.meal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0;
+  background: transparent;
+  color: var(--text);
+  font-weight: 400;
+  border-radius: 0;
+  text-align: left;
+}
+
+/* 一餐的編輯畫面 */
+dialog {
+  width: 100%;
+  max-width: 560px;
+  max-height: 100dvh;
+  margin: auto auto 0;
+  padding: 0;
+  border: none;
+  border-radius: 16px 16px 0 0;
+  background: var(--card);
+  color: var(--text);
+}
+dialog::backdrop { background: rgb(0 0 0 / 0.4); }
+.editor { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+.editor h3 { margin: 20px 0 0; font-size: 16px; color: var(--muted); }
+
+.field { display: block; margin-top: 10px; }
+.field > span { display: block; color: var(--muted); font-size: 14px; margin-bottom: 4px; }
+.field input,
+.field select {
+  width: 100%;
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 44px;
+}
+
+.item-form {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+.item-form h3 { margin-top: 0; }
+.item-form .row { margin-top: 12px; }
+.item-form .row button { flex: 1; }
+.nutrient-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+
+.editor-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+.editor-actions .danger { grid-column: 1 / -1; }
