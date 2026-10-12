@@ -72,11 +72,22 @@ function invalidResponse() {
   return new AnalysisError(ANALYSIS_ERRORS.INVALID_RESPONSE);
 }
 
-// 依 API 的錯誤類型（優先）和狀態碼分類，不比對錯誤訊息的文字。
+// API 錯誤類型 → 錯誤種類。
+const KIND_BY_ERROR_TYPE = {
+  authentication_error: ANALYSIS_ERRORS.INVALID_KEY,
+  billing_error: ANALYSIS_ERRORS.QUOTA,
+  rate_limit_error: ANALYSIS_ERRORS.BUSY,
+  overloaded_error: ANALYSIS_ERRORS.BUSY,
+  api_error: ANALYSIS_ERRORS.BUSY,
+  request_too_large: ANALYSIS_ERRORS.TOO_LARGE,
+};
+
+// 先看 API 的錯誤類型；回應裡沒有可辨識的類型時，才用狀態碼判斷。不比對錯誤訊息的文字。
 function classifyApiError(status, apiErrorType) {
-  if (apiErrorType === "authentication_error" || status === 401) return ANALYSIS_ERRORS.INVALID_KEY;
-  if (apiErrorType === "billing_error" || status === 402) return ANALYSIS_ERRORS.QUOTA;
-  if (["rate_limit_error", "overloaded_error", "api_error"].includes(apiErrorType)) return ANALYSIS_ERRORS.BUSY;
+  if (KIND_BY_ERROR_TYPE[apiErrorType]) return KIND_BY_ERROR_TYPE[apiErrorType];
+  if (status === 401) return ANALYSIS_ERRORS.INVALID_KEY;
+  if (status === 402) return ANALYSIS_ERRORS.QUOTA;
+  if (status === 413) return ANALYSIS_ERRORS.TOO_LARGE;
   if (status === 429 || status >= 500) return ANALYSIS_ERRORS.BUSY;
   return ANALYSIS_ERRORS.REQUEST_FAILED;
 }

@@ -1,13 +1,9 @@
 // 一餐的編輯畫面：手動新增、修改、拍照分析共用。
 import { MEAL_TYPES, NUTRIENTS, NUTRIENT_LABELS } from "../core/meal.js";
-import { ANALYSIS_ERRORS } from "../core/analysis-error.js";
+import { AnalysisError } from "../core/analysis-error.js";
 import { resizePhotos } from "./photos.js";
 import { formatNutrient } from "../core/format.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
-
-// 需要到設定頁處理的錯誤；照片本身有問題時重試也沒用。
-const NEEDS_SETTINGS = new Set([ANALYSIS_ERRORS.NO_API_KEY, ANALYSIS_ERRORS.INVALID_KEY]);
-const NOT_RETRYABLE = new Set([ANALYSIS_ERRORS.INVALID_PHOTO]);
 
 export function renderNutrition(dl, totals) {
   dl.replaceChildren(...NUTRIENTS.flatMap((k) => {
@@ -89,16 +85,16 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
   }
 
   // isError：分析失敗，顯示「改成手動輸入」；retryLabel：重試按鈕的文字。
-  function setAnalysisState({ busy = false, message = "", isError = false, needsKey = false, canRetry = false, retryLabel = "重新分析" }) {
+  function setAnalysisState({ busy = false, message = "", isError = false, needsSettings = false, canRetry = false, retryLabel = "重新分析" }) {
     $("analysis-status").textContent = message;
     $("analysis-status").hidden = !message;
     $("analysis-status").classList.toggle("busy", busy);
     $("analysis-status").classList.toggle("error", isError);
-    $("go-settings").hidden = !needsKey;
+    $("go-settings").hidden = !needsSettings;
     $("reanalyze").hidden = !canRetry;
     $("reanalyze").textContent = retryLabel;
     $("switch-to-manual").hidden = !isError;
-    $("analysis-actions").hidden = !needsKey && !canRetry && !isError;
+    $("analysis-actions").hidden = !needsSettings && !canRetry && !isError;
     $("save-meal").disabled = busy;
     // 分析中鎖住食物的輸入和列表：結果回來時會取代整個清單，避免使用者的輸入被蓋掉。
     form.inert = busy;
@@ -106,14 +102,15 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     $("add-photos-label").inert = busy;
   }
 
-  // 依錯誤種類顯示訊息和選項。訊息由日記核心決定；不是分析錯誤（例如程式錯誤）時顯示通用訊息。
+  // 訊息、要不要前往設定、能不能重試，都由日記核心的錯誤決定；畫面只照著顯示。
+  // 不是分析錯誤（例如程式錯誤）時，顯示通用訊息並允許重試。
   function showAnalysisError(err) {
-    const kind = err?.kind;
+    const isAnalysisError = err instanceof AnalysisError;
     setAnalysisState({
-      message: kind ? err.message : "分析失敗，請稍後再試",
+      message: isAnalysisError ? err.message : "分析失敗，請稍後再試",
       isError: true,
-      needsKey: NEEDS_SETTINGS.has(kind),
-      canRetry: !NOT_RETRYABLE.has(kind),
+      needsSettings: isAnalysisError && err.needsSettings,
+      canRetry: isAnalysisError ? err.retryable : true,
       retryLabel: "重試",
     });
   }
@@ -155,7 +152,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
       if (draft.items.length === 0) await analyze();
       else setAnalysisState({ message: "已加入照片。按「重新分析」可以依全部照片更新食物清單。", canRetry: true });
     } catch (err) {
-      setAnalysisState({ message: err.message });
+      setAnalysisState({ message: err.message, isError: true, canRetry: draft.photos.length > 0 });
     } finally {
       event.target.value = "";
     }
