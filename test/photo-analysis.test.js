@@ -132,7 +132,7 @@ test("API 回傳錯誤時保留狀態碼和錯誤類型；網路斷線時標成 
   const draft = diary.newMealDraft({ photos: PHOTOS });
 
   await assert.rejects(diary.analyzeDraft(draft), (err) => {
-    assert.equal(err.kind, ANALYSIS_ERRORS.REQUEST_FAILED);
+    assert.equal(err.kind, ANALYSIS_ERRORS.INVALID_KEY);
     assert.equal(err.status, 401);
     assert.equal(err.apiErrorType, "authentication_error");
     assert.ok(!err.message.includes("FAKE"), "錯誤訊息不能包含金鑰");

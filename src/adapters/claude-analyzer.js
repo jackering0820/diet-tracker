@@ -44,7 +44,7 @@ const ITEMS_SCHEMA = {
 // "data:image/jpeg;base64,xxxx" → Claude 的圖片區塊
 function imageBlock(dataUrl) {
   const match = /^data:(image\/[a-z]+);base64,(.+)$/.exec(dataUrl);
-  if (!match) throw new AnalysisError(ANALYSIS_ERRORS.INVALID_PHOTO, "照片格式無法辨識，請重新選擇照片");
+  if (!match) throw new AnalysisError(ANALYSIS_ERRORS.INVALID_PHOTO);
   return { type: "image", source: { type: "base64", media_type: match[1], data: match[2] } };
 }
 
@@ -69,7 +69,16 @@ function buildRequest({ model, photos }) {
 const NUMBER_FIELDS = ["kcal", "protein", "carbs", "fat", "veg"];
 
 function invalidResponse() {
-  return new AnalysisError(ANALYSIS_ERRORS.INVALID_RESPONSE, "AI 的回覆無法解讀");
+  return new AnalysisError(ANALYSIS_ERRORS.INVALID_RESPONSE);
+}
+
+// 依 API 的錯誤類型（優先）和狀態碼分類，不比對錯誤訊息的文字。
+function classifyApiError(status, apiErrorType) {
+  if (apiErrorType === "authentication_error" || status === 401) return ANALYSIS_ERRORS.INVALID_KEY;
+  if (apiErrorType === "billing_error" || status === 402) return ANALYSIS_ERRORS.QUOTA;
+  if (["rate_limit_error", "overloaded_error", "api_error"].includes(apiErrorType)) return ANALYSIS_ERRORS.BUSY;
+  if (status === 429 || status >= 500) return ANALYSIS_ERRORS.BUSY;
+  return ANALYSIS_ERRORS.REQUEST_FAILED;
 }
 
 // 檢查一項食物的形狀，只留下需要的欄位。
@@ -118,12 +127,12 @@ export function createClaudeAnalyzer({ transport }) {
           body,
         });
       } catch {
-        throw new AnalysisError(ANALYSIS_ERRORS.NETWORK, "無法連線，請確認網路");
+        throw new AnalysisError(ANALYSIS_ERRORS.NETWORK);
       }
       if (!response.ok) {
         // 只保留狀態碼和錯誤類型，不保留 API 的錯誤訊息（可能包含金鑰片段）。
         const apiErrorType = await response.json().then((b) => b?.error?.type ?? null, () => null);
-        throw new AnalysisError(ANALYSIS_ERRORS.REQUEST_FAILED, "分析失敗，請稍後再試", { status: response.status, apiErrorType });
+        throw new AnalysisError(classifyApiError(response.status, apiErrorType), { status: response.status, apiErrorType });
       }
       return readItems(await response.json().catch(() => null));
     },
