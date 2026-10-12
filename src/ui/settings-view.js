@@ -1,5 +1,6 @@
 // 設定視窗：每日目標，以及 AI 分析的 API 金鑰和模型。
 // 畫面永遠拿不到完整金鑰：只送出使用者剛貼上的值，顯示時只用遮罩後的片段。
+import { MODEL_OPTIONS } from "../core/ai-settings.js";
 import { byId as $, showMessage } from "./dom.js";
 import { GOAL_ROWS } from "./goals-view.js";
 
@@ -9,6 +10,8 @@ export function createSettings({ diary, onClose }) {
   const goalsForm = $("goals-form");
   const aiForm = $("ai-form");
   const goalKeys = GOAL_ROWS.map((r) => r.key);
+
+  aiForm.elements.model.replaceChildren(...MODEL_OPTIONS.map((m) => new Option(m.label, m.id)));
 
   function clearMessages() {
     for (const id of ["goals-error", "goals-saved", "ai-error", "ai-saved"]) showMessage(id, "");
@@ -42,10 +45,8 @@ export function createSettings({ diary, onClose }) {
     clearMessages();
     const keyInput = aiForm.elements.apiKey;
     try {
-      // 已經有金鑰時，欄位留空表示不更換。
-      const { isSet } = await diary.getApiKeyStatus();
-      if (keyInput.value.trim() !== "" || !isSet) await diary.setApiKey(keyInput.value);
-      await diary.setModel(aiForm.elements.model.value);
+      // 「留空表示不更換」的規則由日記核心處理。
+      await diary.saveAiSettings({ key: keyInput.value, model: aiForm.elements.model.value });
       keyInput.value = "";
       await renderKeyStatus();
       showMessage("ai-saved", "✓ 已儲存 AI 設定");

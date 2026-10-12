@@ -85,40 +85,39 @@
 
   <dialog id="settings" aria-labelledby="settings-title">
     <div class="editor">
-    <h2 id="settings-title">設定</h2>
-    <form id="goals-form" novalidate>
-      <h3>每日目標</h3>
-      <p class="hint">留空表示不設定這一項，也不判斷是否達標。</p>
-      <label class="field"><span>熱量上限（大卡）</span><input name="kcal" type="number" inputmode="decimal" min="0" step="any"></label>
-      <label class="field"><span>蛋白質至少（g）</span><input name="protein" type="number" inputmode="decimal" min="0" step="any"></label>
-      <label class="field"><span>蔬菜至少（份）</span><input name="veg" type="number" inputmode="decimal" min="0" step="any"></label>
-      <label class="field"><span>喝水至少（ml）</span><input name="waterMl" type="number" inputmode="numeric" min="0" step="1"></label>
-      <p id="goals-error" class="error" role="alert" hidden></p>
-      <p id="goals-saved" class="saved" role="status" hidden></p>
-      <button type="submit" class="wide">儲存目標</button>
-    </form>
+      <h2 id="settings-title">設定</h2>
+      <form id="goals-form" novalidate>
+        <h3>每日目標</h3>
+        <p class="hint">留空表示不設定這一項，也不判斷是否達標。</p>
+        <label class="field"><span>熱量上限（大卡）</span><input name="kcal" type="number" inputmode="decimal" min="0" step="any"></label>
+        <label class="field"><span>蛋白質至少（g）</span><input name="protein" type="number" inputmode="decimal" min="0" step="any"></label>
+        <label class="field"><span>蔬菜至少（份）</span><input name="veg" type="number" inputmode="decimal" min="0" step="any"></label>
+        <label class="field"><span>喝水至少（ml）</span><input name="waterMl" type="number" inputmode="numeric" min="0" step="1"></label>
+        <p id="goals-error" class="error" role="alert" hidden></p>
+        <p id="goals-saved" class="saved" role="status" hidden></p>
+        <button type="submit" class="wide">儲存目標</button>
+      </form>
 
-    <form id="ai-form" novalidate>
-      <h3>AI 分析</h3>
-      <p class="hint">金鑰只存在這支手機的瀏覽器裡，不會出現在網址或任何紀錄中。</p>
-      <p class="key-status">目前的金鑰：<span id="key-status"></span></p>
-      <label class="field">
-        <span id="key-label">貼上 API 金鑰</span>
-        <input name="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-…">
-      </label>
-      <label class="field">
-        <span>模型</span>
-        <select name="model">
-          <option value="claude-sonnet-5-5">Sonnet 5.5（較準確，預設）</option>
-          <option value="claude-haiku-5-5">Haiku 5.5（較便宜、較快）</option>
-        </select>
-      </label>
-      <p id="ai-error" class="error" role="alert" hidden></p>
-      <p id="ai-saved" class="saved" role="status" hidden></p>
-      <button type="submit" class="wide">儲存 AI 設定</button>
-    </form>
+      <form id="ai-form" novalidate>
+        <h3>AI 分析</h3>
+        <p class="hint">金鑰只存在這支手機的瀏覽器裡，不會出現在網址或任何紀錄中。</p>
+        <p class="key-status">目前的金鑰：<span id="key-status"></span></p>
+        <label class="field">
+          <span id="key-label">貼上 API 金鑰</span>
+          <!-- 刻意不用 type="password"：避免 iCloud 鑰匙圈等密碼管理工具把金鑰當密碼儲存或自動填入。
+               文字用 CSS 顯示成圓點。 -->
+          <input name="apiKey" type="text" class="masked-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" placeholder="sk-ant-…">
+        </label>
+        <label class="field">
+          <span>模型</span>
+          <select name="model"></select>
+        </label>
+        <p id="ai-error" class="error" role="alert" hidden></p>
+        <p id="ai-saved" class="saved" role="status" hidden></p>
+        <button type="submit" class="wide">儲存 AI 設定</button>
+      </form>
 
-    <button type="button" id="close-settings" class="wide secondary">關閉</button>
+      <button type="button" id="close-settings" class="wide secondary">關閉</button>
     </div>
   </dialog>
 

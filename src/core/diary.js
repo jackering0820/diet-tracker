@@ -3,12 +3,13 @@
 import { addDays, atTimeOnDay, dayKeyOf, dayRange, validateAt } from "./day.js";
 import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
 import { goalProgress, validateGoals, withDefaults } from "./goals.js";
-import { DEFAULT_MODEL, MODELS, keyStatus, normalizeKey } from "./ai-settings.js";
+import { DEFAULT_MODEL, isBlankKey, keyStatus, normalizeKey, validateModel } from "./ai-settings.js";
 
 const WATER = "water";
 const MEALS = "meals";
 const SETTINGS = "settings";
 const GOALS_ID = "goals";
+// 金鑰和目標存在同一張 settings 表；做備份（#9）時必須排除金鑰，不能整張表匯出。
 const API_KEY_ID = "apiKey";
 const MODEL_ID = "model";
 
@@ -125,7 +126,15 @@ export function createDiary({ storage, clock }) {
     },
 
     async setModel(model) {
-      if (!MODELS.includes(model)) throw new Error("不支援這個模型");
+      await storage.put(SETTINGS, { id: MODEL_ID, model: validateModel(model) });
+    },
+
+    // 設定頁一次儲存 AI 設定：金鑰留空表示不更換（還沒有金鑰就維持未設定），模型一律儲存。
+    // 先檢查完兩項才寫入，有任何一項不對就整組不存。
+    async saveAiSettings({ key, model }) {
+      const newKey = isBlankKey(key) ? null : normalizeKey(key);
+      validateModel(model);
+      if (newKey !== null) await storage.put(SETTINGS, { id: API_KEY_ID, key: newKey });
       await storage.put(SETTINGS, { id: MODEL_ID, model });
     },
 

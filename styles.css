@@ -223,3 +223,5 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 .saved { color: var(--accent); margin: 12px 0 0; }
 .key-status { margin: 12px 0 0; }
 #key-status { font-family: ui-monospace, Menlo, monospace; font-weight: 600; }
+/* 金鑰欄位：一般文字欄位，但把文字顯示成圓點（不用 type="password"，避免密碼管理工具介入） */
+.masked-input { -webkit-text-security: disc; text-security: disc; font-family: ui-monospace, Menlo, monospace; }

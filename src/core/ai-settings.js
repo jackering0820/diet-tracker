@@ -1,8 +1,22 @@
 // AI 設定：API 金鑰與模型。
 // 金鑰只在核心內部使用；對外只提供遮罩後的片段，畫面永遠拿不到完整金鑰。
 
-export const MODELS = ["claude-sonnet-5-5", "claude-haiku-5-5"];
+// 可以選的模型。畫面依這份清單產生選項，新增模型只要改這裡。
+export const MODEL_OPTIONS = [
+  { id: "claude-sonnet-5-5", label: "Sonnet 5.5（較準確，預設）" },
+  { id: "claude-haiku-5-5", label: "Haiku 5.5（較便宜、較快）" },
+];
 export const DEFAULT_MODEL = "claude-sonnet-5-5";
+
+export function validateModel(model) {
+  if (!MODEL_OPTIONS.some((m) => m.id === model)) throw new Error("不支援這個模型");
+  return model;
+}
+
+// 金鑰欄位是不是留空（留空表示不更換）。
+export function isBlankKey(key) {
+  return typeof key !== "string" || key.trim() === "";
+}
 
 export function keyStatus(key) {
   return key ? { isSet: true, masked: maskKey(key) } : { isSet: false, masked: null };

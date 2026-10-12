@@ -50,3 +50,30 @@ test("可以切換成 Haiku 5.5，重新打開 App 後仍然保留；不認識�
   await reopened.setModel("claude-sonnet-5-5");
   assert.equal(await reopened.getModel(), "claude-sonnet-5-5");
 });
+
+test("還沒有金鑰時，金鑰留空也可以只切換模型", async () => {
+  const { diary } = setup();
+  await diary.saveAiSettings({ key: "", model: "claude-haiku-5-5" });
+  assert.equal(await diary.getModel(), "claude-haiku-5-5");
+  assert.deepEqual(await diary.getApiKeyStatus(), { isSet: false, masked: null });
+});
+
+test("已經有金鑰時，金鑰留空表示不更換；有貼上新金鑰才更換", async () => {
+  const { diary } = setup();
+  await diary.saveAiSettings({ key: FAKE_KEY, model: "claude-sonnet-5-5" });
+  await diary.saveAiSettings({ key: "   ", model: "claude-haiku-5-5" });
+  assert.equal((await diary.getApiKeyStatus()).masked, "sk-ant-…WXYZ");
+  assert.equal(await diary.getModel(), "claude-haiku-5-5");
+
+  await diary.saveAiSettings({ key: OTHER_FAKE_KEY, model: "claude-haiku-5-5" });
+  assert.equal((await diary.getApiKeyStatus()).masked, "sk-ant-…ABCD");
+});
+
+test("金鑰或模型有問題時整組都不儲存", async () => {
+  const { diary } = setup();
+  await diary.saveAiSettings({ key: FAKE_KEY, model: "claude-sonnet-5-5" });
+  await assert.rejects(diary.saveAiSettings({ key: "sk-ant-FAKE bad", model: "claude-haiku-5-5" }), /金鑰/);
+  await assert.rejects(diary.saveAiSettings({ key: OTHER_FAKE_KEY, model: "gpt-4" }), /模型/);
+  assert.equal(await diary.getModel(), "claude-sonnet-5-5");
+  assert.equal((await diary.getApiKeyStatus()).masked, "sk-ant-…WXYZ");
+});
