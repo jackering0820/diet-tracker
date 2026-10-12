@@ -15,15 +15,26 @@
 <body>
   <header>
     <div class="header-row">
-      <h1>今天</h1>
-      <button type="button" id="open-settings" class="secondary">⚙️ 設定</button>
+      <h1 id="page-title">今天</h1>
+      <div class="header-buttons">
+        <button type="button" id="open-history" class="secondary">📅 歷史</button>
+        <button type="button" id="open-settings" class="secondary">⚙️ 設定</button>
+      </div>
     </div>
     <p id="today-date"></p>
+    <button type="button" id="back-to-today" class="link" hidden>‹ 回到今天</button>
   </header>
 
-  <main>
+  <main id="history-view" hidden>
+    <section class="card" aria-label="歷史紀錄">
+      <ul id="history-list" class="history-list"></ul>
+      <button type="button" id="load-older" class="wide secondary">載入更早的日子</button>
+    </section>
+  </main>
+
+  <main id="day-view">
     <section class="card" aria-labelledby="progress-title">
-      <h2 id="progress-title">🎯 今日目標</h2>
+      <h2 id="progress-title">🎯 目標</h2>
       <ul id="goal-progress" class="progress-list"></ul>
     </section>
 
@@ -31,7 +42,7 @@
       <h2 id="meals-title">🍱 吃了什麼</h2>
       <dl id="nutrition-totals" class="nutrition"></dl>
       <ul id="meal-list" class="entries"></ul>
-      <p id="meals-empty" class="empty">今天還沒有餐點紀錄</p>
+      <p id="meals-empty" class="empty">這天還沒有餐點紀錄</p>
       <button type="button" id="add-meal" class="wide">＋ 新增一餐</button>
     </section>
 
@@ -56,9 +67,21 @@
       <p id="water-error" class="error" role="alert" hidden></p>
 
       <ul id="water-list" class="entries"></ul>
-      <p id="water-empty" class="empty">今天還沒有喝水紀錄</p>
+      <p id="water-empty" class="empty">這天還沒有喝水紀錄</p>
     </section>
   </main>
+
+  <dialog id="water-time" aria-labelledby="water-time-title">
+    <form id="water-time-form" class="editor" novalidate>
+      <h2 id="water-time-title">修改喝水時間</h2>
+      <label class="field"><span>日期時間</span><input name="at" type="datetime-local"></label>
+      <p id="water-time-error" class="error" role="alert" hidden></p>
+      <div class="editor-actions">
+        <button type="submit">儲存</button>
+        <button type="button" id="close-water-time" class="secondary">取消</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="settings" aria-labelledby="settings-title">
     <form id="goals-form" class="editor" novalidate>
@@ -81,10 +104,16 @@
     <div class="editor">
       <h2 id="editor-title">新增一餐</h2>
 
-      <label class="field">
-        <span>餐別</span>
-        <select id="meal-type"></select>
-      </label>
+      <div class="two-columns">
+        <label class="field">
+          <span>餐別</span>
+          <select id="meal-type"></select>
+        </label>
+        <label class="field">
+          <span>日期時間</span>
+          <input id="meal-at" type="datetime-local">
+        </label>
+      </div>
 
       <h3>食物</h3>
       <ul id="item-list" class="entries"></ul>

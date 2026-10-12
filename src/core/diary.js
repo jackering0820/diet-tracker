@@ -1,6 +1,6 @@
 // 日記核心（Diary Core）：所有業務規則都在這裡，也是唯一的測試 seam。
 // 資料儲存（storage）和時間（clock）由外部注入。
-import { dayKeyOf, dayRange } from "./day.js";
+import { addDays, atTimeOnDay, dayKeyOf, dayRange, validateAt } from "./day.js";
 import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
 import { goalProgress, validateGoals, withDefaults } from "./goals.js";
 
@@ -11,33 +11,76 @@ const GOALS_ID = "goals";
 
 const byTime = (a, b) => a.at - b.at;
 
+
 export function createDiary({ storage, clock }) {
   async function getGoals() {
     const saved = await storage.get(SETTINGS, GOALS_ID);
     return withDefaults(saved?.goals);
   }
 
+  function todayKey() {
+    return dayKeyOf(clock.now());
+  }
+
+  async function getDaySummary(dayKey) {
+    const { from, to } = dayRange(dayKey);
+    const water = (await storage.listByTime(WATER, from, to)).sort(byTime);
+    const meals = (await storage.listByTime(MEALS, from, to))
+      .sort(byTime)
+      .map((meal) => ({ ...meal, totals: sumNutrients(meal.items) }));
+    const waterTotalMl = water.reduce((sum, w) => sum + w.ml, 0);
+    const nutritionTotals = sumNutrients(meals.flatMap((m) => m.items));
+    const hasRecords = meals.length + water.length > 0;
+    return {
+      dayKey,
+      hasRecords,
+      water,
+      waterTotalMl,
+      meals,
+      nutritionTotals,
+      progress: goalProgress(
+        { ...nutritionTotals, waterMl: waterTotalMl },
+        await getGoals(),
+        hasRecords,
+      ),
+    };
+  }
+
   return {
-    todayKey() {
-      return dayKeyOf(clock.now());
+    todayKey,
+
+    // 新紀錄的預設時間：今天就是現在；補記過去的日子時，用那一天的「現在這個時刻」。
+    timeForNewRecord(dayKey) {
+      const now = clock.now();
+      return dayKey === todayKey() ? now.getTime() : atTimeOnDay(dayKey, now);
     },
 
-    async addWater(ml) {
+    // at：補記時指定的時間（毫秒時間戳），沒給就是現在。
+    async addWater(ml, at = clock.now().getTime()) {
       if (typeof ml !== "number" || !Number.isFinite(ml) || ml <= 0) {
         throw new Error("喝水量必須是大於 0 的數字");
       }
-      const entry = { id: crypto.randomUUID(), at: clock.now().getTime(), ml };
+      const entry = { id: crypto.randomUUID(), at: validateAt(at), ml };
       await storage.put(WATER, entry);
       return entry;
+    },
+
+    // 修改一筆喝水的日期時間，紀錄會移到新的那一天。
+    async moveWater(id, at) {
+      validateAt(at);
+      const entry = await storage.get(WATER, id);
+      if (!entry) throw new Error("找不到這筆喝水紀錄");
+      await storage.put(WATER, { ...entry, at });
     },
 
     async deleteWater(id) {
       await storage.delete(WATER, id);
     },
 
-    newMealDraft({ items, photos } = {}) {
-      const now = clock.now();
-      return createMealDraft({ at: now.getTime(), mealType: defaultMealType(now), items, photos });
+    // at：補記時指定的時間（毫秒時間戳），沒給就是現在。餐別依這個時間預設。
+    newMealDraft({ at = clock.now().getTime(), items, photos } = {}) {
+      validateAt(at);
+      return createMealDraft({ at, mealType: defaultMealType(new Date(at)), items, photos });
     },
 
     async saveMeal(draft) {
@@ -62,22 +105,14 @@ export function createDiary({ storage, clock }) {
       await storage.put(SETTINGS, { id: GOALS_ID, goals: validateGoals(goals) });
     },
 
-    async getDaySummary(dayKey) {
-      const { from, to } = dayRange(dayKey);
-      const water = (await storage.listByTime(WATER, from, to)).sort(byTime);
-      const meals = (await storage.listByTime(MEALS, from, to))
-        .sort(byTime)
-        .map((meal) => ({ ...meal, totals: sumNutrients(meal.items) }));
-      const waterTotalMl = water.reduce((sum, w) => sum + w.ml, 0);
-      const nutritionTotals = sumNutrients(meals.flatMap((m) => m.items));
-      return {
-        dayKey,
-        water,
-        waterTotalMl,
-        meals,
-        nutritionTotals,
-        progress: goalProgress({ ...nutritionTotals, waterMl: waterTotalMl }, await getGoals()),
-      };
+    getDaySummary,
+
+    // 歷史列表：從 before 的前一天（沒給就從今天）往前列出 days 天，新的在前。
+    async getHistory({ before, days }) {
+      if (!Number.isInteger(days) || days < 1) throw new Error("歷史列表的天數必須是正整數");
+      const newest = before ? addDays(before, -1) : todayKey();
+      const keys = Array.from({ length: days }, (_, i) => addDays(newest, -i));
+      return Promise.all(keys.map(getDaySummary));
     },
   };
 }
