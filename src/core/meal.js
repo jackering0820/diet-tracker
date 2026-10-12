@@ -76,6 +76,17 @@ export function createMealDraft({ id, at, mealType, items = [], photos = [], sou
       return sumNutrients(this.items);
     },
 
+    // 用 AI 分析的結果取代食物項目；每一項都經過和手動輸入相同的檢查。
+    applyAnalysis(items) {
+      const checked = items.map((fields) => {
+        const item = { ...fields, id: crypto.randomUUID() };
+        validateItem(item);
+        return item;
+      });
+      this.items = checked;
+      this.source = "ai";
+    },
+
     // 轉成要儲存的資料（不含方法，也不存總數）。
     toRecord() {
       validateAt(this.at);

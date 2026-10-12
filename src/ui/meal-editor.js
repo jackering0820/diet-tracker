@@ -1,4 +1,4 @@
-// 一餐的編輯畫面：手動新增和修改共用。之後拍照分析也會把結果放進這裡。
+// 一餐的編輯畫面：手動新增、修改、拍照分析共用。
 import { MEAL_TYPES, NUTRIENTS, NUTRIENT_LABELS } from "../core/meal.js";
 import { formatNutrient } from "../core/format.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
@@ -14,7 +14,8 @@ export function renderNutrition(dl, totals) {
 }
 
 // onDone 在儲存或刪除之後呼叫，讓「今天」畫面重新整理。
-export function createMealEditor({ diary, onDone }) {
+// onOpenSettings 在還沒設定金鑰、使用者按「前往設定」時呼叫（編輯視窗保持打開，草稿不會不見）。
+export function createMealEditor({ diary, onDone, onOpenSettings }) {
   const dialog = $("meal-editor");
   const form = $("item-form");
   let draft = null;
@@ -70,7 +71,52 @@ export function createMealEditor({ diary, onDone }) {
     return li;
   }
 
+  function renderPhotos() {
+    $("draft-photos").hidden = draft.photos.length === 0;
+    $("draft-photos").replaceChildren(...draft.photos.map((src, i) => {
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = `這一餐的第 ${i + 1} 張照片`;
+      return img;
+    }));
+    $("ai-notice").hidden = draft.source !== "ai";
+  }
+
+  function setAnalysisState({ busy = false, message = "", needsKey = false, canRetry = false }) {
+    $("analysis-status").textContent = message;
+    $("analysis-status").hidden = !message;
+    $("analysis-status").classList.toggle("busy", busy);
+    $("analysis-status").classList.toggle("error", !busy && Boolean(message));
+    $("go-settings").hidden = !needsKey;
+    $("reanalyze").hidden = !canRetry;
+    $("analysis-actions").hidden = !needsKey && !canRetry;
+    $("save-meal").disabled = busy;
+  }
+
+  // 用 AI 分析草稿的照片。分析期間關掉或換了別的草稿，結果就不再更新畫面。
+  async function analyze() {
+    const target = draft;
+    setAnalysisState({ busy: true, message: `分析中…（${target.photos.length} 張照片）` });
+    try {
+      await diary.analyzeDraft(target);
+      if (draft !== target) return;
+      setAnalysisState({});
+      renderDraft();
+    } catch (err) {
+      if (draft !== target) return;
+      setAnalysisState({
+        message: `${err.message}。也可以直接在下方手動輸入。`,
+        needsKey: err.kind === "noApiKey",
+        canRetry: true,
+      });
+    }
+  }
+
+  $("reanalyze").addEventListener("click", analyze);
+  $("go-settings").addEventListener("click", () => onOpenSettings());
+
   function renderDraft() {
+    renderPhotos();
     $("item-list").replaceChildren(...draft.items.map(itemRow));
     $("items-empty").hidden = draft.items.length > 0;
     renderNutrition($("draft-totals"), draft.totals());
@@ -142,13 +188,19 @@ export function createMealEditor({ diary, onDone }) {
     $("meal-at").value = toLocalInputValue(draft.at);
     resetItemForm();
     showError("");
+    setAnalysisState({});
     renderDraft();
     dialog.showModal();
   }
 
   return {
-    // 用預先填好的草稿打開（例如拍照分析的結果）。
+    // 用預先填好的草稿打開。
     openDraft: open,
+    // 用照片建立的草稿打開，並馬上開始 AI 分析。
+    openForAnalysis(photoDraft) {
+      open(photoDraft);
+      return analyze();
+    },
     // at：這一餐的時間；補記過去的日子時由畫面指定。
     openNew(at) {
       open(diary.newMealDraft({ at }));

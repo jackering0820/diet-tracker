@@ -188,7 +188,8 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 .header-buttons { display: flex; gap: 8px; }
 #back-to-today { padding: 4px 0; min-height: 0; }
 
-.two-columns { display: grid; grid-template-columns: 1fr 1.4fr; gap: 0 12px; }
+.two-columns { display: grid; grid-template-columns: minmax(6em, 1fr) 2fr; gap: 0 12px; }
+.two-columns .field input, .two-columns .field select { min-width: 0; }
 
 /* 喝水紀錄的時間可以點來修改 */
 .entries .time.link { padding: 0; min-height: 0; text-align: left; text-decoration: underline dotted; }
@@ -225,3 +226,40 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 #key-status { font-family: ui-monospace, Menlo, monospace; font-weight: 600; }
 /* 金鑰欄位：一般文字欄位，但把文字顯示成圓點（不用 type="password"，避免密碼管理工具介入） */
 .masked-input { -webkit-text-security: disc; text-security: disc; font-family: ui-monospace, Menlo, monospace; }
+
+/* 拍照記一餐 */
+.add-meal-buttons { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; margin-top: 16px; }
+.button-like {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+  min-height: 44px;
+  cursor: pointer;
+}
+.photo-strip { display: flex; gap: 8px; overflow-x: auto; margin-top: 12px; }
+.photo-strip img { height: 96px; border-radius: 10px; flex: none; }
+.analysis-status { margin: 12px 0 0; font-weight: 600; }
+.analysis-status.busy::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#analysis-actions { margin-top: 8px; }
+#analysis-actions button { flex: 1; }
+.notice { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--bg); color: var(--muted); font-size: 14px; }
+.meal-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; flex: none; }
+.analysis-status.error { color: var(--danger); font-weight: 400; }
+button:disabled { opacity: 0.5; }

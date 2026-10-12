@@ -3,6 +3,8 @@ import { createDiary } from "../core/diary.js";
 import { dayRange } from "../core/day.js";
 import { formatNutrient } from "../core/format.js";
 import { createIndexedDbStorage } from "../adapters/indexeddb-storage.js";
+import { createClaudeAnalyzer } from "../adapters/claude-analyzer.js";
+import { resizePhotos } from "./photos.js";
 import { createMealEditor, renderNutrition } from "./meal-editor.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
 import { renderProgress } from "./goals-view.js";
@@ -11,7 +13,8 @@ import { createHistory, formatDayTitle } from "./history-view.js";
 
 // 新版 App 要升級資料庫時，重新整理以載入新版。
 const storage = await createIndexedDbStorage({ onOutdated: () => location.reload() });
-const diary = createDiary({ storage, clock: { now: () => new Date() } });
+const analyzer = createClaudeAnalyzer({ transport: (url, init) => fetch(url, init) });
+const diary = createDiary({ storage, clock: { now: () => new Date() }, analyzer });
 
 function formatTime(ms) {
   return new Date(ms).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -64,6 +67,13 @@ function mealRow(meal) {
   const type = document.createElement("span");
   type.className = "grow";
   type.textContent = meal.mealType;
+  if (meal.photos?.length) {
+    const thumb = document.createElement("img");
+    thumb.className = "meal-thumb";
+    thumb.src = meal.photos[0];
+    thumb.alt = "";
+    button.append(thumb);
+  }
   const kcal = document.createElement("span");
   kcal.textContent = `${formatNutrient("kcal", meal.totals.kcal)} 大卡 ›`;
   button.append(time, type, kcal);
@@ -117,8 +127,22 @@ async function addWater(ml) {
   }
 }
 
-const editor = createMealEditor({ diary, onDone: render });
+const editor = createMealEditor({ diary, onDone: render, onOpenSettings: () => settings.open() });
 $("add-meal").addEventListener("click", () => editor.openNew(timeForNewRecord()));
+
+// 拍照記一餐：縮圖 → 建立帶照片的草稿 → 打開編輯視窗並開始 AI 分析。
+$("meal-photos").addEventListener("change", async (event) => {
+  const files = event.target.files;
+  if (!files?.length) return;
+  try {
+    const photos = await resizePhotos(files);
+    await editor.openForAnalysis(diary.newMealDraft({ at: timeForNewRecord(), photos }));
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    event.target.value = ""; // 讓同一張照片可以再選一次
+  }
+});
 
 // 修改喝水時間的視窗
 let movingWater = null;
