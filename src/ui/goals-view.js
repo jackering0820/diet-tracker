@@ -1,8 +1,7 @@
-// 今日目標的進度條，以及設定每日目標的視窗。
+// 目標的進度條。
 import { formatNutrient } from "../core/format.js";
-import { byId as $, showMessage } from "./dom.js";
 
-const GOAL_ROWS = [
+export const GOAL_ROWS = [
   { key: "kcal", label: "熱量", unit: "大卡" },
   { key: "protein", label: "蛋白質", unit: "g" },
   { key: "veg", label: "蔬菜", unit: "份" },
@@ -45,39 +44,4 @@ export function renderProgress(list, progress) {
     li.append(head, bar);
     return li;
   }));
-}
-
-// onSaved 在儲存目標之後呼叫，讓「今天」畫面重新整理。
-export function createSettings({ diary, onSaved }) {
-  const dialog = $("settings");
-  const form = $("goals-form");
-  const keys = GOAL_ROWS.map((r) => r.key);
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const goals = {};
-    for (const key of keys) {
-      const input = form.elements[key];
-      const raw = input.value.trim();
-      goals[key] = input.validity.badInput ? NaN : raw === "" ? null : Number(raw);
-    }
-    try {
-      await diary.setGoals(goals);
-      dialog.close();
-      await onSaved();
-    } catch (err) {
-      showMessage("goals-error", err.message);
-    }
-  });
-
-  $("close-settings").addEventListener("click", () => dialog.close());
-
-  return {
-    async open() {
-      const goals = await diary.getGoals();
-      for (const key of keys) form.elements[key].value = goals[key] ?? "";
-      showMessage("goals-error", "");
-      dialog.showModal();
-    },
-  };
 }

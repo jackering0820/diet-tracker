@@ -215,3 +215,11 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 .chip.over, .chip.missed { color: var(--danger); }
 .empty-inline { color: var(--muted); font-size: 14px; }
 .noRecords .status { color: var(--muted); }
+
+/* 設定視窗 */
+#settings form + form { margin-top: 24px; padding-top: 4px; border-top: 1px solid var(--border); }
+#settings form .wide { margin-top: 12px; }
+#close-settings { margin-top: 24px; }
+.saved { color: var(--accent); margin: 12px 0 0; }
+.key-status { margin: 12px 0 0; }
+#key-status { font-family: ui-monospace, Menlo, monospace; font-weight: 600; }

@@ -3,11 +3,14 @@
 import { addDays, atTimeOnDay, dayKeyOf, dayRange, validateAt } from "./day.js";
 import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
 import { goalProgress, validateGoals, withDefaults } from "./goals.js";
+import { DEFAULT_MODEL, MODELS, keyStatus, normalizeKey } from "./ai-settings.js";
 
 const WATER = "water";
 const MEALS = "meals";
 const SETTINGS = "settings";
 const GOALS_ID = "goals";
+const API_KEY_ID = "apiKey";
+const MODEL_ID = "model";
 
 const byTime = (a, b) => a.at - b.at;
 
@@ -106,6 +109,25 @@ export function createDiary({ storage, clock }) {
     },
 
     getDaySummary,
+
+    async getApiKeyStatus() {
+      const saved = await storage.get(SETTINGS, API_KEY_ID);
+      return keyStatus(saved?.key);
+    },
+
+    async setApiKey(key) {
+      await storage.put(SETTINGS, { id: API_KEY_ID, key: normalizeKey(key) });
+    },
+
+    async getModel() {
+      const saved = await storage.get(SETTINGS, MODEL_ID);
+      return saved?.model ?? DEFAULT_MODEL;
+    },
+
+    async setModel(model) {
+      if (!MODELS.includes(model)) throw new Error("不支援這個模型");
+      await storage.put(SETTINGS, { id: MODEL_ID, model });
+    },
 
     // 歷史列表：從 before 的前一天（沒給就從今天）往前列出 days 天，新的在前。
     async getHistory({ before, days }) {
