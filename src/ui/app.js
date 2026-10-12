@@ -5,7 +5,8 @@ import { formatNutrient } from "../core/format.js";
 import { createIndexedDbStorage } from "../adapters/indexeddb-storage.js";
 import { createMealEditor, renderNutrition } from "./meal-editor.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
-import { createSettings, renderProgress } from "./goals-view.js";
+import { renderProgress } from "./goals-view.js";
+import { createSettings } from "./settings-view.js";
 import { createHistory, formatDayTitle } from "./history-view.js";
 
 // 新版 App 要升級資料庫時，重新整理以載入新版。
@@ -151,7 +152,7 @@ const historyView = createHistory({ diary, onSelect: showDay });
 $("open-history").addEventListener("click", () => switchTo({ name: "history" }));
 $("back-to-today").addEventListener("click", () => showDay(diary.todayKey()));
 
-const settings = createSettings({ diary, onSaved: render });
+const settings = createSettings({ diary, onClose: render });
 $("open-settings").addEventListener("click", () => settings.open());
 
 for (const btn of document.querySelectorAll("[data-ml]")) {

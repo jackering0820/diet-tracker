@@ -215,3 +215,13 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 .chip.over, .chip.missed { color: var(--danger); }
 .empty-inline { color: var(--muted); font-size: 14px; }
 .noRecords .status { color: var(--muted); }
+
+/* 設定視窗 */
+#settings form + form { margin-top: 24px; padding-top: 4px; border-top: 1px solid var(--border); }
+#settings form .wide { margin-top: 12px; }
+#close-settings { margin-top: 24px; }
+.saved { color: var(--accent); margin: 12px 0 0; }
+.key-status { margin: 12px 0 0; }
+#key-status { font-family: ui-monospace, Menlo, monospace; font-weight: 600; }
+/* 金鑰欄位：一般文字欄位，但把文字顯示成圓點（不用 type="password"，避免密碼管理工具介入） */
+.masked-input { -webkit-text-security: disc; text-security: disc; font-family: ui-monospace, Menlo, monospace; }
