@@ -1,6 +1,6 @@
 // Service worker：讓 App 外殼在沒有網路時也能打開。
 // 策略是「網路優先」：有網路就拿最新版並更新快取，沒網路才用快取。
-const CACHE = "diet-tracker-v7";
+const CACHE = "diet-tracker-v8";
 const SHELL = [
   "./",
   "index.html",
@@ -10,6 +10,7 @@ const SHELL = [
   "src/ui/dom.js",
   "src/ui/goals-view.js",
   "src/ui/settings-view.js",
+  "src/ui/photos.js",
   "src/ui/history-view.js",
   "src/ui/meal-editor.js",
   "src/core/diary.js",
@@ -18,7 +19,9 @@ const SHELL = [
   "src/core/goals.js",
   "src/core/format.js",
   "src/core/ai-settings.js",
+  "src/core/analysis-error.js",
   "src/adapters/indexeddb-storage.js",
+  "src/adapters/claude-analyzer.js",
   "icons/icon-180.png",
   "icons/icon-192.png",
   "icons/icon-512.png",

@@ -3,6 +3,7 @@
 import { addDays, atTimeOnDay, dayKeyOf, dayRange, validateAt } from "./day.js";
 import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
 import { goalProgress, validateGoals, withDefaults } from "./goals.js";
+import { ANALYSIS_ERRORS, AnalysisError } from "./analysis-error.js";
 import { DEFAULT_MODEL, isBlankKey, keyStatus, normalizeKey, validateModel } from "./ai-settings.js";
 
 const WATER = "water";
@@ -16,10 +17,16 @@ const MODEL_ID = "model";
 const byTime = (a, b) => a.at - b.at;
 
 
-export function createDiary({ storage, clock }) {
+// analyzer：AI 分析轉接器（測試時使用假的 transport）。
+export function createDiary({ storage, clock, analyzer }) {
   async function getGoals() {
     const saved = await storage.get(SETTINGS, GOALS_ID);
     return withDefaults(saved?.goals);
+  }
+
+  async function getModel() {
+    const saved = await storage.get(SETTINGS, MODEL_ID);
+    return saved?.model ?? DEFAULT_MODEL;
   }
 
   function todayKey() {
@@ -93,6 +100,20 @@ export function createDiary({ storage, clock }) {
       return meal;
     },
 
+    // 用 AI 分析草稿的照片，結果放進草稿的食物項目（還沒儲存）。
+    // 金鑰只在這裡讀取並交給轉接器，不會回傳給畫面。
+    async analyzeDraft(draft) {
+      const saved = await storage.get(SETTINGS, API_KEY_ID);
+      if (!saved?.key) throw new AnalysisError(ANALYSIS_ERRORS.NO_API_KEY, "還沒設定 API 金鑰，請先到設定頁貼上金鑰");
+      const items = await analyzer.analyze({ apiKey: saved.key, model: await getModel(), photos: draft.photos });
+      try {
+        draft.applyAnalysis(items);
+      } catch {
+        // AI 給的內容沒通過檢查（例如名稱空白），不是使用者輸入錯誤。
+        throw new AnalysisError(ANALYSIS_ERRORS.INVALID_RESPONSE, "AI 的回覆無法解讀");
+      }
+    },
+
     async loadMealDraft(id) {
       const meal = await storage.get(MEALS, id);
       if (!meal) throw new Error("找不到這一餐");
@@ -120,10 +141,7 @@ export function createDiary({ storage, clock }) {
       await storage.put(SETTINGS, { id: API_KEY_ID, key: normalizeKey(key) });
     },
 
-    async getModel() {
-      const saved = await storage.get(SETTINGS, MODEL_ID);
-      return saved?.model ?? DEFAULT_MODEL;
-    },
+    getModel,
 
     async setModel(model) {
       await storage.put(SETTINGS, { id: MODEL_ID, model: validateModel(model) });

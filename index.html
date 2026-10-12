@@ -43,7 +43,13 @@
       <dl id="nutrition-totals" class="nutrition"></dl>
       <ul id="meal-list" class="entries"></ul>
       <p id="meals-empty" class="empty">這天還沒有餐點紀錄</p>
-      <button type="button" id="add-meal" class="wide">＋ 新增一餐</button>
+      <div class="add-meal-buttons">
+        <label class="button-like">
+          📷 拍照記一餐
+          <input id="meal-photos" type="file" accept="image/*" multiple hidden>
+        </label>
+        <button type="button" id="add-meal" class="secondary">✍️ 手動新增</button>
+      </div>
     </section>
 
     <section class="card" aria-labelledby="water-title">
@@ -135,6 +141,18 @@
           <input id="meal-at" type="datetime-local">
         </label>
       </div>
+
+      <div id="draft-photos" class="photo-strip" hidden></div>
+      <label id="add-photos-label" class="button-like secondary small">
+        📷 加照片
+        <input id="add-photos" type="file" accept="image/*" multiple hidden>
+      </label>
+      <p id="analysis-status" class="analysis-status" role="status" hidden></p>
+      <div id="analysis-actions" class="row" hidden>
+        <button type="button" id="go-settings" hidden>前往設定</button>
+        <button type="button" id="reanalyze" class="secondary" hidden>重新分析</button>
+      </div>
+      <p id="ai-notice" class="notice" hidden>⚠️ AI 的數字是估算，可能有 20～30% 誤差，請檢查並修正後再儲存。</p>
 
       <h3>食物</h3>
       <ul id="item-list" class="entries"></ul>
