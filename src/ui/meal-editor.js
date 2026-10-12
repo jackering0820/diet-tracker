@@ -1,5 +1,7 @@
 // 一餐的編輯畫面：手動新增、修改、拍照分析共用。
 import { MEAL_TYPES, NUTRIENTS, NUTRIENT_LABELS } from "../core/meal.js";
+import { ANALYSIS_ERRORS } from "../core/analysis-error.js";
+import { resizePhotos } from "./photos.js";
 import { formatNutrient } from "../core/format.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
 
@@ -91,6 +93,10 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     $("reanalyze").hidden = !canRetry;
     $("analysis-actions").hidden = !needsKey && !canRetry;
     $("save-meal").disabled = busy;
+    // 分析中鎖住食物的輸入和列表：結果回來時會取代整個清單，避免使用者的輸入被蓋掉。
+    form.inert = busy;
+    $("item-list").inert = busy;
+    $("add-photos-label").inert = busy;
   }
 
   // 用 AI 分析草稿的照片。分析期間關掉或換了別的草稿，結果就不再更新畫面。
@@ -106,13 +112,33 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
       if (draft !== target) return;
       setAnalysisState({
         message: `${err.message}。也可以直接在下方手動輸入。`,
-        needsKey: err.kind === "noApiKey",
+        needsKey: err.kind === ANALYSIS_ERRORS.NO_API_KEY,
         canRetry: true,
       });
     }
   }
 
-  $("reanalyze").addEventListener("click", analyze);
+  // 重新分析會取代目前的食物清單（包含已經修正過的），先確認。
+  $("reanalyze").addEventListener("click", () => {
+    if (draft.items.length > 0 && !confirm("重新分析會取代目前的食物清單（包含你修改過的內容），確定嗎？")) return;
+    analyze();
+  });
+
+  // 追加照片到同一餐：還沒有食物就直接分析，已經有食物就讓使用者決定要不要重新分析。
+  $("add-photos").addEventListener("change", async (event) => {
+    const files = event.target.files;
+    if (!files?.length) return;
+    try {
+      draft.addPhotos(await resizePhotos(files));
+      renderPhotos();
+      if (draft.items.length === 0) await analyze();
+      else setAnalysisState({ message: "已加入照片。按「重新分析」可以依全部照片更新食物清單。", canRetry: true });
+    } catch (err) {
+      setAnalysisState({ message: err.message });
+    } finally {
+      event.target.value = "";
+    }
+  });
   $("go-settings").addEventListener("click", () => onOpenSettings());
 
   function renderDraft() {
@@ -194,8 +220,6 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
   }
 
   return {
-    // 用預先填好的草稿打開。
-    openDraft: open,
     // 用照片建立的草稿打開，並馬上開始 AI 分析。
     openForAnalysis(photoDraft) {
       open(photoDraft);

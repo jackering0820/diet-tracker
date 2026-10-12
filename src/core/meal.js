@@ -41,9 +41,15 @@ export function sumNutrients(items) {
 
 // 草稿：正在編輯、還沒確認儲存的一餐。有 id 表示是在修改已存的一餐。
 // 可以預先帶入食物項目和縮圖照片（例如 AI 分析的結果）。
+// 建立一個經過檢查的食物項目（沒有 id 就給一個新的）。
+function newItem(fields, id = crypto.randomUUID()) {
+  const item = { ...fields, id };
+  validateItem(item);
+  return item;
+}
+
 export function createMealDraft({ id, at, mealType, items = [], photos = [], source = "manual" }) {
-  const prefilled = items.map((i) => ({ ...i, id: i.id ?? crypto.randomUUID() }));
-  prefilled.forEach(validateItem);
+  const prefilled = items.map((i) => newItem(i, i.id));
   return {
     id,
     at,
@@ -53,8 +59,7 @@ export function createMealDraft({ id, at, mealType, items = [], photos = [], sou
     source,
 
     addItem(fields) {
-      const item = { id: crypto.randomUUID(), ...fields };
-      validateItem(item);
+      const item = newItem(fields);
       this.items.push(item);
       return item;
     },
@@ -68,6 +73,11 @@ export function createMealDraft({ id, at, mealType, items = [], photos = [], sou
       return updated;
     },
 
+    // 追加照片到同一餐（例如主餐、飲料分開拍）。
+    addPhotos(photos) {
+      this.photos.push(...photos);
+    },
+
     removeItem(id) {
       this.items = this.items.filter((i) => i.id !== id);
     },
@@ -78,12 +88,7 @@ export function createMealDraft({ id, at, mealType, items = [], photos = [], sou
 
     // 用 AI 分析的結果取代食物項目；每一項都經過和手動輸入相同的檢查。
     applyAnalysis(items) {
-      const checked = items.map((fields) => {
-        const item = { ...fields, id: crypto.randomUUID() };
-        validateItem(item);
-        return item;
-      });
-      this.items = checked;
+      this.items = items.map((fields) => newItem(fields));
       this.source = "ai";
     },
 

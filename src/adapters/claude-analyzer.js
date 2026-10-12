@@ -1,7 +1,7 @@
 // AI 分析轉接器：從瀏覽器直接呼叫 Anthropic Messages API，分析一餐的照片。
 // 網路傳送功能（transport，形狀和 fetch 相同）由外部注入；測試換成假的，永遠不會真的呼叫 API。
 
-import { AnalysisError } from "../core/analysis-error.js";
+import { ANALYSIS_ERRORS, AnalysisError } from "../core/analysis-error.js";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 
@@ -44,7 +44,7 @@ const ITEMS_SCHEMA = {
 // "data:image/jpeg;base64,xxxx" → Claude 的圖片區塊
 function imageBlock(dataUrl) {
   const match = /^data:(image\/[a-z]+);base64,(.+)$/.exec(dataUrl);
-  if (!match) throw new AnalysisError("invalidPhoto", "照片格式無法辨識，請重新選擇照片");
+  if (!match) throw new AnalysisError(ANALYSIS_ERRORS.INVALID_PHOTO, "照片格式無法辨識，請重新選擇照片");
   return { type: "image", source: { type: "base64", media_type: match[1], data: match[2] } };
 }
 
@@ -66,36 +66,66 @@ function buildRequest({ model, photos }) {
   };
 }
 
+const NUMBER_FIELDS = ["kcal", "protein", "carbs", "fat", "veg"];
+
+function invalidResponse() {
+  return new AnalysisError(ANALYSIS_ERRORS.INVALID_RESPONSE, "AI 的回覆無法解讀");
+}
+
+// 檢查一項食物的形狀，只留下需要的欄位。
+function readItem(raw) {
+  if (typeof raw?.name !== "string" || typeof raw.portion !== "string") throw invalidResponse();
+  const item = { name: raw.name, portion: raw.portion };
+  for (const key of NUMBER_FIELDS) {
+    const value = raw[key];
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw invalidResponse();
+    item[key] = value;
+  }
+  return item;
+}
+
 // 檢查並取出食物項目：只有形狀完全正確的回應才交給日記核心。
+// 沒有正常結束（例如 refusal、max_tokens）的回覆也不採用。
 function readItems(body) {
-  const text = body?.content?.find((b) => b.type === "text")?.text;
+  if (body?.stop_reason !== "end_turn") throw invalidResponse();
+  const text = body.content?.find((b) => b.type === "text")?.text;
   let parsed;
   try {
     parsed = JSON.parse(text);
   } catch {
-    throw new AnalysisError("invalidResponse", "AI 的回覆無法解讀");
+    throw invalidResponse();
   }
-  if (!Array.isArray(parsed?.items)) throw new AnalysisError("invalidResponse", "AI 的回覆無法解讀");
-  return parsed.items;
+  if (!Array.isArray(parsed?.items)) throw invalidResponse();
+  return parsed.items.map(readItem);
 }
 
 export function createClaudeAnalyzer({ transport }) {
   return {
     // 回傳食物項目清單（尚未經過日記核心的檢查）。
     async analyze({ apiKey, model, photos }) {
-      const response = await transport(API_URL, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          // 允許瀏覽器直接呼叫 API（這個 App 沒有後端）。
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify(buildRequest({ model, photos })),
-      });
-      if (!response.ok) throw new AnalysisError("failed", "分析失敗，請稍後再試");
-      return readItems(await response.json());
+      const body = JSON.stringify(buildRequest({ model, photos }));
+      let response;
+      try {
+        response = await transport(API_URL, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01",
+            // 允許瀏覽器直接呼叫 API（這個 App 沒有後端）。
+            "anthropic-dangerous-direct-browser-access": "true",
+          },
+          body,
+        });
+      } catch {
+        throw new AnalysisError(ANALYSIS_ERRORS.NETWORK, "無法連線，請確認網路");
+      }
+      if (!response.ok) {
+        // 只保留狀態碼和錯誤類型，不保留 API 的錯誤訊息（可能包含金鑰片段）。
+        const apiErrorType = await response.json().then((b) => b?.error?.type ?? null, () => null);
+        throw new AnalysisError(ANALYSIS_ERRORS.REQUEST_FAILED, "分析失敗，請稍後再試", { status: response.status, apiErrorType });
+      }
+      return readItems(await response.json().catch(() => null));
     },
   };
 }

@@ -263,3 +263,6 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 .meal-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; flex: none; }
 .analysis-status.error { color: var(--danger); font-weight: 400; }
 button:disabled { opacity: 0.5; }
+.button-like.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.button-like.small { display: inline-flex; margin-top: 12px; padding: 8px 14px; min-height: 40px; font-size: 15px; }
+[inert] { opacity: 0.5; }
