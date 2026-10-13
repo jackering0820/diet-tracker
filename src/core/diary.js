@@ -104,13 +104,13 @@ export function createDiary({ storage, clock, analyzer }) {
     // 金鑰只在這裡讀取並交給轉接器，不會回傳給畫面。
     async analyzeDraft(draft) {
       const saved = await storage.get(SETTINGS, API_KEY_ID);
-      if (!saved?.key) throw new AnalysisError(ANALYSIS_ERRORS.NO_API_KEY, "還沒設定 API 金鑰，請先到設定頁貼上金鑰");
+      if (!saved?.key) throw new AnalysisError(ANALYSIS_ERRORS.NO_API_KEY);
       const items = await analyzer.analyze({ apiKey: saved.key, model: await getModel(), photos: draft.photos });
       try {
         draft.applyAnalysis(items);
       } catch {
         // AI 給的內容沒通過檢查（例如名稱空白），不是使用者輸入錯誤。
-        throw new AnalysisError(ANALYSIS_ERRORS.INVALID_RESPONSE, "AI 的回覆無法解讀");
+        throw new AnalysisError(ANALYSIS_ERRORS.INVALID_RESPONSE);
       }
     },
 

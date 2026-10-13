@@ -1,6 +1,6 @@
 // 一餐的編輯畫面：手動新增、修改、拍照分析共用。
 import { MEAL_TYPES, NUTRIENTS, NUTRIENT_LABELS } from "../core/meal.js";
-import { ANALYSIS_ERRORS } from "../core/analysis-error.js";
+import { AnalysisError } from "../core/analysis-error.js";
 import { resizePhotos } from "./photos.js";
 import { formatNutrient } from "../core/format.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
@@ -84,20 +84,42 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     $("ai-notice").hidden = draft.source !== "ai";
   }
 
-  function setAnalysisState({ busy = false, message = "", needsKey = false, canRetry = false }) {
+  // isError：分析失敗，顯示「改成手動輸入」；retryLabel：重試按鈕的文字。
+  function setAnalysisState({ busy = false, message = "", isError = false, needsSettings = false, canRetry = false, retryLabel = "重新分析" }) {
     $("analysis-status").textContent = message;
     $("analysis-status").hidden = !message;
     $("analysis-status").classList.toggle("busy", busy);
-    $("analysis-status").classList.toggle("error", !busy && Boolean(message));
-    $("go-settings").hidden = !needsKey;
+    $("analysis-status").classList.toggle("error", isError);
+    $("go-settings").hidden = !needsSettings;
     $("reanalyze").hidden = !canRetry;
-    $("analysis-actions").hidden = !needsKey && !canRetry;
+    $("reanalyze").textContent = retryLabel;
+    $("switch-to-manual").hidden = !isError;
+    $("analysis-actions").hidden = !needsSettings && !canRetry && !isError;
     $("save-meal").disabled = busy;
     // 分析中鎖住食物的輸入和列表：結果回來時會取代整個清單，避免使用者的輸入被蓋掉。
     form.inert = busy;
     $("item-list").inert = busy;
     $("add-photos-label").inert = busy;
   }
+
+  // 訊息、要不要前往設定、能不能重試，都由日記核心的錯誤決定；畫面只照著顯示。
+  // 不是分析錯誤（例如程式錯誤）時，顯示通用訊息並允許重試。
+  function showAnalysisError(err) {
+    const isAnalysisError = err instanceof AnalysisError;
+    setAnalysisState({
+      message: isAnalysisError ? err.message : "分析失敗，請稍後再試",
+      isError: true,
+      needsSettings: isAnalysisError && err.needsSettings,
+      canRetry: isAnalysisError ? err.retryable : true,
+      retryLabel: "重試",
+    });
+  }
+
+  // 改成手動輸入：收起錯誤訊息，照片和餐別都保留，直接開始輸入第一項食物。
+  $("switch-to-manual").addEventListener("click", () => {
+    setAnalysisState({ canRetry: draft.photos.length > 0 });
+    form.elements.name.focus();
+  });
 
   // 用 AI 分析草稿的照片。分析期間關掉或換了別的草稿，結果就不再更新畫面。
   async function analyze() {
@@ -110,11 +132,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
       renderDraft();
     } catch (err) {
       if (draft !== target) return;
-      setAnalysisState({
-        message: `${err.message}。也可以直接在下方手動輸入。`,
-        needsKey: err.kind === ANALYSIS_ERRORS.NO_API_KEY,
-        canRetry: true,
-      });
+      showAnalysisError(err);
     }
   }
 
@@ -134,7 +152,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
       if (draft.items.length === 0) await analyze();
       else setAnalysisState({ message: "已加入照片。按「重新分析」可以依全部照片更新食物清單。", canRetry: true });
     } catch (err) {
-      setAnalysisState({ message: err.message });
+      setAnalysisState({ message: err.message, isError: true, canRetry: draft.photos.length > 0 });
     } finally {
       event.target.value = "";
     }
