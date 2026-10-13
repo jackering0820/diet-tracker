@@ -60,5 +60,28 @@ export async function createIndexedDbStorage({ onOutdated } = {}) {
       await waitForTransaction(tx);
       return req.result;
     },
+    async count(name) {
+      const tx = db.transaction(name, "readonly");
+      const req = tx.objectStore(name).count();
+      await waitForTransaction(tx);
+      return req.result;
+    },
+    async listAll(name) {
+      const tx = db.transaction(name, "readonly");
+      const req = tx.objectStore(name).getAll();
+      await waitForTransaction(tx);
+      return req.result;
+    },
+    // 一次完成多個寫入：全部成功或全部不生效（同一個 transaction）。
+    // ops：[{ type: "clear", name }] 或 [{ type: "put", name, record }]
+    async batch(ops) {
+      const names = [...new Set(ops.map((op) => op.name))];
+      const tx = db.transaction(names, "readwrite");
+      for (const op of ops) {
+        if (op.type === "clear") tx.objectStore(op.name).clear();
+        else tx.objectStore(op.name).put(op.record);
+      }
+      await waitForTransaction(tx);
+    },
   };
 }
