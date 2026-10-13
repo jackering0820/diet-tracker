@@ -77,9 +77,15 @@ export async function createIndexedDbStorage({ onOutdated } = {}) {
     async batch(ops) {
       const names = [...new Set(ops.map((op) => op.name))];
       const tx = db.transaction(names, "readwrite");
-      for (const op of ops) {
-        if (op.type === "clear") tx.objectStore(op.name).clear();
-        else tx.objectStore(op.name).put(op.record);
+      try {
+        for (const op of ops) {
+          if (op.type === "clear") tx.objectStore(op.name).clear();
+          else tx.objectStore(op.name).put(op.record);
+        }
+      } catch (err) {
+        // 排程到一半出錯（例如某筆資料無法儲存）：明確取消，前面排好的「清空」也不會生效。
+        tx.abort();
+        throw err;
       }
       await waitForTransaction(tx);
     },

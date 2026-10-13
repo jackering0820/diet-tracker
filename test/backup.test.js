@@ -87,6 +87,12 @@ test("格式錯誤或版本不符的備份會被拒絕並說明原因，現有�
     ["喝水量是負數", with_({ water: [{ ...good.water[0], ml: -500 }] }), /喝水/],
     ["喝水時間無效", with_({ water: [{ ...good.water[0], at: "昨天" }] }), /喝水/],
     ["目標是負數", with_({ goals: { ...GOALS, kcal: -1 } }), /目標/],
+    ["缺少目標", with_({ goals: undefined }), /目標/],
+    ["某一餐缺少食物清單", with_({ meals: [{ ...good.meals[0], items: undefined }] }), /餐點/],
+    ["某一餐缺少照片清單", with_({ meals: [{ ...good.meals[0], photos: undefined }] }), /餐點/],
+    ["某一餐的來源不明", with_({ meals: [{ ...good.meals[0], source: "robot" }] }), /餐點/],
+    ["兩餐的識別碼重複", with_({ meals: [good.meals[0], { ...good.meals[1], id: good.meals[0].id }] }), /重複/],
+    ["兩筆喝水的識別碼重複", with_({ water: [good.water[0], { ...good.water[1], id: good.water[0].id }] }), /重複/],
   ];
 
   for (const [label, text, message] of BAD) {
@@ -96,7 +102,7 @@ test("格式錯誤或版本不符的備份會被拒絕並說明原因，現有�
   assert.deepEqual(await diary.getGoals(), GOALS);
 });
 
-test("提醒定期備份：有紀錄但從沒備份過、或上次匯出超過 7 天時提醒；沒有任何紀錄時不提醒", async () => {
+test("提醒定期備份：有紀錄但從沒備份過、或上次存好備份超過 7 天時提醒；沒有任何紀錄時不提醒", async () => {
   const { diary, clock } = setup(new Date(2026, 9, 1, 9, 0));
   assert.equal(await diary.backupReminderDue(), false, "還沒有任何紀錄");
 
@@ -105,7 +111,9 @@ test("提醒定期備份：有紀錄但從沒備份過、或上次匯出超過 7
 
   assert.equal(await diary.getLastExportAt(), null);
   await diary.exportBackup();
-  assert.equal(await diary.backupReminderDue(), false, "剛匯出");
+  assert.equal(await diary.backupReminderDue(), true, "只產生了備份，使用者可能取消了儲存");
+  await diary.markExported();
+  assert.equal(await diary.backupReminderDue(), false, "確定存好了");
   assert.equal(await diary.getLastExportAt(), new Date(2026, 9, 1, 9, 0).getTime());
 
   clock.now = () => new Date(2026, 9, 8, 9, 0);

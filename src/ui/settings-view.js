@@ -3,10 +3,10 @@
 import { MODEL_OPTIONS } from "../core/ai-settings.js";
 import { byId as $, showMessage } from "./dom.js";
 import { GOAL_ROWS } from "./goals-view.js";
-import { downloadBackup, formatLastExport } from "./backup.js";
+import { formatLastExport, saveBackup } from "./backup.js";
 
-// onClose 在關閉視窗之後呼叫，讓畫面重新整理。
-export function createSettings({ diary, onClose }) {
+// onClose 在關閉視窗之後呼叫，讓畫面重新整理；onDataChanged 在匯入備份之後馬上呼叫。
+export function createSettings({ diary, onClose, onDataChanged }) {
   const dialog = $("settings");
   const goalsForm = $("goals-form");
   const aiForm = $("ai-form");
@@ -63,9 +63,10 @@ export function createSettings({ diary, onClose }) {
   $("export-backup").addEventListener("click", async () => {
     clearMessages();
     try {
-      const name = await downloadBackup(diary);
+      const { saved, name } = await saveBackup(diary);
       await renderLastExport();
-      showMessage("backup-saved", `✓ 已匯出 ${name}`);
+      if (saved) showMessage("backup-saved", `✓ 已匯出 ${name}`);
+      else showMessage("backup-error", "已取消，備份沒有存下來");
     } catch (err) {
       showMessage("backup-error", `匯出失敗：${err.message}`);
     }
@@ -81,6 +82,7 @@ export function createSettings({ diary, onClose }) {
     try {
       await diary.importBackup(await file.text());
       showMessage("backup-saved", "✓ 已從備份還原");
+      await onDataChanged();
       // 目標也被還原了，重新填入表單
       const goals = await diary.getGoals();
       for (const key of goalKeys) goalsForm.elements[key].value = goals[key] ?? "";

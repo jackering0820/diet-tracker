@@ -5,6 +5,7 @@ import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
 import { goalProgress, validateGoals, withDefaults } from "./goals.js";
 import { ANALYSIS_ERRORS, AnalysisError } from "./analysis-error.js";
 import { buildBackup, parseBackup } from "./backup.js";
+import { validateWaterMl } from "./water.js";
 import { DEFAULT_MODEL, isBlankKey, keyStatus, normalizeKey, validateModel } from "./ai-settings.js";
 
 const WATER = "water";
@@ -71,10 +72,7 @@ export function createDiary({ storage, clock, analyzer }) {
 
     // at：補記時指定的時間（毫秒時間戳），沒給就是現在。
     async addWater(ml, at = clock.now().getTime()) {
-      if (typeof ml !== "number" || !Number.isFinite(ml) || ml <= 0) {
-        throw new Error("喝水量必須是大於 0 的數字");
-      }
-      const entry = { id: crypto.randomUUID(), at: validateAt(at), ml };
+      const entry = { id: crypto.randomUUID(), at: validateAt(at), ml: validateWaterMl(ml) };
       await storage.put(WATER, entry);
       return entry;
     },
@@ -136,16 +134,19 @@ export function createDiary({ storage, clock, analyzer }) {
     getDaySummary,
 
     // 匯出備份：餐點（含縮圖）、喝水、目標。不包含 API 金鑰。
+    // 產生備份檔的內容。這時還沒存到手機，所以不算「已備份」。
     async exportBackup() {
-      const now = clock.now();
-      const text = buildBackup({
+      return buildBackup({
         meals: await storage.listAll(MEALS),
         water: await storage.listAll(WATER),
         goals: await getGoals(),
-        exportedAt: now.toISOString(),
+        exportedAt: clock.now().toISOString(),
       });
-      await storage.put(SETTINGS, { id: LAST_EXPORT_ID, at: now.getTime() });
-      return text;
+    },
+
+    // 備份檔確定交給手機儲存之後才呼叫；使用者取消儲存時不要呼叫，提醒才會繼續出現。
+    async markExported() {
+      await storage.put(SETTINGS, { id: LAST_EXPORT_ID, at: clock.now().getTime() });
     },
 
     // 上次匯出備份的時間（毫秒時間戳），沒匯出過是 null。
