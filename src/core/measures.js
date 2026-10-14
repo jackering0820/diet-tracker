@@ -27,6 +27,9 @@ export const NUTRIENTS = Object.freeze(MEASURES.filter((m) => m.source === "food
 // 有目標的指標。
 export const GOAL_MEASURES = Object.freeze(MEASURES.filter((m) => m.goal));
 
+// 喝水這一項指標（不是營養，另外記錄）。
+export const WATER_MEASURE = MEASURES.find((m) => m.source === "water");
+
 const BY_KEY = new Map(MEASURES.map((m) => [m.key, m]));
 
 // 依這項指標的小數位數格式化（熱量和喝水取整數，其他取到小數點後一位）。
@@ -34,7 +37,12 @@ export function formatMeasure(key, value) {
   return value.toFixed(BY_KEY.get(key).decimals);
 }
 
-// 依顯示規則四捨五入後的數值，讓判斷結果和畫面上看到的一致。
+// 格式化並加上單位，例如「820 大卡」。
+export function formatWithUnit(key, value) {
+  return `${formatMeasure(key, value)} ${BY_KEY.get(key).unit}`;
+}
+
+// 依顯示規則四捨五入後的數值：判斷達標狀態時用它，才會和畫面上看到的數字一致。
 export function roundMeasure(key, value) {
   return Number(formatMeasure(key, value));
 }

@@ -2,10 +2,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { setup } from "./helpers.js";
-import { MEASURES, NUTRIENTS, formatMeasure } from "../src/core/measures.js";
+import { GOAL_MEASURES, MEASURES, NUTRIENTS, formatMeasure, formatWithUnit } from "../src/core/measures.js";
 import { GOAL_STATUSES } from "../src/core/goals.js";
 
-const WITH_GOAL = MEASURES.filter((m) => m.goal);
+const WITH_GOAL = GOAL_MEASURES;
 const ALL_NULL_GOALS = Object.fromEntries(WITH_GOAL.map((m) => [m.key, null]));
 
 // 一個所有營養都是 0 的食物項目，再把指定的營養設成 value。
@@ -65,6 +65,13 @@ test("每一項指標都有名稱、單位和顯示格式；營養就是來源�
     assert.equal(formatMeasure(measure.key, 2.25), measure.decimals === 0 ? "2" : "2.3");
   }
   assert.deepEqual(NUTRIENTS, MEASURES.filter((m) => m.source === "food"));
+  assert.deepEqual(GOAL_MEASURES, MEASURES.filter((m) => m.goal));
+});
+
+test("帶單位的顯示：熱量 819.6 是「820 大卡」，喝水 250 是「250 ml」", () => {
+  assert.equal(formatWithUnit("kcal", 819.6), "820 大卡");
+  assert.equal(formatWithUnit("waterMl", 250), "250 ml");
+  assert.equal(formatWithUnit("veg", 2), "2.0 份");
 });
 
 test("核心會產生的每一種達標狀態，在狀態目錄裡都有文字和圖示", async () => {

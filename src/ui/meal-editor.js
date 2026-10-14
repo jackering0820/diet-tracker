@@ -1,6 +1,6 @@
 // 一餐的編輯畫面：手動新增、修改、拍照分析共用。
 import { MEAL_TYPES } from "../core/meal.js";
-import { NUTRIENTS, formatMeasure } from "../core/measures.js";
+import { NUTRIENTS, formatMeasure, formatWithUnit } from "../core/measures.js";
 import { measureLabel, renderMeasureInputs } from "./measure-fields.js";
 import { AnalysisError } from "../core/analysis-error.js";
 import { resizePhotos } from "./photos.js";
@@ -54,7 +54,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     label.className = "grow";
     label.textContent = item.portion ? `${item.name}（${item.portion}）` : item.name;
     const kcal = document.createElement("span");
-    kcal.textContent = `${formatMeasure("kcal", item.kcal)} 大卡`;
+    kcal.textContent = formatWithUnit("kcal", item.kcal);
     const edit = document.createElement("button");
     edit.type = "button";
     edit.className = "link";

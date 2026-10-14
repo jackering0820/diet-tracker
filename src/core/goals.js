@@ -6,11 +6,11 @@ const DEFAULT_GOALS = Object.fromEntries(GOAL_MEASURES.map((m) => [m.key, m.goal
 
 // 達標狀態目錄：每一種狀態的文字和圖示，今天畫面和歷史列表都從這裡讀。
 export const GOAL_STATUSES = Object.freeze({
-  achieved: { text: "達標", icon: "✅" },
-  over: { text: "超過", icon: "❌" },
-  missed: { text: "未達標", icon: "❌" },
-  unset: { text: "未設定", icon: "－" },
-  noRecords: { text: "無紀錄", icon: "－" },
+  achieved: Object.freeze({ text: "達標", icon: "✅" }),
+  over: Object.freeze({ text: "超過", icon: "❌" }),
+  missed: Object.freeze({ text: "未達標", icon: "❌" }),
+  unset: Object.freeze({ text: "未設定", icon: "－" }),
+  noRecords: Object.freeze({ text: "無紀錄", icon: "－" }),
 });
 
 // 檢查並整理目標：每項必須是 0 或正數，null 表示未設定。
@@ -47,7 +47,7 @@ function goalStatus(measure, value, goal, hasRecords) {
   return shown >= goal ? "achieved" : "missed";
 }
 
-// 計算 4 項目標的進度。hasRecords：這一天有沒有任何餐點或喝水紀錄。
+// 計算每一項目標的進度。hasRecords：這一天有沒有任何餐點或喝水紀錄。
 export function goalProgress(values, goals, hasRecords) {
   return Object.fromEntries(
     GOAL_MEASURES.map((measure) => {
