@@ -9,6 +9,7 @@ import { createMealEditor, renderNutrition } from "./meal-editor.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
 import { renderProgress } from "./goals-view.js";
 import { createSettings } from "./settings-view.js";
+import { saveBackup } from "./backup.js";
 import { createHistory, formatDayTitle } from "./history-view.js";
 
 // 新版 App 要升級資料庫時，重新整理以載入新版。
@@ -98,6 +99,7 @@ async function render() {
 }
 
 async function renderDay() {
+  $("backup-reminder").hidden = !(await diary.backupReminderDue());
   const day = await diary.getDaySummary(currentDayKey());
   const isToday = day.dayKey === diary.todayKey();
   $("page-title").textContent = isToday ? "今天" : formatDayTitle(day.dayKey);
@@ -176,8 +178,17 @@ const historyView = createHistory({ diary, onSelect: showDay });
 $("open-history").addEventListener("click", () => switchTo({ name: "history" }));
 $("back-to-today").addEventListener("click", () => showDay(diary.todayKey()));
 
-const settings = createSettings({ diary, onClose: render });
+const settings = createSettings({ diary, onClose: render, onDataChanged: render });
 $("open-settings").addEventListener("click", () => settings.open());
+
+$("reminder-export").addEventListener("click", async () => {
+  try {
+    await saveBackup(diary);
+  } catch (err) {
+    alert(`匯出失敗：${err.message}`);
+  }
+  await render();
+});
 
 for (const btn of document.querySelectorAll("[data-ml]")) {
   btn.addEventListener("click", () => addWater(Number(btn.dataset.ml)));

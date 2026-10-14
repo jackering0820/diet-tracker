@@ -33,6 +33,11 @@
   </main>
 
   <main id="day-view">
+    <div id="backup-reminder" class="notice reminder" hidden>
+      <span class="grow">📦 好一陣子沒備份了。iPhone 可能會清除長時間沒用的網站資料，建議現在匯出一份備份。</span>
+      <button type="button" id="reminder-export">匯出備份</button>
+    </div>
+
     <section class="card" aria-labelledby="progress-title">
       <h2 id="progress-title">🎯 目標</h2>
       <ul id="goal-progress" class="progress-list"></ul>
@@ -122,6 +127,21 @@
         <p id="ai-saved" class="saved" role="status" hidden></p>
         <button type="submit" class="wide">儲存 AI 設定</button>
       </form>
+
+      <section id="backup-section" aria-labelledby="backup-title">
+        <h3 id="backup-title">備份</h3>
+        <p class="hint">資料只存在這支手機裡，而且 iPhone 可能會清除長時間沒使用的網站資料。建議每週匯出一次備份，存到「檔案」或雲端硬碟。備份不包含 API 金鑰。</p>
+        <p class="key-status">上次匯出：<span id="last-export"></span></p>
+        <div class="row backup-buttons">
+          <button type="button" id="export-backup">匯出備份</button>
+          <label class="button-like secondary">
+            匯入備份
+            <input id="import-backup" type="file" accept="application/json,.json" hidden>
+          </label>
+        </div>
+        <p id="backup-error" class="error" role="alert" hidden></p>
+        <p id="backup-saved" class="saved" role="status" hidden></p>
+      </section>
 
       <button type="button" id="close-settings" class="wide secondary">關閉</button>
     </div>

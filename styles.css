@@ -266,3 +266,10 @@ button:disabled { opacity: 0.5; }
 .button-like.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
 .button-like.small { display: inline-flex; margin-top: 12px; padding: 8px 14px; min-height: 40px; font-size: 15px; }
 [inert] { opacity: 0.5; }
+
+/* 備份 */
+#backup-section { margin-top: 24px; padding-top: 4px; border-top: 1px solid var(--border); }
+.backup-buttons { margin-top: 12px; }
+.backup-buttons > * { flex: 1; }
+.notice.reminder { display: flex; align-items: center; gap: 12px; margin: 12px 0 0; color: var(--text); border: 1px solid var(--border); }
+.notice.reminder button { padding: 8px 12px; font-size: 14px; flex: none; }
