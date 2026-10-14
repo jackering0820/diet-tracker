@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { setup } from "./helpers.js";
-import { formatNutrient } from "../src/core/format.js";
+import { formatMeasure } from "../src/core/measures.js";
 
 test("依建立時間預設餐別，每個時間邊界都正確", () => {
   const cases = [
@@ -113,11 +113,11 @@ test("刪除整餐後，今天不再列出這一餐，總數也扣掉", async ()
 });
 
 test("營養數字的顯示：熱量取整數，其他取到小數點後一位", () => {
-  assert.equal(formatNutrient("kcal", 819.6), "820");
-  assert.equal(formatNutrient("kcal", 0), "0");
-  assert.equal(formatNutrient("protein", 0.1 + 0.2), "0.3");
-  assert.equal(formatNutrient("fat", 3.75), "3.8");
-  assert.equal(formatNutrient("veg", 2), "2.0");
+  assert.equal(formatMeasure("kcal", 819.6), "820");
+  assert.equal(formatMeasure("kcal", 0), "0");
+  assert.equal(formatMeasure("protein", 0.1 + 0.2), "0.3");
+  assert.equal(formatMeasure("fat", 3.75), "3.8");
+  assert.equal(formatMeasure("veg", 2), "2.0");
 });
 
 test("沒有任何食物的一餐不能儲存", async () => {

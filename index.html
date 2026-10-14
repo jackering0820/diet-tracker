@@ -100,10 +100,8 @@
       <form id="goals-form" novalidate>
         <h3>每日目標</h3>
         <p class="hint">留空表示不設定這一項，也不判斷是否達標。</p>
-        <label class="field"><span>熱量上限（大卡）</span><input name="kcal" type="number" inputmode="decimal" min="0" step="any"></label>
-        <label class="field"><span>蛋白質至少（g）</span><input name="protein" type="number" inputmode="decimal" min="0" step="any"></label>
-        <label class="field"><span>蔬菜至少（份）</span><input name="veg" type="number" inputmode="decimal" min="0" step="any"></label>
-        <label class="field"><span>喝水至少（ml）</span><input name="waterMl" type="number" inputmode="numeric" min="0" step="1"></label>
+        <!-- 每一項目標的輸入欄位：由指標目錄產生 -->
+        <div id="goal-fields"></div>
         <p id="goals-error" class="error" role="alert" hidden></p>
         <p id="goals-saved" class="saved" role="status" hidden></p>
         <button type="submit" class="wide">儲存目標</button>
@@ -183,13 +181,8 @@
         <h3 id="item-form-title">新增食物</h3>
         <label class="field"><span>名稱</span><input name="name" placeholder="例如 雞腿便當"></label>
         <label class="field"><span>份量</span><input name="portion" placeholder="例如 一個、大杯微糖"></label>
-        <div class="nutrient-inputs">
-          <label class="field"><span>熱量（大卡）</span><input name="kcal" type="number" inputmode="decimal" min="0" step="any"></label>
-          <label class="field"><span>蛋白質（g）</span><input name="protein" type="number" inputmode="decimal" min="0" step="any"></label>
-          <label class="field"><span>碳水（g）</span><input name="carbs" type="number" inputmode="decimal" min="0" step="any"></label>
-          <label class="field"><span>脂肪（g）</span><input name="fat" type="number" inputmode="decimal" min="0" step="any"></label>
-          <label class="field"><span>蔬菜（份）</span><input name="veg" type="number" inputmode="decimal" min="0" step="any"></label>
-        </div>
+        <!-- 每一項營養的輸入欄位：由指標目錄產生 -->
+        <div id="nutrient-fields" class="nutrient-inputs"></div>
         <p id="item-error" class="error" role="alert" hidden></p>
         <div class="row">
           <button type="submit" id="item-submit">加入這一項</button>
