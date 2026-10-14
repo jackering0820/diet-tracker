@@ -1,18 +1,15 @@
-// 目標的進度條。
-import { formatNutrient } from "../core/format.js";
+// 目標的進度條。指標和狀態的文字、圖示都來自核心的目錄，這裡只負責顯示。
+import { GOAL_MEASURES, formatMeasure } from "../core/measures.js";
+import { GOAL_STATUSES } from "../core/goals.js";
 
-export const GOAL_ROWS = [
-  { key: "kcal", label: "熱量", unit: "大卡" },
-  { key: "protein", label: "蛋白質", unit: "g" },
-  { key: "veg", label: "蔬菜", unit: "份" },
-  { key: "waterMl", label: "喝水", unit: "ml" },
-];
-
-// 狀態由日記核心判斷，這裡只負責顯示。
-const STATUS_TEXT = { unset: "未設定", achieved: "✅ 達標", over: "❌ 超過", missed: "❌ 未達標", noRecords: "無紀錄" };
+// 例如「✅ 達標」；沒有圖示的狀態（－）只顯示文字，例如「未設定」。
+function statusLabel(status) {
+  const { text, icon } = GOAL_STATUSES[status];
+  return icon === "－" ? text : `${icon} ${text}`;
+}
 
 export function renderProgress(list, progress) {
-  list.replaceChildren(...GOAL_ROWS.map(({ key, label, unit }) => {
+  list.replaceChildren(...GOAL_MEASURES.map(({ key, name: measureName, unit }) => {
     const p = progress[key];
     const li = document.createElement("li");
     li.className = p.status;
@@ -21,13 +18,13 @@ export function renderProgress(list, progress) {
     head.className = "progress-head";
     const name = document.createElement("span");
     name.className = "grow";
-    name.textContent = label;
+    name.textContent = measureName;
     const numbers = document.createElement("span");
-    const value = formatNutrient(key, p.value);
-    numbers.textContent = p.goal === null ? `${value} ${unit}` : `${value} / ${formatNutrient(key, p.goal)} ${unit}`;
+    const value = formatMeasure(key, p.value);
+    numbers.textContent = p.goal === null ? `${value} ${unit}` : `${value} / ${formatMeasure(key, p.goal)} ${unit}`;
     const status = document.createElement("span");
     status.className = "status";
-    status.textContent = STATUS_TEXT[p.status];
+    status.textContent = statusLabel(p.status);
     head.append(name, numbers, status);
 
     const bar = document.createElement("div");

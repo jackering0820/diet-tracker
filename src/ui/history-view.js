@@ -1,10 +1,10 @@
-// 歷史列表：往前翻看每一天，每天顯示 4 項目標的 ✅ / ❌，沒有紀錄的日子顯示「無紀錄」。
+// 歷史列表：往前翻看每一天，每天顯示每一項目標的達標狀態，沒有紀錄的日子顯示「無紀錄」。
 import { dayRange } from "../core/day.js";
+import { GOAL_MEASURES } from "../core/measures.js";
+import { GOAL_STATUSES } from "../core/goals.js";
 import { byId as $ } from "./dom.js";
 
 const PAGE_DAYS = 14;
-const SHORT_LABELS = { kcal: "熱量", protein: "蛋白質", veg: "蔬菜", waterMl: "喝水" };
-const STATUS_ICON = { achieved: "✅", over: "❌", missed: "❌", unset: "－" };
 
 export function formatDayTitle(dayKey) {
   return new Date(dayRange(dayKey).from).toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "short" });
@@ -24,15 +24,16 @@ function historyRow(day, onSelect) {
   if (!day.hasRecords) {
     const none = document.createElement("span");
     none.className = "empty-inline";
-    none.textContent = "無紀錄";
+    none.textContent = GOAL_STATUSES.noRecords.text;
     button.append(none);
   } else {
     const chips = document.createElement("span");
     chips.className = "chips";
-    for (const [key, p] of Object.entries(day.progress)) {
+    for (const { key, name } of GOAL_MEASURES) {
+      const { status } = day.progress[key];
       const chip = document.createElement("span");
-      chip.className = `chip ${p.status}`;
-      chip.textContent = `${SHORT_LABELS[key]} ${STATUS_ICON[p.status]}`;
+      chip.className = `chip ${status}`;
+      chip.textContent = `${name} ${GOAL_STATUSES[status].icon}`;
       chips.append(chip);
     }
     button.append(chips);

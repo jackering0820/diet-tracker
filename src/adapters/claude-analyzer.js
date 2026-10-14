@@ -2,8 +2,12 @@
 // 網路傳送功能（transport，形狀和 fetch 相同）由外部注入；測試換成假的，永遠不會真的呼叫 API。
 
 import { ANALYSIS_ERRORS, AnalysisError } from "../core/analysis-error.js";
+import { NUTRIENTS } from "../core/measures.js";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
+
+// 營養的 key 來自指標目錄。
+const NUTRIENT_KEYS = NUTRIENTS.map((m) => m.key);
 
 const SYSTEM_PROMPT = `你是台灣的營養分析助理。使用者會傳來同一餐的一張或多張照片，請辨識照片中的食物並估算營養。
 
@@ -26,13 +30,9 @@ const ITEMS_SCHEMA = {
         properties: {
           name: { type: "string" },
           portion: { type: "string" },
-          kcal: { type: "number" },
-          protein: { type: "number" },
-          carbs: { type: "number" },
-          fat: { type: "number" },
-          veg: { type: "number" },
+          ...Object.fromEntries(NUTRIENT_KEYS.map((key) => [key, { type: "number" }])),
         },
-        required: ["name", "portion", "kcal", "protein", "carbs", "fat", "veg"],
+        required: ["name", "portion", ...NUTRIENT_KEYS],
         additionalProperties: false,
       },
     },
@@ -66,7 +66,6 @@ function buildRequest({ model, photos }) {
   };
 }
 
-const NUMBER_FIELDS = ["kcal", "protein", "carbs", "fat", "veg"];
 
 function invalidResponse() {
   return new AnalysisError(ANALYSIS_ERRORS.INVALID_RESPONSE);
@@ -96,7 +95,7 @@ function classifyApiError(status, apiErrorType) {
 function readItem(raw) {
   if (typeof raw?.name !== "string" || typeof raw.portion !== "string") throw invalidResponse();
   const item = { name: raw.name, portion: raw.portion };
-  for (const key of NUMBER_FIELDS) {
+  for (const key of NUTRIENT_KEYS) {
     const value = raw[key];
     if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw invalidResponse();
     item[key] = value;

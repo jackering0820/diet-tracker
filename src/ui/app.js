@@ -1,7 +1,7 @@
 // 畫面層（UI Shell）：只處理畫面，所有規則交給日記核心。
 import { createDiary } from "../core/diary.js";
 import { dayRange } from "../core/day.js";
-import { formatNutrient } from "../core/format.js";
+import { formatWithUnit } from "../core/measures.js";
 import { createIndexedDbStorage } from "../adapters/indexeddb-storage.js";
 import { createClaudeAnalyzer } from "../adapters/claude-analyzer.js";
 import { resizePhotos } from "./photos.js";
@@ -76,7 +76,7 @@ function mealRow(meal) {
     button.append(thumb);
   }
   const kcal = document.createElement("span");
-  kcal.textContent = `${formatNutrient("kcal", meal.totals.kcal)} 大卡 ›`;
+  kcal.textContent = `${formatWithUnit("kcal", meal.totals.kcal)} ›`;
   button.append(time, type, kcal);
   button.setAttribute("aria-label", `修改 ${formatTime(meal.at)} 的${meal.mealType}`);
   button.addEventListener("click", () => editor.openExisting(meal.id));

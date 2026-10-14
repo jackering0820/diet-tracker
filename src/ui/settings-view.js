@@ -2,7 +2,8 @@
 // 畫面永遠拿不到完整金鑰：只送出使用者剛貼上的值，顯示時只用遮罩後的片段。
 import { MODEL_OPTIONS } from "../core/ai-settings.js";
 import { byId as $, showMessage } from "./dom.js";
-import { GOAL_ROWS } from "./goals-view.js";
+import { GOAL_MEASURES } from "../core/measures.js";
+import { goalLabel, renderMeasureInputs } from "./measure-fields.js";
 import { formatLastExport, saveBackup } from "./backup.js";
 
 // onClose 在關閉視窗之後呼叫，讓畫面重新整理；onDataChanged 在匯入備份之後馬上呼叫。
@@ -10,7 +11,8 @@ export function createSettings({ diary, onClose, onDataChanged }) {
   const dialog = $("settings");
   const goalsForm = $("goals-form");
   const aiForm = $("ai-form");
-  const goalKeys = GOAL_ROWS.map((r) => r.key);
+  const goalKeys = GOAL_MEASURES.map((m) => m.key);
+  renderMeasureInputs($("goal-fields"), GOAL_MEASURES, goalLabel);
 
   aiForm.elements.model.replaceChildren(...MODEL_OPTIONS.map((m) => new Option(m.label, m.id)));
 

@@ -1,21 +1,25 @@
 // 每日目標與達標判斷。
-import { roundForDisplay } from "./format.js";
+import { GOAL_MEASURES, roundMeasure } from "./measures.js";
 
-// 第一次使用時的目標：蔬菜依台灣每日飲食指南建議至少 3 份，其他未設定（null）。
-export const DEFAULT_GOALS = { kcal: null, protein: null, veg: 3, waterMl: null };
+// 第一次使用時的目標：依指標目錄的預設值（null 表示未設定）。
+const DEFAULT_GOALS = Object.fromEntries(GOAL_MEASURES.map((m) => [m.key, m.goal.default]));
 
-const GOAL_LABELS = { kcal: "熱量", protein: "蛋白質", veg: "蔬菜份數", waterMl: "喝水量" };
-
-// 熱量是上限（≤ 目標達標），其他是下限（≥ 目標達標）。
-const CEILINGS = new Set(["kcal"]);
+// 達標狀態目錄：每一種狀態的文字和圖示，今天畫面和歷史列表都從這裡讀。
+export const GOAL_STATUSES = Object.freeze({
+  achieved: Object.freeze({ text: "達標", icon: "✅" }),
+  over: Object.freeze({ text: "超過", icon: "❌" }),
+  missed: Object.freeze({ text: "未達標", icon: "❌" }),
+  unset: Object.freeze({ text: "未設定", icon: "－" }),
+  noRecords: Object.freeze({ text: "無紀錄", icon: "－" }),
+});
 
 // 檢查並整理目標：每項必須是 0 或正數，null 表示未設定。
 export function validateGoals(goals) {
   return Object.fromEntries(
-    Object.keys(DEFAULT_GOALS).map((key) => {
+    GOAL_MEASURES.map(({ key, name }) => {
       const v = goals[key] ?? null;
       if (v !== null && (typeof v !== "number" || !Number.isFinite(v) || v < 0)) {
-        throw new Error(`${GOAL_LABELS[key]}目標必須是 0 或正數，或留空`);
+        throw new Error(`${name}目標必須是 0 或正數，或留空`);
       }
       return [key, v];
     }),
@@ -35,21 +39,21 @@ export function withDefaults(saved) {
 //   noRecords 這一天完全沒有紀錄，不判斷（避免沒吃東西也被標成熱量達標）
 // 刻意用「顯示出來的數字」判斷：畫面寫「1800 / 1800」就一定是達標，
 // 不會因為實際是 1800.4 而顯示超過，讓使用者困惑。
-function goalStatus(key, value, goal, hasRecords) {
+function goalStatus(measure, value, goal, hasRecords) {
   if (goal === null) return "unset";
   if (!hasRecords) return "noRecords";
-  const shown = roundForDisplay(key, value);
-  if (CEILINGS.has(key)) return shown <= goal ? "achieved" : "over";
+  const shown = roundMeasure(measure.key, value);
+  if (measure.goal.limit === "ceiling") return shown <= goal ? "achieved" : "over";
   return shown >= goal ? "achieved" : "missed";
 }
 
-// 計算 4 項目標的進度。hasRecords：這一天有沒有任何餐點或喝水紀錄。
+// 計算每一項目標的進度。hasRecords：這一天有沒有任何餐點或喝水紀錄。
 export function goalProgress(values, goals, hasRecords) {
   return Object.fromEntries(
-    Object.keys(DEFAULT_GOALS).map((key) => {
-      const value = values[key];
-      const goal = goals[key];
-      return [key, { value, goal, status: goalStatus(key, value, goal, hasRecords) }];
+    GOAL_MEASURES.map((measure) => {
+      const value = values[measure.key];
+      const goal = goals[measure.key];
+      return [measure.key, { value, goal, status: goalStatus(measure, value, goal, hasRecords) }];
     }),
   );
 }

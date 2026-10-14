@@ -1,5 +1,6 @@
 // 一餐的規則：餐別預設、草稿編輯、總數計算。
 import { validateAt } from "./day.js";
+import { NUTRIENTS } from "./measures.js";
 
 export const MEAL_TYPES = ["早餐", "午餐", "晚餐", "點心"];
 
@@ -13,34 +14,28 @@ export function defaultMealType(date) {
   return "點心";
 }
 
-export const NUTRIENTS = ["kcal", "protein", "carbs", "fat", "veg"];
-
-export const NUTRIENT_LABELS = { kcal: "熱量", protein: "蛋白質", carbs: "碳水", fat: "脂肪", veg: "蔬菜份數" };
-
 // 檢查一個完整的食物項目，有問題就丟出錯誤（訊息給使用者看）。
 function validateItem(item) {
   if (typeof item.name !== "string" || item.name.trim() === "") {
     throw new Error("食物名稱不能空白");
   }
-  for (const k of NUTRIENTS) {
-    const v = item[k];
+  for (const { key, name } of NUTRIENTS) {
+    const v = item[key];
     if (typeof v !== "number" || !Number.isFinite(v) || v < 0) {
-      throw new Error(`${NUTRIENT_LABELS[k]}必須是 0 或正數`);
+      throw new Error(`${name}必須是 0 或正數`);
     }
   }
 }
 
-// 加總食物項目的 5 項營養。總數不儲存，每次都即時算。
+// 加總食物項目的每一項營養。總數不儲存，每次都即時算。
 export function sumNutrients(items) {
-  const totals = Object.fromEntries(NUTRIENTS.map((k) => [k, 0]));
+  const totals = Object.fromEntries(NUTRIENTS.map(({ key }) => [key, 0]));
   for (const item of items) {
-    for (const k of NUTRIENTS) totals[k] += item[k];
+    for (const { key } of NUTRIENTS) totals[key] += item[key];
   }
   return totals;
 }
 
-// 草稿：正在編輯、還沒確認儲存的一餐。有 id 表示是在修改已存的一餐。
-// 可以預先帶入食物項目和縮圖照片（例如 AI 分析的結果）。
 // 建立一個經過檢查的食物項目（沒有 id 就給一個新的）。
 function newItem(fields, id = crypto.randomUUID()) {
   const item = { ...fields, id };
@@ -48,6 +43,8 @@ function newItem(fields, id = crypto.randomUUID()) {
   return item;
 }
 
+// 草稿：正在編輯、還沒確認儲存的一餐。有 id 表示是在修改已存的一餐。
+// 可以預先帶入食物項目和縮圖照片（例如 AI 分析的結果）。
 export function createMealDraft({ id, at, mealType, items = [], photos = [], source = "manual" }) {
   const prefilled = items.map((i) => newItem(i, i.id));
   return {

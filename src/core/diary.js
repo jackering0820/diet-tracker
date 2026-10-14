@@ -7,6 +7,7 @@ import { ANALYSIS_ERRORS, AnalysisError } from "./analysis-error.js";
 import { buildBackup, parseBackup } from "./backup.js";
 import { validateWaterMl } from "./water.js";
 import { DEFAULT_MODEL, isBlankKey, keyStatus, normalizeKey, validateModel } from "./ai-settings.js";
+import { WATER_MEASURE } from "./measures.js";
 
 const WATER = "water";
 const MEALS = "meals";
@@ -54,7 +55,7 @@ export function createDiary({ storage, clock, analyzer }) {
       meals,
       nutritionTotals,
       progress: goalProgress(
-        { ...nutritionTotals, waterMl: waterTotalMl },
+        { ...nutritionTotals, [WATER_MEASURE.key]: waterTotalMl },
         await getGoals(),
         hasRecords,
       ),

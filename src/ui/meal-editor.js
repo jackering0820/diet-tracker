@@ -1,16 +1,17 @@
 // 一餐的編輯畫面：手動新增、修改、拍照分析共用。
-import { MEAL_TYPES, NUTRIENTS, NUTRIENT_LABELS } from "../core/meal.js";
+import { MEAL_TYPES } from "../core/meal.js";
+import { NUTRIENTS, formatMeasure, formatWithUnit } from "../core/measures.js";
+import { measureLabel, renderMeasureInputs } from "./measure-fields.js";
 import { AnalysisError } from "../core/analysis-error.js";
 import { resizePhotos } from "./photos.js";
-import { formatNutrient } from "../core/format.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
 
 export function renderNutrition(dl, totals) {
-  dl.replaceChildren(...NUTRIENTS.flatMap((k) => {
+  dl.replaceChildren(...NUTRIENTS.flatMap(({ key, name }) => {
     const dt = document.createElement("dt");
-    dt.textContent = NUTRIENT_LABELS[k];
+    dt.textContent = name;
     const dd = document.createElement("dd");
-    dd.textContent = formatNutrient(k, totals[k]);
+    dd.textContent = formatMeasure(key, totals[key]);
     return [dt, dd];
   }));
 }
@@ -20,6 +21,7 @@ export function renderNutrition(dl, totals) {
 export function createMealEditor({ diary, onDone, onOpenSettings }) {
   const dialog = $("meal-editor");
   const form = $("item-form");
+  renderMeasureInputs($("nutrient-fields"), NUTRIENTS, measureLabel);
   let draft = null;
   let editingItemId = null;
 
@@ -39,7 +41,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
 
   function startEditingItem(item) {
     editingItemId = item.id;
-    for (const key of ["name", "portion", ...NUTRIENTS]) form.elements[key].value = item[key];
+    for (const key of ["name", "portion", ...NUTRIENTS.map((n) => n.key)]) form.elements[key].value = item[key];
     $("item-form-title").textContent = "修改食物";
     $("item-submit").textContent = "更新這一項";
     $("item-cancel").hidden = false;
@@ -52,7 +54,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     label.className = "grow";
     label.textContent = item.portion ? `${item.name}（${item.portion}）` : item.name;
     const kcal = document.createElement("span");
-    kcal.textContent = `${formatNutrient("kcal", item.kcal)} 大卡`;
+    kcal.textContent = formatWithUnit("kcal", item.kcal);
     const edit = document.createElement("button");
     edit.type = "button";
     edit.className = "link";
@@ -168,10 +170,10 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
 
   function readItemForm() {
     const fields = { name: form.elements.name.value.trim(), portion: form.elements.portion.value.trim() };
-    for (const k of NUTRIENTS) {
-      const raw = form.elements[k].value.trim();
+    for (const { key } of NUTRIENTS) {
+      const raw = form.elements[key].value.trim();
       // 空白當作 0；輸入框裡打了無法解讀的字，瀏覽器會給空字串，所以用 validity 判斷。
-      fields[k] = form.elements[k].validity.badInput ? NaN : raw === "" ? 0 : Number(raw);
+      fields[key] = form.elements[key].validity.badInput ? NaN : raw === "" ? 0 : Number(raw);
     }
     return fields;
   }
