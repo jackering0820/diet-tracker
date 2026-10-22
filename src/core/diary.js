@@ -17,7 +17,6 @@ const GOALS_ID = "goals";
 const API_KEY_ID = "apiKey";
 const MODEL_ID = "model";
 const LAST_EXPORT_ID = "lastExport";
-const BACKUP_REMINDER_MS = 7 * 24 * 60 * 60 * 1000;
 const RECENT_MEALS_LIMIT = 20;
 
 const byTime = (a, b) => a.at - b.at;
@@ -193,14 +192,6 @@ export function createDiary({ storage, clock, analyzer }) {
     // 上次匯出備份的時間（毫秒時間戳），沒匯出過是 null。
     async getLastExportAt() {
       return (await storage.get(SETTINGS, LAST_EXPORT_ID))?.at ?? null;
-    },
-
-    // 要不要提醒定期備份：有紀錄，而且從沒備份過或上次匯出超過 7 天。
-    async backupReminderDue() {
-      const hasRecords = (await storage.count(MEALS)) + (await storage.count(WATER)) > 0;
-      if (!hasRecords) return false;
-      const last = await storage.get(SETTINGS, LAST_EXPORT_ID);
-      return !last || clock.now().getTime() - last.at > BACKUP_REMINDER_MS;
     },
 
     // 匯入備份：整份取代餐點、喝水和目標；API 金鑰和模型設定保留不變。
