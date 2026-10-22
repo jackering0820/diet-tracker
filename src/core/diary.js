@@ -65,7 +65,7 @@ export function createDiary({ storage, clock, analyzer }) {
   return {
     todayKey,
 
-    // 網址指定的某一天（"YYYY-MM-DD"）；格式不對、日曆上不存在或在今天以後時是今天。
+    // 要打開的某一天（"YYYY-MM-DD"）；格式不對、日曆上不存在或在今天以後時是今天（不能在未來補記）。
     dayOrToday(dayKey) {
       const today = todayKey();
       return isDayKey(dayKey) && dayKey < today ? dayKey : today;

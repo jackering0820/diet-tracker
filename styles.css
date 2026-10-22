@@ -258,7 +258,7 @@ dialog {
 }
 dialog::backdrop { background: rgb(2 8 16 / 0.65); }
 .editor { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
-.editor h3 { margin: 20px 0 0; font-size: 16px; color: var(--muted); }
+.editor h3, #settings-view h3 { margin: 20px 0 0; font-size: 16px; color: var(--muted); }
 
 .field { display: block; margin-top: 10px; }
 .field > span { display: block; color: var(--muted); font-size: 14px; margin-bottom: 4px; }
@@ -288,7 +288,7 @@ dialog::backdrop { background: rgb(2 8 16 / 0.65); }
 .editor-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
 .editor-actions .danger { grid-column: 1 / -1; }
 
-/* 標題列與設定 */
+/* 說明文字 */
 .hint { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
 
 /* 今日目標的進度條 */
@@ -334,7 +334,6 @@ dialog::backdrop { background: rgb(2 8 16 / 0.65); }
 .noRecords .status { color: var(--muted); }
 
 /* 設定分頁 */
-#settings-view h3 { margin: 20px 0 0; font-size: 16px; color: var(--muted); }
 #settings-view form:first-child h3 { margin-top: 0; }
 #settings-view form + form { margin-top: 24px; padding-top: 4px; border-top: 1px solid var(--border); }
 #settings-view form .wide { margin-top: 12px; }

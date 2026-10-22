@@ -122,12 +122,20 @@ async function render() {
     return settings.open();
   }
   await renderDay();
-  editor.resume(); // 從設定回來時，打開剛才收起的那一餐
+  // 從設定回到原本那一天時，打開剛才收起的那一餐；去了別天就不打開，免得草稿出現在不相關的日子
+  if (editorLeftFrom && view.name === "day" && view.pastDay === editorLeftFrom.pastDay) {
+    editorLeftFrom = null;
+    editor.resume();
+  }
 }
 
 async function renderDay() {
-  $("backup-reminder").hidden = !(await diary.backupReminderDue());
+  const shown = view;
+  const reminderDue = await diary.backupReminderDue();
   const day = await diary.getDaySummary(currentDayKey());
+  // 等資料時已經切到別的畫面，就不要用舊的結果蓋掉新畫面的標題
+  if (view !== shown) return;
+  $("backup-reminder").hidden = !reminderDue;
   const isToday = day.dayKey === diary.todayKey();
   $("page-title").textContent = isToday ? "今天" : formatDayTitle(day.dayKey);
   // 標題日期由日記核心的 dayKey 推算，和資料用的是同一個時間來源。
@@ -155,7 +163,16 @@ async function addWater(ml) {
   }
 }
 
-const editor = createMealEditor({ diary, onDone: render, onOpenSettings: () => { location.hash = "#settings"; } });
+// 編輯一餐按「前往設定」時所在的那一天的畫面（回到這一天才重新打開草稿）
+let editorLeftFrom = null;
+const editor = createMealEditor({
+  diary,
+  onDone: render,
+  onOpenSettings: () => {
+    editorLeftFrom = view;
+    location.hash = "#settings";
+  },
+});
 $("add-meal").addEventListener("click", () => editor.openNew(timeForNewRecord()));
 
 // 拍照記一餐：縮圖 → 建立帶照片的草稿 → 打開編輯視窗並開始 AI 分析。
