@@ -171,7 +171,7 @@ button:disabled {
 }
 button:disabled::before, button:disabled::after { display: none; }
 
-/* 文字型的按鈕（連結、整列可點的餐點和日子、刪除、喝水紀錄的小標籤）不是按鍵：沒有底座、不下沉、沒有漣漪和星星 */
+/* 文字型的按鈕（連結、餐點卡片、整列可點的日子、刪除、喝水紀錄的小標籤）不是按鍵：沒有底座、不下沉、沒有漣漪和星星 */
 button.link, button.delete, .meal, .history-row, .log {
   margin-bottom: 0;
   border: 0;
@@ -308,7 +308,11 @@ button.link { color: var(--highlight); padding: 8px; }
   padding: 20px 16px calc(16px + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, rgb(8 25 43 / 0), rgb(8 25 43 / 0.95) 34%);
 }
-.dock > * { white-space: nowrap; }
+.dock > * { white-space: nowrap; pointer-events: auto; }
+/* 漸層的透明部分不擋住下面的卡片和標籤 */
+.dock { pointer-events: none; }
+/* 選照片的欄位藏起來時，用鍵盤移到它上面要看得到在哪一顆 */
+label:has(> input.sr-only:focus-visible) { outline: 2px solid var(--highlight); outline-offset: 3px; }
 
 /* 一餐的編輯畫面 */
 dialog {

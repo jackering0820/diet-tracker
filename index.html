@@ -56,13 +56,14 @@
       <div class="sec-h"><h2 id="meals-title">🍱 吃了什麼</h2><span id="meal-hint" class="hint n"></span></div>
       <dl id="nutrition-totals" class="nutrition"></dl>
       <!-- 依時間排序的每一餐，可以橫向滑動；今天最後一格是「下一餐」 -->
-      <div id="meal-list" class="shelf meal-shelf" aria-label="這一天的每一餐，點一下可以修改">
+      <div id="meal-list" class="shelf meal-shelf" role="group" aria-label="這一天的每一餐，點一下可以修改">
+        <label id="next-meal" class="meal">
+          <span class="cover ghost" aria-hidden="true"><span></span></span>
+          <span class="cap"><span class="t"></span><b>下一餐</b></span>
+          <!-- 選照片的欄位只在視覺上藏起來，鍵盤和 VoiceOver 仍然可以操作 -->
+          <input type="file" accept="image/*" multiple class="sr-only" data-meal-photos>
+        </label>
       </div>
-      <label id="next-meal" class="meal">
-        <span class="cover ghost" aria-hidden="true"><span></span></span>
-        <span class="cap"><span class="t"></span><b>下一餐</b></span>
-        <input type="file" accept="image/*" multiple hidden data-meal-photos>
-      </label>
     </section>
 
     <section class="card" aria-labelledby="water-title">
@@ -97,7 +98,7 @@
     <div class="dock">
       <label class="button-like">
         <span id="snap-meal-label">📷 拍照記一餐</span>
-        <input id="meal-photos" type="file" accept="image/*" multiple hidden data-meal-photos>
+        <input type="file" accept="image/*" multiple class="sr-only" data-meal-photos>
       </label>
       <button type="button" id="add-meal" class="secondary">✍️ 手寫</button>
     </div>

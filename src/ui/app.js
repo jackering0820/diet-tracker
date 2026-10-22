@@ -109,7 +109,7 @@ function mealCard(meal) {
   kcal.textContent = formatWithUnit("kcal", meal.totals.kcal);
   cap.append(when, title, kcal);
   card.append(cover, cap);
-  card.setAttribute("aria-label", `${formatTime(meal.at)} ${meal.mealType}：${meal.title}，${formatWithUnit("kcal", meal.totals.kcal)}，點一下修改`);
+  card.setAttribute("aria-label", `${when.textContent}：${meal.title}，${kcal.textContent}，點一下修改`);
   card.addEventListener("click", () => editor.openExisting(meal.id));
   return card;
 }
