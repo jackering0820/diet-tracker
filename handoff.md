@@ -14,7 +14,7 @@
 - 名詞表：`CONTEXT.md`（專案用語，程式和對話都用同一套詞）
 
 ## 背景知識（先前已經學過的）
-- Skills repo：https://github.com/mattpocock/skills（`claude-plugins-official` marketplace，1.2.3 版，user scope）
+- Skills repo：https://github.com/mattpocock/skills（`claude-plugins-official` marketplace，目前 1.3.1 版，user scope）
 - 主流程：`grill-me` / `grill-with-docs`（釐清需求）→ `to-spec`（寫規格，不含程式碼）→ `to-tickets`（按使用者功能拆任務）→ `implement`（內含 `tdd`）→ `code-review` → 定期 `improve-codebase-architecture`
 - 參考影片：Gary Chen〈700 萬人下載的 /grill-me，Matt Pocock 到底寫了什麼？〉https://www.youtube.com/watch?v=aR97E7aKEgg
 - `setup-matt-pocock-skills`、`to-spec` 等 skill 設定成只能由我手動輸入 `/指令` 啟動
@@ -50,6 +50,32 @@
 - [x] **建立 `CONTEXT.md`**（名詞表）：指標（Measure）、營養（Nutrient）、目標（Goal）、上限／下限、達標狀態
 - [x] 重構完成：[PR #18](https://github.com/jackering0820/diet-tracker/pull/18)，測試 80 個。每一項指標的名稱、單位、格式、目標設定都集中在 `src/core/measures.js`；設定頁和編輯一餐的輸入欄位改由目錄產生；「蔬菜份數」統一改成「蔬菜」
 
+### 2026-10-15～22：觀星書房改版（進行中）
+- [x] 修正 `hidden` 屬性被 `display` 蓋掉的錯誤（備份提醒一直顯示）：[PR #19](https://github.com/jackering0820/diet-tracker/pull/19)
+- [x] 在 Claude 畫布設計新外觀「觀星書房」（K 列 14 張可操作的畫板）：https://claude.ai/artifact/UonorcQfozXprgyyost16U
+  - 產生畫板的程式在 `C:\Users\User\Desktop\Claude\code.install mod\k-row-generator`（`node build.js`，說明在它的 README.md）
+- [x] `/grill-me` 討論怎麼套用到網站（26 題），決定寫在 `decisions.md` 的「觀星書房改版」段落
+- [x] `/to-spec` → [#20 改版規格書](https://github.com/jackering0820/diet-tracker/issues/20)
+- [x] `/to-tickets` → 11 張票 #21～#31，都是 #20 的子 issue，用 GitHub 內建的 blocked-by 串起來
+
+| 票 | 功能 | PR | 測試數（累計） |
+|---|---|---|---|
+| [#21](https://github.com/jackering0820/diet-tracker/issues/21) | 目標四捨五入（存的數字＝看到的數字） | [#32](https://github.com/jackering0820/diet-tracker/pull/32) | 84 |
+| [#22](https://github.com/jackering0820/diet-tracker/issues/22) | 地基：冷色外觀、WebGL 夜空、鍵帽按鍵、快取清單測試 | [#33](https://github.com/jackering0820/diet-tracker/pull/33) | 86 |
+
+- 還沒做：#23 分頁與網址 → #24～#31（今天、最近吃過、歷史、設定、編輯一餐、AI 分析狀態、匯出備份）。先後順序看每張票的 blocked-by
+- #22 審查後刻意不改的：按鍵的「不是鍵帽」清單在 CSS 寫了 3 次（文字型按鈕）；危險按鍵用畫布上的淡玫瑰紅 #FF9DB0；開啟「減少動態效果」時，分析中的轉圈圖示會停住（文字還在）
+
+## 下一步（請照這個順序）
+1. **在 iPhone 上跑 #22 的手動清單**（正式網址，App 完全關掉再打開，確認已換成冷色外觀）：
+   - [ ] 打開後 1 秒內可以操作
+   - [ ] 捲動順暢
+   - [ ] 放著 5 分鐘不發燙
+   - [ ] 開飛航模式也能打開（快取版本已升到 v14）
+   - [ ] 按下按鍵看得到下沉和回彈（iPhone Safari 需要 touchstart 監聽，已加上，但只在電腦上測過）
+   - [ ] 「設定 → 輔助使用 → 動作 → 減少動態效果」開啟時沒有漣漪和彈跳
+2. **`/implement #23`**（分頁與網址），流程同下方「每張票的流程」
+
 ## 開發過程中我做的決定（不在 `decisions.md` 裡的）
 - 熱量目標是**上限**，蛋白質、蔬菜、喝水是**下限**
 - 餐別預設時間：04:00–10:29 早餐、10:30–14:29 午餐、14:30–16:59 點心、17:00–21:29 晚餐、其他點心
@@ -61,12 +87,8 @@
 - 備份**整份取代**、不是合併；API 金鑰和模型設定在匯入後保留，不放進備份
 - 儲存目標或 AI 設定後，設定視窗不自動關閉，顯示「✓ 已儲存」
 
-## 還沒在 iPhone 上確認的事（請優先做）
-- [ ] #3～#9 的新功能都還沒在 iPhone 上實測（#2 喝水已確認正常）
-- [ ] 在設定頁貼上**真的** API 金鑰，拍一餐試試 AI 分析（金鑰只在手機上操作，**絕對不要貼進對話**）
-- [ ] 備份：分享選單 →「儲存到檔案」→ 從「檔案」匯入 → 關閉設定後畫面正常
-- [ ] 按分享選單的「取消」後，今天畫面的備份提醒應該還在
-- [ ] 加入主畫面後離線打開（飛航模式）
+## iPhone 上確認過的事
+- [x] #3～#9 的功能、真的 API 金鑰拍一餐（金鑰只在手機上操作，**絕對不要貼進對話**）都已在 iPhone 上測過（觀星書房討論後回報）
 - [ ] **待觀察**：文件寫額度用完是 HTTP 402。如果哪天用到每月 5 美元上限，卻看到「分析失敗（錯誤代碼 400）」，要回報，補上分類
 
 ## 延後處理的項目（code review 提過、刻意先不做）
@@ -75,7 +97,7 @@
 **程式碼整理（smell）**
 - 「一天」用 `"YYYY-MM-DD"` 字串表示（Primitive Obsession），`from`／`to` 總是一起傳（Data Clumps）（候選 #6：檢視後判斷字串本身沒問題，真正該改的是畫面自己判斷「是不是今天」、自己格式化日期）
 - 兩個儲存轉接器的介面說明註解重複；`count`、`listAll`、`get` 的寫法很像（候選 #5）
-- `sw.js` 的快取清單要手動維護：**每新增一個檔案都要加進去，並把 `CACHE` 版本號加 1**（檢視後判斷：不算架構問題，可以加一個測試檢查清單有沒有漏）
+- `sw.js` 的快取清單要手動維護：**每新增一個檔案都要加進去，並把 `CACHE` 版本號加 1** → **已加測試**（#22）：漏掉時 `npm test` 會失敗並列出漏掉的檔案；版本號還是要手動加 1
 - 餐別直接用「早餐」等中文字儲存，以後想改顯示名稱要處理舊資料（檢視後判斷：除非真的要改名，否則不做）
 - ~~「熱量、蛋白質…」的名稱、狀態對照表散在好幾個檔案~~ → **已解決**（PR #18：指標目錄和狀態目錄）
 - `mealRow`／`itemRow` 建立列表的寫法重複；表單讀數字的寫法在兩個檔案重複（檢視後判斷：前者只是外觀；後者其實是兩條不同的業務規則，空白當 0、空白當未設定，可以搬到核心）
@@ -123,6 +145,17 @@
 - **結果不合理時先懷疑測試本身**：截圖拍太早、重複使用同一份檔案清單、瀏覽器沒有在繪製畫面，都曾讓 App 看起來壞掉
 - **安全**：金鑰只在核心內部使用、錯誤訊息不包含金鑰或 API 原始訊息、備份用「挑選欄位」（白名單）而不是「全部倒出來再刪」
 - **先讀文件再寫 API 程式**：API 格式會改，不要憑記憶寫
+- **外觀要在瀏覽器實際量**：夜空一開始完全沒畫出來（畫布還隱藏時量到的寬度是 0），自動測試抓不到，是在瀏覽器量畫布大小才發現
+- **內建瀏覽器的面板沒顯示時不會繪製畫面**：關掉視窗、動畫、transition 都會卡住，看起來像壞掉；先截一張圖讓它畫一次，再判斷
+- **決定改了要回頭更新 `decisions.md`**：#22 審查時發現第 69 行還寫「膠囊按鈕特效拿掉」，和後來的鍵帽設計衝突，已更新並註明取代原因
+
+## 建議使用的 skills（給下一個 session）
+- `mattpocock-skills:implement`（`/implement #23`）：會叫用 `tdd` 和 `code-review`
+- `mattpocock-skills:tdd`：只在日記核心的公開操作寫測試；畫面層的變更用內建瀏覽器實際操作確認
+- `mattpocock-skills:code-review`：固定點用 `main`，規格是該張票加上 #20
+- `mattpocock-skills:pr`：寫 PR 內文（Summary／Evidence／Merge Danger，內文寫 `Closes #N`）
+- `anthropic-skills:built-in-browser`：在內建瀏覽器開 `diet-tracker`（port 8787）並用手機尺寸檢查
+- 畫面對照畫布 K 列時用 Artifact 工具讀 https://claude.ai/artifact/UonorcQfozXprgyyost16U
 
 ## 注意事項
 - **絕對不要**要求我把 API key 貼進對話
