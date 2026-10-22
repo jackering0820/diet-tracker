@@ -1,8 +1,9 @@
 /* 觀星書房的冷色色票（只有深色）。配色邏輯：深色底、一個鮮明的主色給主要動作、
    一個淺亮色當強調、綠色系代表達標、冷白文字；只有超過和錯誤用暖色。 */
 :root {
-  --bg: #08192B;          /* 背景（夜空下方） */
-  --bg-top: #0E3550;      /* 背景（夜空上方） */
+  --bg: #0A1115;          /* 背景（夜空下方）：參考動畫的灰藍色，接近黑色（和 WebGL 天空的下方同色） */
+  --bg-rgb: 10 17 21;     /* 同一個顏色，給半透明的標題列和底部固定列用 */
+  --bg-top: #2B3F4D;      /* 背景（夜空上方）：灰藍色 */
   --card: #0D2A40;
   --field: rgb(0 0 0 / 0.28);
   --text: #EEF3F7;
@@ -60,7 +61,7 @@ body {
   padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
 }
 #top-bar.compact {
-  background: rgb(8 25 43 / 0.78);
+  background: rgb(var(--bg-rgb) / 0.78);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
@@ -340,7 +341,7 @@ button.link { color: var(--highlight); padding: 8px; }
   gap: 10px;
   margin: 26px -16px 0;
   padding: 20px 16px calc(16px + env(safe-area-inset-bottom));
-  background: linear-gradient(180deg, rgb(8 25 43 / 0), rgb(8 25 43 / 0.95) 34%);
+  background: linear-gradient(180deg, rgb(var(--bg-rgb) / 0), rgb(var(--bg-rgb) / 0.95) 34%);
 }
 .dock > * { white-space: nowrap; pointer-events: auto; }
 /* 漸層的透明部分不擋住下面的卡片和標籤 */
@@ -433,7 +434,7 @@ dialog::backdrop { background: rgb(2 8 16 / 0.65); }
 .mrow .l2 b { font-size: 15px; color: var(--text); }
 .n { font-variant-numeric: tabular-nums; }
 
-/* 頂端星座：依喝水進度點亮，點亮的星星之間連線 */
+/* 頂端星座的 SVG 版：WebGL 夜空畫不出來時才顯示（平常星座畫在 3D 夜空裡），依喝水進度點亮 */
 .constellation { position: absolute; top: 0; right: 0; width: min(390px, 100%); z-index: -1; pointer-events: none; }
 .c-line { stroke: rgb(111 211 255 / 0.5); stroke-width: 1; opacity: 0; transition: opacity 0.5s ease; }
 .c-glow { fill: rgb(111 211 255 / 0.24); opacity: 0; transition: opacity 0.5s ease; }
