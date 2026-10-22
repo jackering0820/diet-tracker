@@ -181,8 +181,7 @@ async function renderDay() {
   sky?.update(day.constellationLit, day.water.some(isNewWater) || day.meals.some(isNewMeal));
   miniConstellation.update(day.constellationLit);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
-  const shownMeals = new Set(sameDay ? lastShown.mealIds : []);
-  renderMealShelf(day, isToday, (meal) => sameDay && !shownMeals.has(meal.id));
+  renderMealShelf(day, isToday, isNewMeal);
   renderRecent(recent);
 
   const waterGoal = day.progress[WATER_MEASURE.key].goal;
