@@ -1,7 +1,7 @@
 // 日記核心（Diary Core）：所有業務規則都在這裡，也是唯一的測試 seam。
 // 資料儲存（storage）和時間（clock）由外部注入。
 import { addDays, atTimeOnDay, dayKeyOf, dayRange, isDayKey, validateAt } from "./day.js";
-import { createMealDraft, defaultMealType, mealTitle, sumNutrients } from "./meal.js";
+import { createMealDraft, defaultMealType, foodCombination, mealTitle, sumNutrients } from "./meal.js";
 import { goalProgress, validateGoals, withDefaults } from "./goals.js";
 import { ANALYSIS_ERRORS, AnalysisError } from "./analysis-error.js";
 import { buildBackup, parseBackup } from "./backup.js";
@@ -18,6 +18,7 @@ const API_KEY_ID = "apiKey";
 const MODEL_ID = "model";
 const LAST_EXPORT_ID = "lastExport";
 const BACKUP_REMINDER_MS = 7 * 24 * 60 * 60 * 1000;
+const RECENT_MEALS_LIMIT = 20;
 
 const byTime = (a, b) => a.at - b.at;
 
@@ -118,6 +119,39 @@ export function createDiary({ storage, clock, analyzer }) {
         // AI 給的內容沒通過檢查（例如名稱空白），不是使用者輸入錯誤。
         throw new AnalysisError(ANALYSIS_ERRORS.INVALID_RESPONSE);
       }
+    },
+
+    // 最近吃過：從最新的一餐往回列出，同樣的食物組合只留最新的一次，最多 20 個。
+    // 每一個附上標題、熱量，有照片的附第一張照片當縮圖。
+    async recentMeals() {
+      const meals = (await storage.listAll(MEALS)).sort((a, b) => b.at - a.at);
+      const seen = new Set();
+      const recent = [];
+      for (const meal of meals) {
+        if (recent.length === RECENT_MEALS_LIMIT) break;
+        const combination = foodCombination(meal.items);
+        if (seen.has(combination)) continue;
+        seen.add(combination);
+        recent.push({
+          mealId: meal.id,
+          title: mealTitle(meal.items),
+          kcal: sumNutrients(meal.items).kcal,
+          photo: meal.photos?.[0] ?? null, // 第一張照片當縮圖
+        });
+      }
+      return recent;
+    },
+
+    // 再記一次：複製那一餐的食物項目（產生新的 id），時間是現在、餐別依現在時間、不帶照片，直接存成一餐。
+    async logAgain(mealId) {
+      const meal = await storage.get(MEALS, mealId);
+      if (!meal) throw new Error("找不到這一餐");
+      const now = clock.now();
+      const items = meal.items.map(({ id, ...fields }) => fields);
+      // 和一般的一餐一樣，由草稿檢查後才存
+      const again = createMealDraft({ at: now.getTime(), mealType: defaultMealType(now), items }).toRecord();
+      await storage.put(MEALS, again);
+      return again;
     },
 
     async loadMealDraft(id) {

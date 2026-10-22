@@ -77,28 +77,35 @@ function replay(el, cls) {
 
 // 「吃了什麼」貨架上的一張卡片：有照片用照片當封面，沒有照片是有橫線的羊皮紙卡片（手寫的一餐）。
 // 下方是時間・餐別、標題（日記核心串好的食物名稱）、熱量；點一下修改這一餐。
-function mealCard(meal) {
+// isNew：剛加入的那一餐（例如再記一次），滑進來。
+// 卡片的封面：有照片用照片；沒有照片是有橫線的羊皮紙，寫上標題（before／after：標題前後要加的元素）
+function mealCover(photo, title, { before, after } = {}) {
+  const cover = document.createElement("span");
+  if (photo) {
+    cover.className = "cover";
+    const img = document.createElement("img");
+    img.src = photo;
+    img.alt = "";
+    cover.append(img);
+    return cover;
+  }
+  cover.className = "cover note";
+  const name = document.createElement("b");
+  name.textContent = title;
+  cover.append(...[before, name, after].filter(Boolean));
+  return cover;
+}
+
+function mealCard(meal, isNew) {
   const card = document.createElement("button");
   card.type = "button";
-  card.className = "meal";
-  const cover = document.createElement("span");
-  if (meal.photos?.length) {
-    cover.className = "cover";
-    const photo = document.createElement("img");
-    photo.src = meal.photos[0];
-    photo.alt = "";
-    cover.append(photo);
-  } else {
-    cover.className = "cover note";
-    const type = document.createElement("span");
-    type.className = "k";
-    type.textContent = meal.mealType;
-    const title = document.createElement("b");
-    title.textContent = meal.title;
-    const tag = document.createElement("i");
-    tag.textContent = "手寫";
-    cover.append(type, title, tag);
-  }
+  card.className = isNew ? "meal fresh" : "meal";
+  const type = document.createElement("span");
+  type.className = "k";
+  type.textContent = meal.mealType;
+  const tag = document.createElement("i");
+  tag.textContent = "手寫";
+  const cover = mealCover(meal.photos?.[0], meal.title, { before: type, after: tag });
   const cap = document.createElement("span");
   cap.className = "cap";
   const when = document.createElement("span");
@@ -152,6 +159,7 @@ async function renderDay() {
   const shown = view;
   const reminderDue = await diary.backupReminderDue();
   const day = await diary.getDaySummary(currentDayKey());
+  const recent = view.pastDay ? [] : await diary.recentMeals(); // 過去某一天不顯示最近吃過
   // 等資料時已經切到別的畫面，就不要用舊的結果蓋掉新畫面的標題
   if (view !== shown) return;
   // 換到另一天不算資料變化：加上 instant 直接畫出來，不播放動畫
@@ -173,7 +181,8 @@ async function renderDay() {
   sky?.update(day.constellationLit, day.water.some(isNewWater) || day.meals.some(isNewMeal));
   miniConstellation.update(day.constellationLit);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
-  renderMealShelf(day, isToday);
+  renderMealShelf(day, isToday, isNewMeal);
+  renderRecent(recent);
 
   const waterGoal = day.progress[WATER_MEASURE.key].goal;
   $("water-total").textContent = day.waterTotalMl.toLocaleString("zh-TW");
@@ -222,15 +231,56 @@ const editor = createMealEditor({
 // 「下一餐」和「拍照記〇〇」的餐別是新的一餐會用的預設餐別（依現在時間，由日記核心決定）。
 // 「下一餐」卡片在過去某一天會被移出畫面，所以先留住它
 const nextMealCard = $("next-meal");
-function renderMealShelf(day, isToday) {
+// isNew(meal)：這一餐是不是剛加入的
+function renderMealShelf(day, isToday, isNew) {
   const { meals, nutritionTotals } = day;
   $("meal-hint").textContent = meals.length ? `${meals.length} 餐・${formatWithUnit("kcal", nutritionTotals.kcal)}` : "還沒有紀錄";
   const nextType = diary.newMealDraft({ at: timeForNewRecord() }).mealType;
   nextMealCard.querySelector(".t").textContent = nextType;
   nextMealCard.querySelector(".ghost span").textContent = nextType.charAt(0);
   nextMealCard.setAttribute("aria-label", `記下一餐：${nextType}，拍照`);
-  $("meal-list").replaceChildren(...meals.map(mealCard), ...(isToday ? [nextMealCard] : []));
+  $("meal-list").replaceChildren(...meals.map((m) => mealCard(m, isNew(m))), ...(isToday ? [nextMealCard] : []));
   $("snap-meal-label").textContent = isToday ? `📷 拍照記${nextType}` : "📷 拍照補記一餐";
+}
+
+// 「最近吃過」：每一張卡片點一下就把那一餐再記一次（日記核心決定時間、餐別和要複製什麼）。
+function recentCard(recent) {
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = "rc";
+  const cover = mealCover(recent.photo, recent.title);
+  const row = document.createElement("span");
+  row.className = "row";
+  const text = document.createElement("span");
+  const title = document.createElement("b");
+  title.textContent = recent.title;
+  const kcal = document.createElement("small");
+  kcal.className = "n";
+  kcal.textContent = formatWithUnit("kcal", recent.kcal);
+  text.append(title, kcal);
+  const plus = document.createElement("span");
+  plus.className = "add";
+  plus.setAttribute("aria-hidden", "true");
+  plus.textContent = "+";
+  row.append(text, plus);
+  card.append(cover, row);
+  card.setAttribute("aria-label", `再記一次：${recent.title}，${kcal.textContent}`);
+  card.addEventListener("click", async () => {
+    card.disabled = true; // 連按兩下不會記兩次
+    try {
+      await diary.logAgain(recent.mealId);
+      await render();
+    } catch (err) {
+      card.disabled = false;
+      alert(`再記一次失敗：${err.message}`);
+    }
+  });
+  return card;
+}
+
+function renderRecent(recent) {
+  $("recent-section").hidden = recent.length === 0;
+  $("recent-list").replaceChildren(...recent.map(recentCard));
 }
 
 $("add-meal").addEventListener("click", () => editor.openNew(timeForNewRecord()));

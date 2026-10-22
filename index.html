@@ -94,6 +94,12 @@
       <p id="water-empty" class="empty">還沒有喝水紀錄</p>
     </section>
 
+    <!-- 最近吃過：只在今天顯示，點一張卡片再記一次 -->
+    <section id="recent-section" class="card" aria-labelledby="recent-title" hidden>
+      <div class="sec-h"><h2 id="recent-title">🔁 最近吃過</h2><span class="hint">點一下再記一次</span></div>
+      <div id="recent-list" class="shelf" role="group" aria-label="最近吃過的餐點"></div>
+    </section>
+
     <!-- 底部固定：拍照記一餐、手寫 -->
     <div class="dock">
       <label class="button-like">
