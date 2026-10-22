@@ -15,7 +15,7 @@ import { startSky } from "./sky.js";
 import { installKeyRipple } from "./keys.js";
 
 // 夜空：畫得出來時，星座也在夜空裡（3D），SVG 星座只在畫不出來時使用
-const sky = startSky($("sky"));
+const sky = startSky($("sky"), { onLost: () => { $("constellation").hidden = false; } });
 installKeyRipple();
 
 // 新版 App 要升級資料庫時，重新整理以載入新版。
@@ -166,9 +166,9 @@ async function renderDay() {
   });
   astrolabe.update(day.progress, day.hasRecords);
   constellation.update(day.constellationLit);
-  // 夜空：打開 App 時飛進來；同一天加了水或記了一餐時轉動一下；換到另一天直接畫
+  // 夜空：同一天加了水或記了一餐時轉動一下；換到另一天直接畫（打開 App 的飛入由夜空自己處理）
   const added = sameDay && (day.water.some((w) => !lastShown.waterIds.includes(w.id)) || day.meals.some((m) => !lastShown.mealIds.includes(m.id)));
-  sky?.update(day.constellationLit, !lastShown ? "open" : added ? "change" : null);
+  sky?.update(day.constellationLit, added);
   miniConstellation.update(day.constellationLit);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
   renderMealShelf(day, isToday);
@@ -339,8 +339,11 @@ $("custom-water").addEventListener("submit", async (event) => {
 
 // 從背景回到前景時重新整理，跨過午夜也會換成新的一天。
 // 設定分頁不重新整理，避免正在輸入的目標被換掉。
+// 回到前景就是又打開一次 App：夜空從遠處飛進來。
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && view.name !== "settings") render();
+  if (document.visibilityState !== "visible") return;
+  sky?.open();
+  if (view.name !== "settings") render();
 });
 
 // 捲動後頂端縮成半透明標題列：頂端的小標記離開畫面時加上 compact。

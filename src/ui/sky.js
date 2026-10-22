@@ -143,9 +143,12 @@ function link(gl, vertex, fragment) {
   return { program, uniform };
 }
 
-// 把夜空畫在 canvas 上。畫不出來時回傳 null（canvas 維持隱藏，畫面用 CSS 和 SVG 的備案）。
-// 回傳的 update(lit, motion)：lit 是星座點亮數；motion 是 "open"（打開 App）、"change"（加水、記一餐）或不動。
-export function startSky(canvas) {
+// 把夜空畫在 canvas 上，一開始就從遠處飛進來（打開 App）。
+// 畫不出來時回傳 null（canvas 維持隱藏，畫面用 CSS 和 SVG 的備案）；之後繪圖區被系統收回時呼叫 onLost。
+// 回傳的控制器：
+//   open()               打開 App（例如從背景回來）：從遠處飛進來
+//   update(lit, changed) lit 是星座點亮數；changed 是「加了水或記了一餐」，轉動一下，新點亮的星星綻放
+export function startSky(canvas, { onLost } = {}) {
   const gl = canvas.getContext("webgl", { antialias: false });
   if (!gl) return null;
   const sky = link(gl, BG_VERTEX, BG_FRAGMENT);
@@ -281,24 +284,41 @@ export function startSky(canvas) {
     cancelAnimationFrame(resizing);
     resizing = requestAnimationFrame(() => { if (!motion) draw(performance.now()); });
   });
-  // 系統收回繪圖區時退回 CSS 背景，不再嘗試重畫
-  canvas.addEventListener("webglcontextlost", () => { canvas.hidden = true; });
+  // 播放一段動畫；「減少動態效果」開啟時直接畫出結果
+  function play(kind, newStars = []) {
+    if (reduceMotion()) {
+      if (!motion) draw(performance.now());
+      return;
+    }
+    if (kind === "change") swingDir = -swingDir; // 每次往不同方向轉
+    motion = { kind, start: performance.now(), duration: kind === "open" ? OPEN_MS : CHANGE_MS, dir: swingDir, newStars };
+    lastPose = null;
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(tick);
+  }
+
+  // 系統收回繪圖區時退回 CSS 背景和 SVG 星座，不再嘗試重畫
+  let lost = false;
+  canvas.addEventListener("webglcontextlost", () => {
+    lost = true;
+    cancelAnimationFrame(frame);
+    motion = null;
+    canvas.hidden = true;
+    onLost?.();
+  });
   canvas.hidden = false; // 先顯示才量得到大小
+  play("open");
 
   return {
-    update(nextLit, kind) {
+    open() {
+      if (!lost) play("open");
+    },
+    update(nextLit, changed) {
+      if (lost) return;
       const before = lit;
       lit = nextLit;
-      if (!kind || reduceMotion()) {
-        if (!motion) draw(performance.now());
-        return;
-      }
-      if (kind === "change") swingDir = -swingDir; // 每次往不同方向轉
-      const newStars = Array.from({ length: Math.max(0, lit - before) }, (_, k) => before + k);
-      motion = { kind, start: performance.now(), duration: kind === "open" ? OPEN_MS : CHANGE_MS, dir: swingDir, newStars };
-      lastPose = null;
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(tick);
+      if (changed) play("change", Array.from({ length: Math.max(0, lit - before) }, (_, k) => before + k));
+      else if (!motion) draw(performance.now());
     },
   };
 }
