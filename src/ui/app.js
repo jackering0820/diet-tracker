@@ -14,7 +14,8 @@ import { createHistory, formatDayTitle } from "./history-view.js";
 import { startSky } from "./sky.js";
 import { installKeyRipple } from "./keys.js";
 
-startSky($("sky"));
+// 夜空：畫得出來時，星座也在夜空裡（3D），SVG 星座只在畫不出來時使用
+const sky = startSky($("sky"));
 installKeyRipple();
 
 // 新版 App 要升級資料庫時，重新整理以載入新版。
@@ -64,6 +65,7 @@ function waterItem(w, isNew) {
 // 星盤卡、頂端星座、喝水面板旁的小星座：只建立一次，之後每次重新整理只更新數值。
 const astrolabe = createAstrolabe({ chart: $("astrolabe"), centerBig: $("astro-big"), centerSmall: $("astro-small"), list: $("goal-progress") });
 const constellation = createConstellation($("constellation"));
+$("constellation").hidden = Boolean(sky);
 const miniConstellation = createMiniConstellation($("mini-constellation"));
 
 // 重新播放一次 CSS 動畫（例如數字變了時的跳一下）
@@ -164,6 +166,9 @@ async function renderDay() {
   });
   astrolabe.update(day.progress, day.hasRecords);
   constellation.update(day.constellationLit);
+  // 夜空：打開 App 時飛進來；同一天加了水或記了一餐時轉動一下；換到另一天直接畫
+  const added = sameDay && (day.water.some((w) => !lastShown.waterIds.includes(w.id)) || day.meals.some((m) => !lastShown.mealIds.includes(m.id)));
+  sky?.update(day.constellationLit, !lastShown ? "open" : added ? "change" : null);
   miniConstellation.update(day.constellationLit);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
   renderMealShelf(day, isToday);
@@ -182,7 +187,12 @@ async function renderDay() {
     void $("day-view").offsetWidth;
     $("day-view").classList.remove("instant");
   }
-  lastShown = { dayKey: day.dayKey, waterTotalMl: day.waterTotalMl, waterIds: day.water.map((w) => w.id) };
+  lastShown = {
+    dayKey: day.dayKey,
+    waterTotalMl: day.waterTotalMl,
+    waterIds: day.water.map((w) => w.id),
+    mealIds: day.meals.map((m) => m.id),
+  };
 }
 
 async function addWater(ml) {
