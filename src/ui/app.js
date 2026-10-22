@@ -14,7 +14,8 @@ import { createHistory, formatDayTitle } from "./history-view.js";
 import { startSky } from "./sky.js";
 import { installKeyRipple } from "./keys.js";
 
-startSky($("sky"));
+// 夜空：畫得出來時，星座也在夜空裡（3D），SVG 星座只在畫不出來時使用
+const sky = startSky($("sky"), { onLost: () => { $("constellation").hidden = false; } });
 installKeyRipple();
 
 // 新版 App 要升級資料庫時，重新整理以載入新版。
@@ -64,6 +65,7 @@ function waterItem(w, isNew) {
 // 星盤卡、頂端星座、喝水面板旁的小星座：只建立一次，之後每次重新整理只更新數值。
 const astrolabe = createAstrolabe({ chart: $("astrolabe"), centerBig: $("astro-big"), centerSmall: $("astro-small"), list: $("goal-progress") });
 const constellation = createConstellation($("constellation"));
+$("constellation").hidden = Boolean(sky);
 const miniConstellation = createMiniConstellation($("mini-constellation"));
 
 // 重新播放一次 CSS 動畫（例如數字變了時的跳一下）
@@ -164,6 +166,11 @@ async function renderDay() {
   });
   astrolabe.update(day.progress, day.hasRecords);
   constellation.update(day.constellationLit);
+  // 同一天裡剛加入的喝水和餐點（換到另一天不算）
+  const isNewWater = (w) => sameDay && !lastShown.waterIds.includes(w.id);
+  const isNewMeal = (m) => sameDay && !lastShown.mealIds.includes(m.id);
+  // 夜空：加了水或記了一餐時轉動一下；換到另一天直接畫（打開 App 的飛入由夜空自己處理）
+  sky?.update(day.constellationLit, day.water.some(isNewWater) || day.meals.some(isNewMeal));
   miniConstellation.update(day.constellationLit);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
   renderMealShelf(day, isToday);
@@ -172,8 +179,7 @@ async function renderDay() {
   $("water-total").textContent = day.waterTotalMl.toLocaleString("zh-TW");
   $("water-goal").textContent = waterGoal === null ? " ml" : ` / ${waterGoal.toLocaleString("zh-TW")} ml`;
   $("water-empty").hidden = day.water.length > 0;
-  const shownWater = new Set(sameDay ? lastShown.waterIds : []);
-  $("water-list").replaceChildren(...day.water.map((w) => waterItem(w, sameDay && !shownWater.has(w.id))));
+  $("water-list").replaceChildren(...day.water.map((w) => waterItem(w, isNewWater(w))));
 
   if (sameDay) {
     if (day.waterTotalMl !== lastShown.waterTotalMl) replay($("water-total"), "bump");
@@ -182,7 +188,12 @@ async function renderDay() {
     void $("day-view").offsetWidth;
     $("day-view").classList.remove("instant");
   }
-  lastShown = { dayKey: day.dayKey, waterTotalMl: day.waterTotalMl, waterIds: day.water.map((w) => w.id) };
+  lastShown = {
+    dayKey: day.dayKey,
+    waterTotalMl: day.waterTotalMl,
+    waterIds: day.water.map((w) => w.id),
+    mealIds: day.meals.map((m) => m.id),
+  };
 }
 
 async function addWater(ml) {
@@ -329,8 +340,11 @@ $("custom-water").addEventListener("submit", async (event) => {
 
 // 從背景回到前景時重新整理，跨過午夜也會換成新的一天。
 // 設定分頁不重新整理，避免正在輸入的目標被換掉。
+// 回到前景就是又打開一次 App：夜空從遠處飛進來。
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && view.name !== "settings") render();
+  if (document.visibilityState !== "visible") return;
+  sky?.open();
+  if (view.name !== "settings") render();
 });
 
 // 捲動後頂端縮成半透明標題列：頂端的小標記離開畫面時加上 compact。
