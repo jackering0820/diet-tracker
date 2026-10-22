@@ -1,6 +1,6 @@
 // 日記核心（Diary Core）：所有業務規則都在這裡，也是唯一的測試 seam。
 // 資料儲存（storage）和時間（clock）由外部注入。
-import { addDays, atTimeOnDay, dayKeyOf, dayRange, validateAt } from "./day.js";
+import { addDays, atTimeOnDay, dayKeyOf, dayRange, isDayKey, validateAt } from "./day.js";
 import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
 import { goalProgress, validateGoals, withDefaults } from "./goals.js";
 import { ANALYSIS_ERRORS, AnalysisError } from "./analysis-error.js";
@@ -64,6 +64,12 @@ export function createDiary({ storage, clock, analyzer }) {
 
   return {
     todayKey,
+
+    // 網址指定的某一天（"YYYY-MM-DD"）；格式不對、日曆上不存在或在今天以後時是今天。
+    dayOrToday(dayKey) {
+      const today = todayKey();
+      return isDayKey(dayKey) && dayKey < today ? dayKey : today;
+    },
 
     // 新紀錄的預設時間：今天就是現在；補記過去的日子時，用那一天的「現在這個時刻」。
     timeForNewRecord(dayKey) {

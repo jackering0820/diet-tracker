@@ -9,6 +9,13 @@ export function dayKeyOf(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+// 是不是日曆上真的存在的 "YYYY-MM-DD"（2026-02-30 這種換算後會變成別天的不算）
+export function isDayKey(text) {
+  if (typeof text !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const [y, m, d] = text.split("-").map(Number);
+  return dayKeyOf(new Date(y, m - 1, d)) === text;
+}
+
 // 紀錄的時間（毫秒時間戳）必須是有效的數字。
 export function validateAt(at) {
   if (typeof at !== "number" || !Number.isFinite(at)) throw new Error("請選擇有效的日期時間");

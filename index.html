@@ -15,16 +15,17 @@
 </head>
 <body>
   <canvas id="sky" aria-hidden="true" hidden></canvas>
-  <header>
-    <div class="header-row">
-      <h1 id="page-title">今天</h1>
-      <div class="header-buttons">
-        <button type="button" id="open-history" class="secondary">📅 歷史</button>
-        <button type="button" id="open-settings" class="secondary">⚙️ 設定</button>
-      </div>
-    </div>
+  <!-- 頂端：三個分頁。捲動後縮成半透明標題列（偵測 #top-sentinel 離開畫面） -->
+  <div id="top-sentinel" aria-hidden="true"></div>
+  <header id="top-bar">
+    <nav class="tabs" aria-label="分頁">
+      <a href="#today" data-tab="today">今天</a>
+      <a href="#history" data-tab="history">歷史</a>
+      <a href="#settings" data-tab="settings">設定</a>
+    </nav>
+    <a id="back-to-history" class="back-link" href="#history" hidden>‹ 歷史</a>
+    <h1 id="page-title">今天</h1>
     <p id="today-date"></p>
-    <button type="button" id="back-to-today" class="link" hidden>‹ 回到今天</button>
   </header>
 
   <main id="history-view" hidden>
@@ -96,9 +97,8 @@
     </form>
   </dialog>
 
-  <dialog id="settings" aria-labelledby="settings-title">
-    <div class="editor">
-      <h2 id="settings-title">設定</h2>
+  <main id="settings-view" hidden>
+    <section class="card" aria-label="設定">
       <form id="goals-form" novalidate>
         <h3>每日目標</h3>
         <p class="hint">留空表示不設定這一項，也不判斷是否達標。</p>
@@ -142,10 +142,8 @@
         <p id="backup-error" class="error" role="alert" hidden></p>
         <p id="backup-saved" class="saved" role="status" hidden></p>
       </section>
-
-      <button type="button" id="close-settings" class="wide secondary">關閉</button>
-    </div>
-  </dialog>
+    </section>
+  </main>
 
   <dialog id="meal-editor" aria-labelledby="editor-title">
     <div class="editor">
