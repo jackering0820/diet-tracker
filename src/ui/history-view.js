@@ -8,7 +8,10 @@ import { byId as $ } from "./dom.js";
 import { statusStar } from "./stars.js";
 
 const WEEK_DAYS = 7;
-const WEEK_NAMES = ["本週", "上週", "兩週前", "三週前"];
+const FIRST_WEEKS = 3; // 打開歷史時先顯示幾週
+// 第幾週：本週、上週、兩週前、三週前…（十週以上用數字）
+const WEEK_NUMBERS = "零一兩三四五六七八九十";
+const weekName = (index) => (index === 0 ? "本週" : index === 1 ? "上週" : index <= 10 ? `${WEEK_NUMBERS[index]}週前` : `${index} 週前`);
 
 const dateOf = (dayKey) => new Date(dayRange(dayKey).from);
 
@@ -16,7 +19,10 @@ export function formatDayTitle(dayKey) {
   return dateOf(dayKey).toLocaleDateString("zh-TW", { month: "long", day: "numeric", weekday: "short" });
 }
 
-const monthDay = (dayKey) => `${dateOf(dayKey).getMonth() + 1}/${dateOf(dayKey).getDate()}`;
+function monthDay(dayKey) {
+  const date = dateOf(dayKey);
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
 
 // 四顆星，每顆旁邊標著是哪一項，顏色不是唯一的提示
 function goalStars(progress) {
@@ -33,11 +39,11 @@ function goalStars(progress) {
   return stars;
 }
 
-// 一天的卡片。wide：歷史用的寬卡片（多寫當天熱量）；isToday：有框和「今天」標籤。
+// 一天的卡片。wide：歷史用的寬卡片（多寫當天熱量）；isToday：「今天」標籤，有紀錄時再加框。
 export function dayTile(day, { wide = false, isToday = false, onSelect }) {
   const tile = document.createElement("button");
   tile.type = "button";
-  tile.className = ["day", wide && "wide", isToday && "is-today", !day.hasRecords && "none"].filter(Boolean).join(" ");
+  tile.className = ["day", wide && "wide", isToday && day.hasRecords && "is-today", !day.hasRecords && "none"].filter(Boolean).join(" ");
 
   const head = document.createElement("span");
   head.className = "h";
@@ -81,7 +87,7 @@ function weekRow(days, index, todayKey, onSelect) {
   const head = document.createElement("div");
   head.className = "sec-h";
   const title = document.createElement("h2");
-  title.textContent = WEEK_NAMES[index] ?? `${index} 週前`;
+  title.textContent = weekName(index);
   const hint = document.createElement("span");
   hint.className = "hint";
   const range = document.createElement("span");
@@ -102,7 +108,7 @@ function weekRow(days, index, todayKey, onSelect) {
 export function renderLegend(container) {
   container.replaceChildren(...["achieved", "over", "missed", "unset"].map((status) => {
     const item = document.createElement("span");
-    item.append(statusStar(status), status === "over" ? "超過上限" : GOAL_STATUSES[status].text);
+    item.append(statusStar(status), GOAL_STATUSES[status].text);
     return item;
   }));
 }
@@ -117,18 +123,20 @@ export function createHistory({ diary, onSelect }) {
 
   renderLegend($("history-legend"));
 
-  // 「載入更早的日子」一次多一週
-  async function loadWeek() {
+  // 載入接下來的幾週（一次取完再切成一週一排）；「載入更早的日子」一次多一週
+  async function loadWeeks(count) {
     if (loading) return; // 避免連按時同一週載入兩次
     loading = true;
     $("load-older").disabled = true;
     const myGeneration = generation;
     try {
-      const days = await diary.getHistory({ before: oldest ?? undefined, days: WEEK_DAYS });
+      const days = await diary.getHistory({ before: oldest ?? undefined, days: WEEK_DAYS * count });
       if (myGeneration !== generation) return;
       oldest = days.at(-1).dayKey;
-      $("history-weeks").append(weekRow(days, weeks, diary.todayKey(), onSelect));
-      weeks += 1;
+      for (let i = 0; i < count; i++) {
+        $("history-weeks").append(weekRow(days.slice(i * WEEK_DAYS, (i + 1) * WEEK_DAYS), weeks, diary.todayKey(), onSelect));
+        weeks += 1;
+      }
     } finally {
       // 只有同一次打開的載入才解除鎖定，舊的載入不能影響新的。
       if (myGeneration === generation) {
@@ -138,7 +146,7 @@ export function createHistory({ diary, onSelect }) {
     }
   }
 
-  $("load-older").addEventListener("click", loadWeek);
+  $("load-older").addEventListener("click", () => loadWeeks(1));
 
   return {
     // 每次打開都從今天重新載入，資料才會是最新的；先顯示最近三週。
@@ -148,8 +156,7 @@ export function createHistory({ diary, onSelect }) {
       oldest = null;
       weeks = 0;
       $("history-weeks").replaceChildren();
-      const myGeneration = generation;
-      for (let i = 0; i < 3 && myGeneration === generation; i++) await loadWeek();
+      await loadWeeks(FIRST_WEEKS);
     },
   };
 }
