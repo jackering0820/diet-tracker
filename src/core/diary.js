@@ -1,10 +1,10 @@
 // 日記核心（Diary Core）：所有業務規則都在這裡，也是唯一的測試 seam。
 // 資料儲存（storage）和時間（clock）由外部注入。
-import { addDays, atTimeOnDay, dayKeyOf, dayRange, isDayKey, validateAt } from "./day.js";
+import { addDays, atTimeOnDay, dayKeyOf, dayRange, daysBetween, isDayKey, validateAt } from "./day.js";
 import { createMealDraft, defaultMealType, foodCombination, mealTitle, sumNutrients } from "./meal.js";
-import { allGoalsAchieved, goalProgress, validateGoals, withDefaults } from "./goals.js";
+import { allGoalsAchieved, goalProgress, stepGoal, validateGoals, withDefaults } from "./goals.js";
 import { ANALYSIS_ERRORS, AnalysisError } from "./analysis-error.js";
-import { buildBackup, parseBackup } from "./backup.js";
+import { buildBackup, parseBackup, summarizeBackup } from "./backup.js";
 import { constellationLit, validateWaterMl } from "./water.js";
 import { DEFAULT_MODEL, isBlankKey, keyStatus, normalizeKey, validateModel } from "./ai-settings.js";
 import { WATER_MEASURE } from "./measures.js";
@@ -194,6 +194,17 @@ export function createDiary({ storage, clock, analyzer }) {
       return (await storage.get(SETTINGS, LAST_EXPORT_ID))?.at ?? null;
     },
 
+    // 備份摘要：一份備份檔裡的紀錄天數、餐點、照片、喝水筆數、檔案大小（位元組）
+    backupSummary(text) {
+      return summarizeBackup(text);
+    },
+
+    // 上次匯出是幾天前（照日曆的日子算），沒匯出過是 null。
+    async daysSinceLastExport() {
+      const last = (await storage.get(SETTINGS, LAST_EXPORT_ID))?.at;
+      return last === undefined ? null : daysBetween(dayKeyOf(new Date(last)), todayKey());
+    },
+
     // 匯入備份：整份取代餐點、喝水和目標；API 金鑰和模型設定保留不變。
     async importBackup(text) {
       const backup = parseBackup(text); // 先完整檢查；有問題就丟出錯誤，什麼都不寫入
@@ -231,6 +242,11 @@ export function createDiary({ storage, clock, analyzer }) {
     },
 
     // 歷史列表：從 before 的前一天（沒給就從今天）往前列出 days 天，新的在前。
+    // 設定頁的目標步進器：按一下 ＋（+1）或 −（-1）之後的目標
+    stepGoal(key, value, direction) {
+      return stepGoal(key, value, direction);
+    },
+
     async getHistory({ before, days }) {
       if (!Number.isInteger(days) || days < 1) throw new Error("歷史列表的天數必須是正整數");
       const newest = before ? addDays(before, -1) : todayKey();

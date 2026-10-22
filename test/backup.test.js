@@ -123,3 +123,34 @@ test("匯入改版前的備份：裡面沒有四捨五入的目標（例如 2.25
 
   assert.deepEqual(await diary.getGoals(), { kcal: 1800, protein: 90.3, veg: 2.3, waterMl: 2001 });
 });
+
+test("上次匯出是幾天前：照日曆的日子算，沒匯出過是 null", async () => {
+  const { diary, clock } = setup(new Date(2026, 9, 1, 23, 0));
+  assert.equal(await diary.daysSinceLastExport(), null);
+  await diary.markExported();
+  assert.equal(await diary.daysSinceLastExport(), 0);
+  clock.now = () => new Date(2026, 9, 2, 1, 0);
+  assert.equal(await diary.daysSinceLastExport(), 1, "隔天凌晨就是 1 天前");
+  clock.now = () => new Date(2026, 9, 11, 9, 0);
+  assert.equal(await diary.daysSinceLastExport(), 10);
+});
+
+test("備份摘要：空的日記全部是 0，檔案大小是備份檔的位元組數", async () => {
+  const { diary } = setup();
+  const text = await diary.exportBackup();
+  assert.deepEqual(diary.backupSummary(text), { days: 0, meals: 0, photos: 0, water: 0, bytes: new TextEncoder().encode(text).length });
+});
+
+test("備份摘要：紀錄天數算有任何餐點或喝水的日子（只有喝水的一天也算），照片和喝水筆數都加總", async () => {
+  const { diary, clock } = setup(new Date(2026, 9, 1, 12, 0));
+  await diary.saveMeal(diary.newMealDraft({ items: [{ name: "便當", portion: "", kcal: 700, protein: 30, carbs: 90, fat: 20, veg: 1 }], photos: [PHOTO, PHOTO] }));
+  await diary.addWater(500);
+  clock.now = () => new Date(2026, 9, 2, 8, 0);
+  await diary.addWater(250); // 10/2：只有喝水
+  clock.now = () => new Date(2026, 9, 4, 19, 0);
+  await diary.saveMeal(diary.newMealDraft({ items: [{ name: "麵", portion: "", kcal: 500, protein: 20, carbs: 70, fat: 15, veg: 0.5 }], photos: [PHOTO] }));
+  await diary.saveMeal(diary.newMealDraft({ items: [{ name: "水果", portion: "", kcal: 80, protein: 1, carbs: 20, fat: 0, veg: 0 }] }));
+
+  const text = await diary.exportBackup();
+  assert.deepEqual(diary.backupSummary(text), { days: 3, meals: 3, photos: 3, water: 2, bytes: new TextEncoder().encode(text).length });
+});

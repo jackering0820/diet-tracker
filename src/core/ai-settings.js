@@ -3,8 +3,8 @@
 
 // 可以選的模型。畫面依這份清單產生選項，新增模型只要改這裡。
 export const MODEL_OPTIONS = [
-  { id: "claude-sonnet-5-5", label: "Sonnet 5.5（較準確，預設）" },
-  { id: "claude-haiku-5-5", label: "Haiku 5.5（較便宜、較快）" },
+  { id: "claude-sonnet-5-5", name: "Sonnet 5.5", note: "較準確，預設" },
+  { id: "claude-haiku-5-5", name: "Haiku 5.5", note: "較便宜、較快" },
 ];
 export const DEFAULT_MODEL = "claude-sonnet-5-5";
 

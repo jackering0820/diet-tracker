@@ -120,3 +120,31 @@ test("畫面寫「2.3 / 2.3」就一定是達標：目標輸入 2.34 份、吃�
   const { progress } = await diary.getDaySummary(diary.todayKey());
   assert.deepEqual(progress.veg, { value: 2.3, goal: 2.3, status: "achieved" });
 });
+
+test("目標步進器：熱量一次 50、蛋白質 5、蔬菜 0.5、喝水 250", () => {
+  const { diary } = setup();
+  assert.equal(diary.stepGoal("kcal", 1800, +1), 1850);
+  assert.equal(diary.stepGoal("protein", 80, -1), 75);
+  assert.equal(diary.stepGoal("veg", 3, +1), 3.5);
+  assert.equal(diary.stepGoal("waterMl", 2000, -1), 1750);
+});
+
+test("目標步進器：未設定的目標按 ＋ 或 − 都從建議值開始", () => {
+  const { diary } = setup();
+  for (const direction of [+1, -1]) {
+    assert.equal(diary.stepGoal("kcal", null, direction), 1800);
+    assert.equal(diary.stepGoal("protein", null, direction), 60);
+    assert.equal(diary.stepGoal("veg", null, direction), 3);
+    assert.equal(diary.stepGoal("waterMl", null, direction), 2000);
+  }
+});
+
+test("目標步進器：按 ＋ 到下一個比較大的格子、按 − 到下一個比較小的格子，不會小於 0", () => {
+  const { diary } = setup();
+  assert.equal(diary.stepGoal("veg", 0.5, -1), 0);
+  assert.equal(diary.stepGoal("veg", 0, -1), 0);
+  assert.equal(diary.stepGoal("kcal", 30, -1), 0);
+  assert.equal(diary.stepGoal("kcal", 1825, +1), 1850);
+  assert.equal(diary.stepGoal("veg", 2.3, +1), 2.5);
+  assert.equal(diary.stepGoal("protein", 82.5, -1), 80);
+});

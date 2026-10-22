@@ -129,50 +129,61 @@
   </dialog>
 
   <main id="settings-view" hidden>
-    <section class="card" aria-label="設定">
-      <form id="goals-form" novalidate>
-        <h3>每日目標</h3>
-        <p class="hint">留空表示不設定這一項，也不判斷是否達標。</p>
-        <!-- 每一項目標的輸入欄位：由指標目錄產生 -->
+    <section class="card" aria-labelledby="goals-title">
+      <h2 id="goals-title">每日目標</h2>
+      <form id="goals-form" class="settings-form" novalidate>
+        <!-- 每一項目標一個「− 數字 ＋」步進器：由指標目錄產生 -->
         <div id="goal-fields"></div>
         <p id="goals-error" class="error" role="alert" hidden></p>
-        <p id="goals-saved" class="saved" role="status" hidden></p>
         <button type="submit" class="wide">儲存目標</button>
+        <p id="goals-status" class="form-status" role="status"></p>
       </form>
+    </section>
 
-      <form id="ai-form" novalidate>
-        <h3>AI 分析</h3>
-        <p class="hint">金鑰只存在這支手機的瀏覽器裡，不會出現在網址或任何紀錄中。</p>
-        <p class="key-status">目前的金鑰：<span id="key-status"></span></p>
+    <section class="card" aria-labelledby="ai-title">
+      <h2 id="ai-title">AI 分析</h2>
+      <form id="ai-form" class="settings-form" novalidate>
+        <p class="keyrow"><span>🔑 目前的金鑰</span><span id="key-status" class="n"></span></p>
         <label class="field">
           <span id="key-label">貼上 API 金鑰</span>
           <!-- 刻意不用 type="password"：避免 iCloud 鑰匙圈等密碼管理工具把金鑰當密碼儲存或自動填入。
                文字用 CSS 顯示成圓點。 -->
           <input name="apiKey" type="text" class="masked-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" placeholder="sk-ant-…">
         </label>
-        <label class="field">
-          <span>模型</span>
-          <select name="model"></select>
-        </label>
+        <fieldset class="radios">
+          <legend>模型</legend>
+          <div id="model-options"></div>
+        </fieldset>
         <p id="ai-error" class="error" role="alert" hidden></p>
-        <p id="ai-saved" class="saved" role="status" hidden></p>
-        <button type="submit" class="wide">儲存 AI 設定</button>
+        <button type="submit" class="secondary wide">儲存 AI 設定</button>
+        <p id="ai-saved" class="form-status saved" role="status"></p>
       </form>
+    </section>
 
-      <section id="backup-section" aria-labelledby="backup-title">
-        <h3 id="backup-title">備份</h3>
-        <p class="hint">資料只存在這支手機裡，而且 iPhone 可能會清除長時間沒使用的網站資料。建議每週匯出一次備份，存到「檔案」或雲端硬碟。備份不包含 API 金鑰。</p>
-        <p class="key-status">上次匯出：<span id="last-export"></span></p>
-        <div class="row backup-buttons">
-          <button type="button" id="export-backup">匯出備份</button>
-          <label class="button-like secondary">
-            匯入備份
-            <input id="import-backup" type="file" accept="application/json,.json" hidden>
-          </label>
+    <section id="backup-section" class="card" aria-labelledby="backup-title">
+      <h2 id="backup-title">資料備份</h2>
+      <div class="lrows">
+        <p class="lrow"><span>上次匯出</span><span class="lead" aria-hidden="true"></span><b id="last-export" class="n"></b></p>
+        <p class="lrow"><span>資料量</span><span class="lead" aria-hidden="true"></span><span id="data-amount" class="n"></span></p>
+      </div>
+      <div id="backup-buttons" class="backup-buttons">
+        <button type="button" id="export-backup">⬇︎ 匯出備份</button>
+        <label class="button-like secondary">
+          ⬆︎ 匯入備份
+          <input id="import-backup" type="file" accept="application/json,.json" class="sr-only">
+        </label>
+      </div>
+      <!-- 匯入前在畫面內確認（不用瀏覽器的確認視窗） -->
+      <div id="import-confirm" class="confirm" role="alertdialog" aria-labelledby="import-question" hidden>
+        <p class="keyrow"><span id="import-file-name" class="n"></span></p>
+        <p id="import-question">匯入會「覆蓋」目前所有的餐點、喝水紀錄和每日目標（API 金鑰會保留）。確定要匯入嗎？</p>
+        <div class="confirm-buttons">
+          <button type="button" id="import-yes" class="danger">匯入並覆蓋</button>
+          <button type="button" id="import-no" class="secondary">不要</button>
         </div>
-        <p id="backup-error" class="error" role="alert" hidden></p>
-        <p id="backup-saved" class="saved" role="status" hidden></p>
-      </section>
+      </div>
+      <p id="backup-error" class="error" role="alert" hidden></p>
+      <p id="backup-saved" class="form-status saved" role="status"></p>
     </section>
   </main>
 

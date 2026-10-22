@@ -3,16 +3,17 @@
 // 新增一項指標：在這裡加一行（key 一旦用了就不要改，手機上的資料和備份檔都用它）。
 //
 // source：food 是來自食物的營養，water 是另外記錄的喝水。
-// goal：null 表示只顯示、不設目標；limit 是 ceiling（上限）或 floor（下限）。
+// goal：null 表示只顯示、不設目標；limit 是 ceiling（上限）或 floor（下限）；step 是設定頁步進器按一下的幅度，
+// suggested 是目標未設定時按步進器開始的建議值。
 // short：一個字的簡稱，標在歷史的星星旁邊（有目標的指標才需要）。
 const LIST = [
-  { key: "kcal", name: "熱量", short: "熱", unit: "大卡", decimals: 0, source: "food", goal: { limit: "ceiling", default: null } },
-  { key: "protein", name: "蛋白質", short: "蛋", unit: "g", decimals: 1, source: "food", goal: { limit: "floor", default: null } },
+  { key: "kcal", name: "熱量", short: "熱", unit: "大卡", decimals: 0, source: "food", goal: { limit: "ceiling", default: null, step: 50, suggested: 1800 } },
+  { key: "protein", name: "蛋白質", short: "蛋", unit: "g", decimals: 1, source: "food", goal: { limit: "floor", default: null, step: 5, suggested: 60 } },
   { key: "carbs", name: "碳水", unit: "g", decimals: 1, source: "food", goal: null },
   { key: "fat", name: "脂肪", unit: "g", decimals: 1, source: "food", goal: null },
   // 蔬菜預設至少 3 份：台灣每日飲食指南的建議
-  { key: "veg", name: "蔬菜", short: "菜", unit: "份", decimals: 1, source: "food", goal: { limit: "floor", default: 3 } },
-  { key: "waterMl", name: "喝水", short: "水", unit: "ml", decimals: 0, source: "water", goal: { limit: "floor", default: null } },
+  { key: "veg", name: "蔬菜", short: "菜", unit: "份", decimals: 1, source: "food", goal: { limit: "floor", default: 3, step: 0.5, suggested: 3 } },
+  { key: "waterMl", name: "喝水", short: "水", unit: "ml", decimals: 0, source: "water", goal: { limit: "floor", default: null, step: 250, suggested: 2000 } },
 ];
 
 function freeze(measure) {
