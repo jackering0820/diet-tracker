@@ -102,25 +102,14 @@ test("格式錯誤或版本不符的備份會被拒絕並說明原因，現有�
   assert.deepEqual(await diary.getGoals(), GOALS);
 });
 
-test("提醒定期備份：有紀錄但從沒備份過、或上次存好備份超過 7 天時提醒；沒有任何紀錄時不提醒", async () => {
-  const { diary, clock } = setup(new Date(2026, 9, 1, 9, 0));
-  assert.equal(await diary.backupReminderDue(), false, "還沒有任何紀錄");
-
+test("上次匯出：只產生備份不算（使用者可能取消了儲存），確定存好後才記下時間", async () => {
+  const { diary } = setup(new Date(2026, 9, 1, 9, 0));
   await diary.addWater(250);
-  assert.equal(await diary.backupReminderDue(), true, "有紀錄但從沒備份過");
-
   assert.equal(await diary.getLastExportAt(), null);
   await diary.exportBackup();
-  assert.equal(await diary.backupReminderDue(), true, "只產生了備份，使用者可能取消了儲存");
+  assert.equal(await diary.getLastExportAt(), null, "只產生了備份");
   await diary.markExported();
-  assert.equal(await diary.backupReminderDue(), false, "確定存好了");
   assert.equal(await diary.getLastExportAt(), new Date(2026, 9, 1, 9, 0).getTime());
-
-  clock.now = () => new Date(2026, 9, 8, 9, 0);
-  assert.equal(await diary.backupReminderDue(), false, "剛好 7 天");
-
-  clock.now = () => new Date(2026, 9, 8, 9, 1);
-  assert.equal(await diary.backupReminderDue(), true, "超過 7 天");
 });
 
 test("匯入改版前的備份：裡面沒有四捨五入的目標（例如 2.25 份）匯入後也是看到的數字", async () => {

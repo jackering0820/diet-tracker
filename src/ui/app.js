@@ -9,7 +9,6 @@ import { createMealEditor, renderNutrition } from "./meal-editor.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
 import { createAstrolabe, createConstellation, createMiniConstellation } from "./astrolabe.js";
 import { createSettings } from "./settings-view.js";
-import { saveBackup } from "./backup.js";
 import { createHistory, formatDayTitle } from "./history-view.js";
 import { startSky } from "./sky.js";
 import { installKeyRipple } from "./keys.js";
@@ -148,14 +147,12 @@ let lastShown = null;
 
 async function renderDay() {
   const shown = view;
-  const reminderDue = await diary.backupReminderDue();
   const day = await diary.getDaySummary(currentDayKey());
   // 等資料時已經切到別的畫面，就不要用舊的結果蓋掉新畫面的標題
   if (view !== shown) return;
   // 換到另一天不算資料變化：加上 instant 直接畫出來，不播放動畫
   const sameDay = day.dayKey === lastShown?.dayKey;
   if (!sameDay) $("day-view").classList.add("instant");
-  $("backup-reminder").hidden = !reminderDue;
   const isToday = day.dayKey === diary.todayKey();
   $("page-title").textContent = isToday ? "今天" : formatDayTitle(day.dayKey);
   // 標題日期由日記核心的 dayKey 推算，和資料用的是同一個時間來源。
@@ -292,15 +289,6 @@ const showDay = (dayKey) => { location.hash = dayKey === diary.todayKey() ? "#to
 const historyView = createHistory({ diary, onSelect: showDay });
 
 const settings = createSettings({ diary });
-
-$("reminder-export").addEventListener("click", async () => {
-  try {
-    await saveBackup(diary);
-  } catch (err) {
-    alert(`匯出失敗：${err.message}`);
-  }
-  await render();
-});
 
 for (const btn of document.querySelectorAll("[data-ml]")) {
   btn.addEventListener("click", () => addWater(Number(btn.dataset.ml)));
