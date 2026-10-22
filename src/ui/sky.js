@@ -5,6 +5,8 @@
 // 不支援 WebGL、或繪圖區被系統收回時，畫布藏起來，改用 CSS 的靜態漸層（styles.css 的 body 背景）和 SVG 星座。
 // 設計來自原型（prototype/sky-motion 分支，#37）。
 
+import { CONSTELLATION as CONSTELLATION_PX } from "./astrolabe.js";
+
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- 著色器 ----------
@@ -67,8 +69,7 @@ void main() {
 // ---------- 場景 ----------
 const STAR_COUNT = 1400;
 const FOCAL = 1 / Math.tan((70 * Math.PI) / 360); // 垂直視角 70 度
-// 頂端星座的八顆星：和 SVG 星座同樣的排列（390×150 的座標），放進 3D 空間，各自有不同的深度
-const CONSTELLATION_PX = [[196, 92], [222, 78], [250, 98], [278, 84], [304, 104], [330, 86], [356, 110], [330, 132]];
+// 頂端星座的八顆星：用 SVG 星座的座標（390×150），放進 3D 空間，各自有不同的深度
 const CONSTELLATION_DEPTH = [0.45, -0.35, 0.2, -0.55, 0.3, -0.2, 0.55, 0.05];
 const CONSTELLATION = CONSTELLATION_PX.map(([x, y], i) => [0.38 + ((x - 276) / 80) * 0.45, 1.5 - ((y - 78) / 54) * 0.42, -3 + CONSTELLATION_DEPTH[i]]);
 // 視角繞著星座的中心轉
@@ -151,9 +152,9 @@ function link(gl, vertex, fragment) {
 export function startSky(canvas, { onLost } = {}) {
   const gl = canvas.getContext("webgl", { antialias: false });
   if (!gl) return null;
-  const sky = link(gl, BG_VERTEX, BG_FRAGMENT);
-  const stars = link(gl, STAR_VERTEX, STAR_FRAGMENT);
-  if (!sky || !stars) return null;
+  const skyProgram = link(gl, BG_VERTEX, BG_FRAGMENT);
+  const starProgram = link(gl, STAR_VERTEX, STAR_FRAGMENT);
+  if (!skyProgram || !starProgram) return null;
 
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
@@ -163,10 +164,10 @@ export function startSky(canvas, { onLost } = {}) {
   gl.bufferData(gl.ARRAY_BUFFER, starField(), gl.STATIC_DRAW);
   const points = gl.createBuffer(); // 星座：每次畫的時候重新放
   const attr = {
-    pos: gl.getAttribLocation(stars.program, "aPos"),
-    size: gl.getAttribLocation(stars.program, "aSize"),
-    color: gl.getAttribLocation(stars.program, "aColor"),
-    quad: gl.getAttribLocation(sky.program, "p"),
+    pos: gl.getAttribLocation(starProgram.program, "aPos"),
+    size: gl.getAttribLocation(starProgram.program, "aSize"),
+    color: gl.getAttribLocation(starProgram.program, "aColor"),
+    quad: gl.getAttribLocation(skyProgram.program, "p"),
   };
 
   let lit = 0;
@@ -182,14 +183,14 @@ export function startSky(canvas, { onLost } = {}) {
     gl.vertexAttribPointer(attr.pos, 3, gl.FLOAT, false, 32, 0);
     gl.vertexAttribPointer(attr.size, 1, gl.FLOAT, false, 32, 12);
     gl.vertexAttribPointer(attr.color, 4, gl.FLOAT, false, 32, 16);
-    gl.uniform1f(stars.uniform.uMode, mode);
-    gl.uniform1f(stars.uniform.uSizeMul, sizeMul);
-    gl.uniform1f(stars.uniform.uHue, hue);
+    gl.uniform1f(starProgram.uniform.uMode, mode);
+    gl.uniform1f(starProgram.uniform.uSizeMul, sizeMul);
+    gl.uniform1f(starProgram.uniform.uHue, hue);
     const dx = (2 * spreadPx * dpr()) / canvas.width;
     const passes = spreadPx < 0.3 ? [[[1, 1, 1], 0]] : [[[1, 0, 0], -dx], [[0, 1, 0], 0], [[0, 0, 1], dx]];
     for (const [mask, offset] of passes) {
-      gl.uniform3fv(stars.uniform.uMask, mask);
-      gl.uniform2f(stars.uniform.uOffset, offset, 0);
+      gl.uniform3fv(starProgram.uniform.uMask, mask);
+      gl.uniform2f(starProgram.uniform.uOffset, offset, 0);
       gl.drawArrays(gl.POINTS, 0, count);
     }
   }
@@ -215,25 +216,25 @@ export function startSky(canvas, { onLost } = {}) {
     const motionSpread = Math.min(9, speed * 14);
 
     gl.disable(gl.BLEND);
-    gl.useProgram(sky.program);
+    gl.useProgram(skyProgram.program);
     gl.bindBuffer(gl.ARRAY_BUFFER, quad);
     gl.enableVertexAttribArray(attr.quad);
     gl.vertexAttribPointer(attr.quad, 2, gl.FLOAT, false, 0, 0);
-    gl.uniform2f(sky.uniform.uRes, w, h);
+    gl.uniform2f(skyProgram.uniform.uRes, w, h);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disableVertexAttribArray(attr.quad);
 
     // 星星用加法混色：重疊的地方更亮，像光
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
-    gl.useProgram(stars.program);
+    gl.useProgram(starProgram.program);
     for (const a of [attr.pos, attr.size, attr.color]) gl.enableVertexAttribArray(a);
-    gl.uniformMatrix3fv(stars.uniform.uRot, false, rotation(pose));
-    gl.uniform3fv(stars.uniform.uPivot, PIVOT);
-    gl.uniform1f(stars.uniform.uDolly, pose.dolly);
-    gl.uniform1f(stars.uniform.uFocal, FOCAL);
-    gl.uniform1f(stars.uniform.uAspect, w / h);
-    gl.uniform1f(stars.uniform.uDpr, d);
+    gl.uniformMatrix3fv(starProgram.uniform.uRot, false, rotation(pose));
+    gl.uniform3fv(starProgram.uniform.uPivot, PIVOT);
+    gl.uniform1f(starProgram.uniform.uDolly, pose.dolly);
+    gl.uniform1f(starProgram.uniform.uFocal, FOCAL);
+    gl.uniform1f(starProgram.uniform.uAspect, w / h);
+    gl.uniform1f(starProgram.uniform.uDpr, d);
     drawPoints(field, STAR_COUNT, { mode: 0, sizeMul: 3.2, spreadPx: motionSpread });
 
     // 星座：點亮的星星之間連成發光的線（沿著線排一串小光點）

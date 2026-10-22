@@ -166,9 +166,11 @@ async function renderDay() {
   });
   astrolabe.update(day.progress, day.hasRecords);
   constellation.update(day.constellationLit);
-  // 夜空：同一天加了水或記了一餐時轉動一下；換到另一天直接畫（打開 App 的飛入由夜空自己處理）
-  const added = sameDay && (day.water.some((w) => !lastShown.waterIds.includes(w.id)) || day.meals.some((m) => !lastShown.mealIds.includes(m.id)));
-  sky?.update(day.constellationLit, added);
+  // 同一天裡剛加入的喝水和餐點（換到另一天不算）
+  const isNewWater = (w) => sameDay && !lastShown.waterIds.includes(w.id);
+  const isNewMeal = (m) => sameDay && !lastShown.mealIds.includes(m.id);
+  // 夜空：加了水或記了一餐時轉動一下；換到另一天直接畫（打開 App 的飛入由夜空自己處理）
+  sky?.update(day.constellationLit, day.water.some(isNewWater) || day.meals.some(isNewMeal));
   miniConstellation.update(day.constellationLit);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
   renderMealShelf(day, isToday);
@@ -177,8 +179,7 @@ async function renderDay() {
   $("water-total").textContent = day.waterTotalMl.toLocaleString("zh-TW");
   $("water-goal").textContent = waterGoal === null ? " ml" : ` / ${waterGoal.toLocaleString("zh-TW")} ml`;
   $("water-empty").hidden = day.water.length > 0;
-  const shownWater = new Set(sameDay ? lastShown.waterIds : []);
-  $("water-list").replaceChildren(...day.water.map((w) => waterItem(w, sameDay && !shownWater.has(w.id))));
+  $("water-list").replaceChildren(...day.water.map((w) => waterItem(w, isNewWater(w))));
 
   if (sameDay) {
     if (day.waterTotalMl !== lastShown.waterTotalMl) replay($("water-total"), "bump");

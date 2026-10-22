@@ -15,8 +15,8 @@ const RING_WIDTH = 7;
 const ARC = 270;
 const MAX_OVER = 70;
 
-// 頂端星座八顆星的位置（畫布 K 列的座標，viewBox 390×150）
-const CONSTELLATION = [[196, 92], [222, 78], [250, 98], [278, 84], [304, 104], [330, 86], [356, 110], [330, 132]];
+// 頂端星座八顆星的位置（畫布 K 列的座標，viewBox 390×150）；WebGL 夜空（sky.js）也用同一組
+export const CONSTELLATION = [[196, 92], [222, 78], [250, 98], [278, 84], [304, 104], [330, 86], [356, 110], [330, 132]];
 
 function svg(tag, attrs = {}) {
   const el = document.createElementNS(SVG_NS, tag);
