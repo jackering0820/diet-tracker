@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { setup } from "./helpers.js";
+import { setup, saveGoalsLikeOldVersion } from "./helpers.js";
 import { createDiary } from "../src/core/diary.js";
 
 const VEG = { name: "燙青菜", portion: "一盤", kcal: 60, protein: 2, carbs: 5, fat: 3, veg: 1 };
@@ -96,4 +96,27 @@ test("設定了目標之後又清空，那一項就不再判斷達標", async ()
   const { progress } = await diary.getDaySummary(diary.todayKey());
   assert.equal(progress.protein.goal, null);
   assert.equal(progress.protein.status, "unset");
+});
+
+test("儲存目標時四捨五入到畫面顯示的位數：存的數字就是看到的數字", async () => {
+  const { diary } = setup();
+  await diary.setGoals({ kcal: 1800.4, protein: 90.25, veg: 2.25, waterMl: 2000.6 });
+
+  assert.deepEqual(await diary.getGoals(), { kcal: 1800, protein: 90.3, veg: 2.3, waterMl: 2001 });
+});
+
+test("改版前就存著的目標（例如 2.25 份），讀取時也照同樣規則四捨五入，不需要另外轉換資料", async () => {
+  const { diary, storage } = setup();
+  await saveGoalsLikeOldVersion(storage, { kcal: 1800.4, protein: 90.25, veg: 2.25, waterMl: 2000.6 });
+
+  assert.deepEqual(await diary.getGoals(), { kcal: 1800, protein: 90.3, veg: 2.3, waterMl: 2001 });
+});
+
+test("畫面寫「2.3 / 2.3」就一定是達標：目標輸入 2.34 份、吃了 2.3 份", async () => {
+  const { diary } = setup();
+  await diary.setGoals({ kcal: null, protein: null, veg: 2.34, waterMl: null });
+  await diary.saveMeal(diary.newMealDraft({ items: [{ ...VEG, veg: 2.3 }] }));
+
+  const { progress } = await diary.getDaySummary(diary.todayKey());
+  assert.deepEqual(progress.veg, { value: 2.3, goal: 2.3, status: "achieved" });
 });

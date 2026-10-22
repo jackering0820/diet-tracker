@@ -122,3 +122,15 @@ test("提醒定期備份：有紀錄但從沒備份過、或上次存好備份�
   clock.now = () => new Date(2026, 9, 8, 9, 1);
   assert.equal(await diary.backupReminderDue(), true, "超過 7 天");
 });
+
+test("匯入改版前的備份：裡面沒有四捨五入的目標（例如 2.25 份）匯入後也是看到的數字", async () => {
+  const { diary: oldPhone } = await filledDiary();
+  // 改版前匯出的備份，目標是使用者輸入的原始數字
+  const backup = JSON.parse(await oldPhone.exportBackup());
+  backup.goals = { kcal: 1800.4, protein: 90.25, veg: 2.25, waterMl: 2000.6 };
+
+  const { diary } = setup();
+  await diary.importBackup(JSON.stringify(backup));
+
+  assert.deepEqual(await diary.getGoals(), { kcal: 1800, protein: 90.3, veg: 2.3, waterMl: 2001 });
+});

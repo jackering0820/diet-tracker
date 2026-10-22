@@ -26,9 +26,16 @@ export function validateGoals(goals) {
   );
 }
 
-// 把存起來的目標補上預設值：以後新增目標時，舊的存檔也能正常使用。
+// 把存起來的目標整理成使用中的目標：每一次讀取目標都經過這裡。
+// - 補上預設值：以後新增目標時，舊的存檔也能正常使用
+// - 刻意四捨五入到畫面顯示的位數（和顯示用同一個函式）：看到的數字就是判斷用的數字，
+//   畫面寫「2.3 / 2.3」時一定是達標。剛存的、改版前存的（例如 2.25）、匯入的目標都一樣，
+//   所以只需要在這一處處理，不需要另外轉換資料
 export function withDefaults(saved) {
-  return { ...DEFAULT_GOALS, ...saved };
+  const goals = { ...DEFAULT_GOALS, ...saved };
+  return Object.fromEntries(
+    GOAL_MEASURES.map(({ key }) => [key, typeof goals[key] === "number" ? roundMeasure(key, goals[key]) : goals[key]]),
+  );
 }
 
 // 一項目標的狀態：
