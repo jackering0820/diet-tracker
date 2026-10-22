@@ -76,28 +76,34 @@ function replay(el, cls) {
 // 「吃了什麼」貨架上的一張卡片：有照片用照片當封面，沒有照片是有橫線的羊皮紙卡片（手寫的一餐）。
 // 下方是時間・餐別、標題（日記核心串好的食物名稱）、熱量；點一下修改這一餐。
 // isNew：剛加入的那一餐（例如再記一次），滑進來。
+// 卡片的封面：有照片用照片；沒有照片是有橫線的羊皮紙，寫上標題（before／after：標題前後要加的元素）
+function mealCover(photo, title, { before, after } = {}) {
+  const cover = document.createElement("span");
+  if (photo) {
+    cover.className = "cover";
+    const img = document.createElement("img");
+    img.src = photo;
+    img.alt = "";
+    cover.append(img);
+    return cover;
+  }
+  cover.className = "cover note";
+  const name = document.createElement("b");
+  name.textContent = title;
+  cover.append(...[before, name, after].filter(Boolean));
+  return cover;
+}
+
 function mealCard(meal, isNew) {
   const card = document.createElement("button");
   card.type = "button";
   card.className = isNew ? "meal fresh" : "meal";
-  const cover = document.createElement("span");
-  if (meal.photos?.length) {
-    cover.className = "cover";
-    const photo = document.createElement("img");
-    photo.src = meal.photos[0];
-    photo.alt = "";
-    cover.append(photo);
-  } else {
-    cover.className = "cover note";
-    const type = document.createElement("span");
-    type.className = "k";
-    type.textContent = meal.mealType;
-    const title = document.createElement("b");
-    title.textContent = meal.title;
-    const tag = document.createElement("i");
-    tag.textContent = "手寫";
-    cover.append(type, title, tag);
-  }
+  const type = document.createElement("span");
+  type.className = "k";
+  type.textContent = meal.mealType;
+  const tag = document.createElement("i");
+  tag.textContent = "手寫";
+  const cover = mealCover(meal.photos?.[0], meal.title, { before: type, after: tag });
   const cap = document.createElement("span");
   cap.className = "cap";
   const when = document.createElement("span");
@@ -237,19 +243,7 @@ function recentCard(recent) {
   const card = document.createElement("button");
   card.type = "button";
   card.className = "rc";
-  const cover = document.createElement("span");
-  if (recent.photo) {
-    cover.className = "cover";
-    const photo = document.createElement("img");
-    photo.src = recent.photo;
-    photo.alt = "";
-    cover.append(photo);
-  } else {
-    cover.className = "cover note";
-    const title = document.createElement("b");
-    title.textContent = recent.title;
-    cover.append(title);
-  }
+  const cover = mealCover(recent.photo, recent.title);
   const row = document.createElement("span");
   row.className = "row";
   const text = document.createElement("span");

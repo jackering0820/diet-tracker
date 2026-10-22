@@ -24,9 +24,10 @@ test("最近吃過以食物名稱的組合去除重複：順序不同也算同�
   await eat(diary, at(9, 8), ["蛋餅", "豆漿"]);
   await eat(diary, at(10, 8), ["豆漿", "蛋餅"]);
   await eat(diary, at(10, 12), ["蛋餅"]);
-  await eat(diary, at(11, 8), ["蛋餅", "豆漿"]);
+  const newest = await eat(diary, at(11, 8), ["蛋餅", "豆漿"]);
   const recent = await diary.recentMeals();
   assert.deepEqual(recent.map((r) => r.title), ["蛋餅、豆漿", "蛋餅"]);
+  assert.equal(recent[0].mealId, newest.id);
 });
 
 test("最近吃過最多 20 個，超過的是比較舊的", async () => {
