@@ -107,3 +107,8 @@ export function createMealDraft({ id, at, mealType, items = [], photos = [], sou
     },
   };
 }
+
+// 一餐的標題：食物名稱依加入順序用「、」串起來（太長時由畫面截斷）。
+export function mealTitle(items) {
+  return items.map((item) => item.name).join("、");
+}

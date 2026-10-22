@@ -73,31 +73,45 @@ function replay(el, cls) {
   el.classList.add(cls);
 }
 
-function mealRow(meal) {
-  const li = document.createElement("li");
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "meal-row";
-  const time = document.createElement("span");
-  time.className = "time";
-  time.textContent = formatTime(meal.at);
-  const type = document.createElement("span");
-  type.className = "grow";
-  type.textContent = meal.mealType;
+// 「吃了什麼」貨架上的一張卡片：有照片用照片當封面，沒有照片是有橫線的羊皮紙卡片（手寫的一餐）。
+// 下方是時間・餐別、標題（日記核心串好的食物名稱）、熱量；點一下修改這一餐。
+function mealCard(meal) {
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = "meal";
+  const cover = document.createElement("span");
   if (meal.photos?.length) {
-    const thumb = document.createElement("img");
-    thumb.className = "meal-thumb";
-    thumb.src = meal.photos[0];
-    thumb.alt = "";
-    button.append(thumb);
+    cover.className = "cover";
+    const photo = document.createElement("img");
+    photo.src = meal.photos[0];
+    photo.alt = "";
+    cover.append(photo);
+  } else {
+    cover.className = "cover note";
+    const type = document.createElement("span");
+    type.className = "k";
+    type.textContent = meal.mealType;
+    const title = document.createElement("b");
+    title.textContent = meal.title;
+    const tag = document.createElement("i");
+    tag.textContent = "手寫";
+    cover.append(type, title, tag);
   }
+  const cap = document.createElement("span");
+  cap.className = "cap";
+  const when = document.createElement("span");
+  when.className = "t n";
+  when.textContent = `${formatTime(meal.at)}・${meal.mealType}`;
+  const title = document.createElement("b");
+  title.textContent = meal.title;
   const kcal = document.createElement("span");
-  kcal.textContent = `${formatWithUnit("kcal", meal.totals.kcal)} ›`;
-  button.append(time, type, kcal);
-  button.setAttribute("aria-label", `修改 ${formatTime(meal.at)} 的${meal.mealType}`);
-  button.addEventListener("click", () => editor.openExisting(meal.id));
-  li.append(button);
-  return li;
+  kcal.className = "k n";
+  kcal.textContent = formatWithUnit("kcal", meal.totals.kcal);
+  cap.append(when, title, kcal);
+  card.append(cover, cap);
+  card.setAttribute("aria-label", `${formatTime(meal.at)} ${meal.mealType}：${meal.title}，${formatWithUnit("kcal", meal.totals.kcal)}，點一下修改`);
+  card.addEventListener("click", () => editor.openExisting(meal.id));
+  return card;
 }
 
 async function render() {
@@ -152,8 +166,7 @@ async function renderDay() {
   constellation.update(day.constellationLit);
   miniConstellation.update(day.constellationLit);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
-  $("meals-empty").hidden = day.meals.length > 0;
-  $("meal-list").replaceChildren(...day.meals.map(mealRow));
+  renderMealShelf(day, isToday);
 
   const waterGoal = day.progress[WATER_MEASURE.key].goal;
   $("water-total").textContent = day.waterTotalMl.toLocaleString("zh-TW");
@@ -194,21 +207,38 @@ const editor = createMealEditor({
     location.hash = "#settings";
   },
 });
+// 「吃了什麼」：標題旁的「N 餐・X 大卡」、每一餐的卡片；今天最後一格是「下一餐」。
+// 「下一餐」和「拍照記〇〇」的餐別是新的一餐會用的預設餐別（依現在時間，由日記核心決定）。
+// 「下一餐」卡片在過去某一天會被移出畫面，所以先留住它
+const nextMealCard = $("next-meal");
+function renderMealShelf(day, isToday) {
+  const { meals, nutritionTotals } = day;
+  $("meal-hint").textContent = meals.length ? `${meals.length} 餐・${formatWithUnit("kcal", nutritionTotals.kcal)}` : "還沒有紀錄";
+  const nextType = diary.newMealDraft({ at: timeForNewRecord() }).mealType;
+  nextMealCard.querySelector(".t").textContent = nextType;
+  nextMealCard.querySelector(".ghost span").textContent = nextType.charAt(0);
+  nextMealCard.setAttribute("aria-label", `記下一餐：${nextType}，拍照`);
+  $("meal-list").replaceChildren(...meals.map(mealCard), ...(isToday ? [nextMealCard] : []));
+  $("snap-meal-label").textContent = isToday ? `📷 拍照記${nextType}` : "📷 拍照補記一餐";
+}
+
 $("add-meal").addEventListener("click", () => editor.openNew(timeForNewRecord()));
 
-// 拍照記一餐：縮圖 → 建立帶照片的草稿 → 打開編輯視窗並開始 AI 分析。
-$("meal-photos").addEventListener("change", async (event) => {
-  const files = event.target.files;
-  if (!files?.length) return;
-  try {
-    const photos = await resizePhotos(files);
-    await editor.openForAnalysis(diary.newMealDraft({ at: timeForNewRecord(), photos }));
-  } catch (err) {
-    alert(err.message);
-  } finally {
-    event.target.value = ""; // 讓同一張照片可以再選一次
-  }
-});
+// 拍照記一餐（底部按鍵和「下一餐」卡片）：縮圖 → 建立帶照片的草稿 → 打開編輯視窗並開始 AI 分析。
+for (const input of document.querySelectorAll("[data-meal-photos]")) {
+  input.addEventListener("change", async (event) => {
+    const files = event.target.files;
+    if (!files?.length) return;
+    try {
+      const photos = await resizePhotos(files);
+      await editor.openForAnalysis(diary.newMealDraft({ at: timeForNewRecord(), photos }));
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      event.target.value = ""; // 讓同一張照片可以再選一次
+    }
+  });
+}
 
 // 修改喝水時間的面板（從下方滑出）：改時間或刪除這一筆
 let movingWater = null;

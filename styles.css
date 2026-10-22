@@ -172,16 +172,17 @@ button:disabled {
 button:disabled::before, button:disabled::after { display: none; }
 
 /* 文字型的按鈕（連結、整列可點的餐點和日子、刪除、喝水紀錄的小標籤）不是按鍵：沒有底座、不下沉、沒有漣漪和星星 */
-button.link, button.delete, .meal-row, .history-row, .log {
+button.link, button.delete, .meal, .history-row, .log {
   margin-bottom: 0;
   border: 0;
   box-shadow: none;
   background: transparent;
   transition: none;
 }
-button.link:active, button.delete:active, .meal-row:active, .history-row:active, .log:active { transform: none; opacity: 0.7; }
+button.link:active, button.delete:active, .history-row:active, .log:active { transform: none; opacity: 0.7; }
+.meal:active { transform: none; }
 button.link::before, button.link::after, button.delete::before, button.delete::after,
-.meal-row::before, .meal-row::after, .history-row::before, .history-row::after, .log::before, .log::after { display: none; }
+.meal::before, .meal::after, .history-row::before, .history-row::after, .log::before, .log::after { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -234,18 +235,80 @@ button.wide { width: 100%; margin-top: 16px; }
 button.link { color: var(--highlight); padding: 8px; }
 .grow { flex: 1; min-width: 0; }
 
-.entries li:has(> .meal-row) { padding: 0; }
-.meal-row {
+/* 「吃了什麼」貨架：每一餐一張卡片，可以橫向滑動 */
+.sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.sec-h .hint { margin: 0; font-size: 13px; }
+.meal-shelf { gap: 12px; }
+.meal {
+  flex: none;
+  width: 140px;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 0;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 0;
   color: var(--text);
   font-weight: 400;
-  border-radius: 0;
   text-align: left;
+  scroll-snap-align: start;
+  cursor: pointer;
 }
+.cover {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0F2C42;
+  box-shadow: 0 14px 26px -16px rgb(0 0 0 / 0.95);
+  transition: transform 0.3s cubic-bezier(0.3, 1.7, 0.5, 1);
+}
+.meal:active .cover { transform: scale(0.96); transition-duration: 0.08s; }
+.cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* 沒有照片的一餐：有橫線的羊皮紙 */
+.cover.note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  text-align: center;
+  color: #1F2630;
+  background: repeating-linear-gradient(180deg, transparent 0 17px, rgb(31 38 48 / 0.16) 17px 18px), var(--text);
+}
+.note .k { font-size: 11px; letter-spacing: 0.2em; color: rgb(31 38 48 / 0.68); }
+.note b { font-size: 16px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.note i { font-style: normal; font-size: 10px; line-height: 16px; padding: 0 8px; border-radius: 999px; border: 1px solid rgb(31 38 48 / 0.45); color: #2A4A6B; }
+/* 「下一餐」：虛線的空卡片 */
+.cover.ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed rgb(111 211 255 / 0.55);
+  background: rgb(111 211 255 / 0.06);
+  color: rgb(238 243 247 / 0.82);
+  font-size: 36px;
+  font-weight: 700;
+  box-shadow: none;
+}
+.cap { display: flex; flex-direction: column; line-height: 1.35; }
+.cap .t, .cap .k { font-size: 12px; color: var(--muted); }
+.cap b { font-size: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* 底部固定：拍照記一餐、手寫 */
+.dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin: 26px -16px 0;
+  padding: 20px 16px calc(16px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgb(8 25 43 / 0), rgb(8 25 43 / 0.95) 34%);
+}
+.dock > * { white-space: nowrap; }
 
 /* 一餐的編輯畫面 */
 dialog {
@@ -429,8 +492,6 @@ dialog.sheet[open] { animation: sheet-up 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
 .masked-input { -webkit-text-security: disc; text-security: disc; font-family: ui-monospace, Menlo, monospace; }
 
 /* 拍照記一餐 */
-.add-meal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-.add-meal-buttons > * { padding: 0 10px; font-size: 16px; white-space: nowrap; }
 .button-like {
   display: flex;
   align-items: center;
@@ -455,7 +516,6 @@ dialog.sheet[open] { animation: sheet-up 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
 #analysis-actions { margin-top: 8px; }
 #analysis-actions button { flex: 1; }
 .notice { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--field); color: var(--muted); font-size: 14px; }
-.meal-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; flex: none; }
 .analysis-status.error { color: var(--danger); font-weight: 400; }
 .button-like.small { display: inline-flex; margin-top: 12px; padding: 0 16px; font-size: 15px; }
 [inert] { opacity: 0.5; }
