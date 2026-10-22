@@ -68,7 +68,9 @@ export function goalProgress(values, goals, hasRecords) {
 // 目標步進器按一下（direction 是 +1 或 -1）之後的數值；未設定（null）時從建議值開始。
 // 數值落在「步進幅度的倍數」這些格子上：按 ＋ 到下一個比較大的格子、按 − 到下一個比較小的格子，不會小於 0。
 export function stepGoal(key, value, direction) {
-  const { goal } = GOAL_MEASURES.find((m) => m.key === key);
+  const measure = GOAL_MEASURES.find((m) => m.key === key);
+  if (!measure) throw new Error("沒有這一項目標");
+  const { goal } = measure;
   if (value === null) return goal.suggested;
   const steps = value / goal.step;
   const onGrid = Math.abs(steps - Math.round(steps)) < 1e-9; // 小數相除的誤差（例如 0.3 / 0.1）

@@ -156,7 +156,7 @@
         </fieldset>
         <p id="ai-error" class="error" role="alert" hidden></p>
         <button type="submit" class="secondary wide">儲存 AI 設定</button>
-        <p id="ai-saved" class="form-status saved" role="status"></p>
+        <p id="ai-saved" class="form-status" role="status"></p>
       </form>
     </section>
 
@@ -174,7 +174,7 @@
         </label>
       </div>
       <!-- 匯入前在畫面內確認（不用瀏覽器的確認視窗） -->
-      <div id="import-confirm" class="confirm" role="alertdialog" aria-labelledby="import-question" hidden>
+      <div id="import-confirm" class="confirm" role="alertdialog" aria-labelledby="import-file-name" aria-describedby="import-question" hidden>
         <p class="keyrow"><span id="import-file-name" class="n"></span></p>
         <p id="import-question">匯入會「覆蓋」目前所有的餐點、喝水紀錄和每日目標（API 金鑰會保留）。確定要匯入嗎？</p>
         <div class="confirm-buttons">
@@ -183,7 +183,7 @@
         </div>
       </div>
       <p id="backup-error" class="error" role="alert" hidden></p>
-      <p id="backup-saved" class="form-status saved" role="status"></p>
+      <p id="backup-saved" class="form-status" role="status"></p>
     </section>
   </main>
 

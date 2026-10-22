@@ -49,6 +49,7 @@ function goalStepper(measure) {
   input.step = "any";
   input.placeholder = "未設定";
   input.className = "n";
+  input.setAttribute("aria-label", `${measure.name}目標（${tag.textContent}，${measure.unit}）`);
   const unit = document.createElement("span");
   unit.className = "unit";
   unit.setAttribute("aria-hidden", "true");
@@ -68,7 +69,7 @@ function readGoal(input) {
 // 上次匯出：今天、N 天前、還沒匯出過
 function formatDaysAgo(days) {
   if (days === null) return "還沒匯出過";
-  return days === 0 ? "今天" : `${days} 天前`;
+  return `※ ${days === 0 ? "今天" : `${days} 天前`}`;
 }
 
 export function createSettings({ diary }) {
@@ -98,7 +99,9 @@ export function createSettings({ diary }) {
   }
 
   // ---------- 每日目標 ----------
-  const currentGoals = () => GOAL_MEASURES.map(({ key }) => goalsForm.elements[key].value.trim()).join("|");
+  // 欄位現在的樣子（打了無法解讀的字也算，和空白不同）
+  const fieldText = (input) => (input.validity.badInput ? "?" : input.value.trim());
+  const currentGoals = () => GOAL_MEASURES.map(({ key }) => fieldText(goalsForm.elements[key])).join("|");
 
   // 依目標填入欄位（顯示的位數和其他畫面一樣），並記下這是已儲存的樣子
   function fillGoals(goals) {
@@ -110,7 +113,7 @@ export function createSettings({ diary }) {
   // 「未設定」標籤和「有變更還沒儲存」
   function renderGoalsState() {
     for (const row of $("goal-fields").children) {
-      row.querySelector(".unset").hidden = row.querySelector("input").value.trim() !== "";
+      row.querySelector(".unset").hidden = fieldText(row.querySelector("input")) !== "";
     }
     const status = $("goals-status");
     const dirty = currentGoals() !== savedGoals;
@@ -173,8 +176,13 @@ export function createSettings({ diary }) {
   });
 
   // ---------- 資料備份 ----------
-  async function renderBackupInfo() {
+  async function renderLastExport() {
     $("last-export").textContent = formatDaysAgo(await diary.daysSinceLastExport());
+  }
+
+  // 上次匯出和資料量（資料量要把整份日記算一次，照片多時比較慢，所以只在打開設定頁和匯入後算）
+  async function renderBackupInfo() {
+    await renderLastExport();
     const { days, bytes } = diary.backupSummary(await diary.exportBackup());
     $("data-amount").textContent = `${days} 天・${Math.max(1, Math.round(bytes / 1024)).toLocaleString("zh-TW")} KB`;
   }
@@ -183,7 +191,7 @@ export function createSettings({ diary }) {
     clearMessages();
     try {
       const { saved, name } = await saveBackup(diary);
-      await renderBackupInfo();
+      await renderLastExport();
       if (saved) showMessage("backup-saved", `✓ 已匯出 ${name}`);
       else showMessage("backup-error", "已取消，備份沒有存下來");
     } catch (err) {
@@ -194,11 +202,18 @@ export function createSettings({ diary }) {
   // 匯入：選好檔案後先在畫面內確認會覆蓋，按「匯入並覆蓋」才交給日記核心（核心會先完整檢查，有問題就什麼都不改）。
   let pendingImport = null; // 選好、還沒確認的檔案
   function askImport(file) {
+    const wasAsking = Boolean(pendingImport);
     pendingImport = file;
     $("import-file-name").textContent = file ? `📄 ${file.name}` : "";
     $("import-confirm").hidden = !file;
     $("backup-buttons").hidden = Boolean(file);
+    // 確認出現時焦點移到「不要」（比較安全的選擇）；關掉時回到「匯入備份」
+    if (file) $("import-no").focus();
+    else if (wasAsking) $("import-backup").focus();
   }
+  $("import-confirm").addEventListener("keydown", (event) => {
+    if (event.key === "Escape") askImport(null);
+  });
 
   $("import-backup").addEventListener("change", (event) => {
     const file = event.target.files?.[0];
@@ -226,7 +241,9 @@ export function createSettings({ diary }) {
     async open() {
       clearMessages();
       askImport(null);
-      fillGoals(await diary.getGoals());
+      // 有還沒儲存的修改時保留（例如切到別的分頁再回來），提示會繼續顯示
+      if (savedGoals === "" || currentGoals() === savedGoals) fillGoals(await diary.getGoals());
+      else renderGoalsState();
       const model = await diary.getModel();
       for (const radio of aiForm.elements.model) radio.checked = radio.value === model;
       aiForm.elements.apiKey.value = "";

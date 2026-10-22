@@ -22,11 +22,11 @@ export function keyStatus(key) {
   return key ? { isSet: true, masked: maskKey(key) } : { isSet: false, masked: null };
 }
 
-// 只露出開頭 7 個字（例如 "sk-ant-"）和最後 4 個字，讓使用者認得是哪一把金鑰。
+// 只露出最後 4 個字（例如「…WXYZ」），讓使用者認得是哪一把金鑰。
 // 太短的金鑰不露出任何字元。
 function maskKey(key) {
   if (key.length <= 12) return "••••";
-  return `${key.slice(0, 7)}…${key.slice(-4)}`;
+  return `…${key.slice(-4)}`;
 }
 
 // 整理並檢查貼上的金鑰：去掉前後的空白和換行。

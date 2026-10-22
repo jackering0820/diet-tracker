@@ -66,7 +66,7 @@ test("匯入是整份取代：原本的餐點、喝水和目標都被備份的�
   assert.deepEqual(oct10.meals.map((m) => m.items[0].name), ["雞腿便當"]);
   assert.equal(oct10.waterTotalMl, 500);
   assert.deepEqual(await diary.getGoals(), GOALS);
-  assert.equal((await diary.getApiKeyStatus()).masked, "sk-ant-…ABCD");
+  assert.equal((await diary.getApiKeyStatus()).masked, "…ABCD");
   assert.equal(await diary.getModel(), "claude-sonnet-5-5");
 });
 

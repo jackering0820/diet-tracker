@@ -241,12 +241,12 @@ export function createDiary({ storage, clock, analyzer }) {
       await storage.put(SETTINGS, { id: MODEL_ID, model });
     },
 
-    // 歷史列表：從 before 的前一天（沒給就從今天）往前列出 days 天，新的在前。
     // 設定頁的目標步進器：按一下 ＋（+1）或 −（-1）之後的目標
     stepGoal(key, value, direction) {
       return stepGoal(key, value, direction);
     },
 
+    // 歷史列表：從 before 的前一天（沒給就從今天）往前列出 days 天，新的在前。
     async getHistory({ before, days }) {
       if (!Number.isInteger(days) || days < 1) throw new Error("歷史列表的天數必須是正整數");
       const newest = before ? addDays(before, -1) : todayKey();

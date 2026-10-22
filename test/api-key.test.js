@@ -17,12 +17,12 @@ test("儲存金鑰後只看得到遮罩後的片段；更換後顯示新的片�
   const { diary, storage, clock } = setup();
   await diary.setApiKey(`  ${FAKE_KEY}\n`); // 貼上時常會多出空白或換行
   const status = await diary.getApiKeyStatus();
-  assert.deepEqual(status, { isSet: true, masked: "sk-ant-…WXYZ" });
+  assert.deepEqual(status, { isSet: true, masked: "…WXYZ" });
   assert.ok(!JSON.stringify(status).includes("FAKE-test-key"));
 
   await diary.setApiKey(OTHER_FAKE_KEY);
   const reopened = createDiary({ storage, clock });
-  assert.deepEqual(await reopened.getApiKeyStatus(), { isSet: true, masked: "sk-ant-…ABCD" });
+  assert.deepEqual(await reopened.getApiKeyStatus(), { isSet: true, masked: "…ABCD" });
 });
 
 test("空白或中間有空格的金鑰會被拒絕，原本的金鑰不變，錯誤訊息也不包含貼上的內容", async () => {
@@ -37,7 +37,7 @@ test("空白或中間有空格的金鑰會被拒絕，原本的金鑰不變，�
     return true;
   });
 
-  assert.equal((await diary.getApiKeyStatus()).masked, "sk-ant-…WXYZ");
+  assert.equal((await diary.getApiKeyStatus()).masked, "…WXYZ");
 });
 
 test("可以切換成 Haiku 5.5，重新打開 App 後仍然保留；不認識的模型會被拒絕", async () => {
@@ -62,11 +62,11 @@ test("已經有金鑰時，金鑰留空表示不更換；有貼上新金鑰才�
   const { diary } = setup();
   await diary.saveAiSettings({ key: FAKE_KEY, model: "claude-sonnet-5-5" });
   await diary.saveAiSettings({ key: "   ", model: "claude-haiku-5-5" });
-  assert.equal((await diary.getApiKeyStatus()).masked, "sk-ant-…WXYZ");
+  assert.equal((await diary.getApiKeyStatus()).masked, "…WXYZ");
   assert.equal(await diary.getModel(), "claude-haiku-5-5");
 
   await diary.saveAiSettings({ key: OTHER_FAKE_KEY, model: "claude-haiku-5-5" });
-  assert.equal((await diary.getApiKeyStatus()).masked, "sk-ant-…ABCD");
+  assert.equal((await diary.getApiKeyStatus()).masked, "…ABCD");
 });
 
 test("金鑰或模型有問題時整組都不儲存", async () => {
@@ -75,5 +75,5 @@ test("金鑰或模型有問題時整組都不儲存", async () => {
   await assert.rejects(diary.saveAiSettings({ key: "sk-ant-FAKE bad", model: "claude-haiku-5-5" }), /金鑰/);
   await assert.rejects(diary.saveAiSettings({ key: OTHER_FAKE_KEY, model: "gpt-4" }), /模型/);
   assert.equal(await diary.getModel(), "claude-sonnet-5-5");
-  assert.equal((await diary.getApiKeyStatus()).masked, "sk-ant-…WXYZ");
+  assert.equal((await diary.getApiKeyStatus()).masked, "…WXYZ");
 });
