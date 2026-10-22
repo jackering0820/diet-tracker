@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { setup } from "./helpers.js";
+import { setup, saveGoalsLikeOldVersion } from "./helpers.js";
 import { createDiary } from "../src/core/diary.js";
 
 const VEG = { name: "燙青菜", portion: "一盤", kcal: 60, protein: 2, carbs: 5, fat: 3, veg: 1 };
@@ -107,8 +107,7 @@ test("儲存目標時四捨五入到畫面顯示的位數：存的數字就是�
 
 test("改版前就存著的目標（例如 2.25 份），讀取時也照同樣規則四捨五入，不需要另外轉換資料", async () => {
   const { diary, storage } = setup();
-  // 改版前的 App 會原樣存下使用者輸入的數字
-  await storage.put("settings", { id: "goals", goals: { kcal: 1800.4, protein: 90.25, veg: 2.25, waterMl: 2000.6 } });
+  await saveGoalsLikeOldVersion(storage, { kcal: 1800.4, protein: 90.25, veg: 2.25, waterMl: 2000.6 });
 
   assert.deepEqual(await diary.getGoals(), { kcal: 1800, protein: 90.3, veg: 2.3, waterMl: 2001 });
 });

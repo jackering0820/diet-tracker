@@ -14,8 +14,6 @@ export const GOAL_STATUSES = Object.freeze({
 });
 
 // 檢查並整理目標：每項必須是 0 或正數，null 表示未設定。
-// 刻意四捨五入到畫面顯示的位數（和顯示用同一個函式）：存的數字就是看到的數字，
-// 畫面寫「2.3 / 2.3」時判斷一定是達標，不會因為背後存的是 2.25 而不一致。
 export function validateGoals(goals) {
   return Object.fromEntries(
     GOAL_MEASURES.map(({ key, name }) => {
@@ -23,17 +21,20 @@ export function validateGoals(goals) {
       if (v !== null && (typeof v !== "number" || !Number.isFinite(v) || v < 0)) {
         throw new Error(`${name}目標必須是 0 或正數，或留空`);
       }
-      return [key, v === null ? null : roundMeasure(key, v)];
+      return [key, v];
     }),
   );
 }
 
-// 把存起來的目標補上預設值：以後新增目標時，舊的存檔也能正常使用。
-// 改版前存的目標沒有四捨五入（例如 2.25），讀取時一起處理，不需要另外轉換資料。
+// 把存起來的目標整理成使用中的目標：每一次讀取目標都經過這裡。
+// - 補上預設值：以後新增目標時，舊的存檔也能正常使用
+// - 刻意四捨五入到畫面顯示的位數（和顯示用同一個函式）：看到的數字就是判斷用的數字，
+//   畫面寫「2.3 / 2.3」時一定是達標。剛存的、改版前存的（例如 2.25）、匯入的目標都一樣，
+//   所以只需要在這一處處理，不需要另外轉換資料
 export function withDefaults(saved) {
   const goals = { ...DEFAULT_GOALS, ...saved };
   return Object.fromEntries(
-    GOAL_MEASURES.map(({ key }) => [key, goals[key] === null ? null : roundMeasure(key, goals[key])]),
+    GOAL_MEASURES.map(({ key }) => [key, typeof goals[key] === "number" ? roundMeasure(key, goals[key]) : goals[key]]),
   );
 }
 

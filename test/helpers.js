@@ -36,3 +36,9 @@ export function claudeReply(items) {
     },
   };
 }
+
+// 模擬改版前的 App 存下的目標：當時原樣存下使用者輸入的數字，沒有四捨五入。
+// 沒有公開操作做得出這種舊存檔，所以只在這裡直接寫入儲存層，存檔格式也只寫在這一處。
+export async function saveGoalsLikeOldVersion(storage, goals) {
+  await storage.put("settings", { id: "goals", goals });
+}
