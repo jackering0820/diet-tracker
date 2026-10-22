@@ -11,6 +11,11 @@ import { renderProgress } from "./goals-view.js";
 import { createSettings } from "./settings-view.js";
 import { saveBackup } from "./backup.js";
 import { createHistory, formatDayTitle } from "./history-view.js";
+import { startSky } from "./sky.js";
+import { installKeyRipple } from "./keys.js";
+
+startSky($("sky"));
+installKeyRipple();
 
 // 新版 App 要升級資料庫時，重新整理以載入新版。
 const storage = await createIndexedDbStorage({ onOutdated: () => location.reload() });

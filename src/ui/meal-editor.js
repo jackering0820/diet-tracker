@@ -45,7 +45,8 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     $("item-form-title").textContent = "修改食物";
     $("item-submit").textContent = "更新這一項";
     $("item-cancel").hidden = false;
-    form.scrollIntoView({ behavior: "smooth", block: "start" });
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    form.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   }
 
   function itemRow(item) {
