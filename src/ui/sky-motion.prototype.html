@@ -1,0 +1,458 @@
+<title>星空動態原型</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--
+  原型（用完就丟，不會進 main）：星空背景要不要加上 3D 空間和 RGB 光暈？
+  三個方案用底部的切換列比較，網址 #plan1、#plan2、#now 可以直接打開某一個：
+    方案 1：3D 星空和 RGB 光暈，只畫一次，平常完全靜止
+    方案 2：平常靜止；打開 App、加水、記一餐時 3D 轉動約 2.6 秒，新點亮的星星有 RGB 光暈，轉動越快 RGB 分得越開
+    現在：目前 App 的平面星空（對照用）
+  「減少動態效果」開啟時，方案 2 不轉動。
+-->
+<style>
+/* 版面：模擬今天畫面的頂端（分頁、標題、喝水卡片），背後是全螢幕的 WebGL 星空；底部的淺色切換列只屬於原型 */
+:root {
+  --bg: #08192B;
+  --card: #0D2A40;
+  --text: #EEF3F7;
+  --muted: rgb(238 243 247 / 0.7);
+  --border: rgb(238 243 247 / 0.14);
+  --field: rgb(0 0 0 / 0.28);
+  --accent: #1E88E5;
+  --accent-ink: #04121F;
+  --accent-edge: #0B3E6B;
+  --secondary: #0F3A52;
+  --secondary-edge: rgb(238 243 247 / 0.72);
+  --highlight: #6FD3FF;
+  --star: #BFEAFF;
+  --proto-bg: #F4EFE3;
+  --proto-ink: #15212C;
+  --font: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100dvh;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 120px;
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+#sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; display: block; }
+.n { font-variant-numeric: tabular-nums; }
+
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; padding-block: 8px 4px; }
+.tabs { display: flex; gap: 8px; padding: 4px; border: 1px solid var(--border); border-radius: 999px; background: var(--field); }
+.tabs span { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 40px; border-radius: 999px; color: var(--muted); font-weight: 700; }
+.tabs .on { background: var(--accent); color: var(--accent-ink); }
+h1 { margin: 14px 0 0; font-size: 28px; text-wrap: balance; }
+.date { margin: 4px 0 0; color: var(--muted); }
+
+/* 星座在頂端右側的這塊空間，留白讓它看得到 */
+.sky-room { height: 120px; }
+
+.card { margin: 12px 0; padding: 16px; border: 1px solid var(--border); border-radius: 20px; background: var(--card); }
+.card h2 { margin: 0; font-size: 20px; }
+.big { display: flex; align-items: baseline; gap: 6px; margin-top: 8px; }
+.big b { font-size: 44px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; }
+.big span { font-size: 14px; color: var(--muted); white-space: nowrap; }
+.mini { display: flex; gap: 3px; margin-left: auto; align-self: center; }
+.mini svg { width: 14px; height: 14px; }
+.mini path { fill: none; stroke: rgb(238 243 247 / 0.35); stroke-width: 1.6; }
+.mini .lit path { fill: var(--star); stroke: var(--star); }
+.keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.keys.two { grid-template-columns: minmax(0, 1fr) auto; }
+
+/* 鍵帽按鍵（和 App 一樣的按下手感） */
+button {
+  --face: var(--secondary); --ink: var(--text); --edge: var(--secondary-edge);
+  min-height: 44px; margin-bottom: 4px; padding: 0 18px;
+  border: 2px solid var(--edge); border-radius: 999px; background: var(--face); color: var(--ink);
+  box-shadow: 0 4px 0 var(--edge); font: 700 16px var(--font); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.34s cubic-bezier(0.3, 1.9, 0.5, 1), box-shadow 0.34s cubic-bezier(0.3, 1.9, 0.5, 1);
+}
+button:active { transform: translateY(4px) scale(0.97); box-shadow: 0 0 0 var(--edge); transition-duration: 0.07s; }
+button:focus-visible { outline: 2px solid var(--highlight); outline-offset: 3px; }
+button.primary { --face: var(--accent); --ink: var(--accent-ink); --edge: var(--accent-edge); }
+
+.note { font-size: 14px; color: var(--muted); }
+.note p { margin: 8px 0 0; }
+.note strong { color: var(--text); }
+.state { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--field); font-size: 13px; color: var(--muted); }
+.state b { color: var(--text); }
+.warn { color: #FFB4C2; }
+
+/* 原型的切換列：淺色、不屬於設計 */
+.switcher {
+  position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px; padding: 4px;
+  border-radius: 999px; background: var(--proto-bg); color: var(--proto-ink);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.5); font: 600 14px var(--font); white-space: nowrap;
+}
+.switcher button {
+  --face: transparent; --ink: var(--proto-ink); --edge: transparent;
+  min-height: 40px; min-width: 40px; margin: 0; padding: 0 10px; box-shadow: none; font-size: 18px;
+}
+.switcher button:active { transform: scale(0.92); }
+.switcher .label { padding: 0 6px; min-width: 11em; text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  button, button:active { transition: none; }
+}
+</style>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+
+<header>
+  <div class="tabs" aria-hidden="true"><span class="on">今天</span><span>歷史</span><span>設定</span></div>
+  <h1>今天</h1>
+  <p class="date" id="date"></p>
+</header>
+
+<div class="sky-room" aria-hidden="true"></div>
+
+<section class="card" aria-labelledby="water-h">
+  <h2 id="water-h">💧 喝水</h2>
+  <div class="big">
+    <b id="water" class="n">750</b><span class="n">/ 2,000 ml</span>
+    <span class="mini" id="mini" aria-hidden="true"></span>
+  </div>
+  <div class="keys">
+    <button type="button" id="add250" class="n">+250</button>
+    <button type="button" id="add500" class="n">+500</button>
+    <button type="button" id="reset">重設</button>
+  </div>
+  <div class="keys two">
+    <button type="button" id="meal" class="primary">📷 記一餐</button>
+    <button type="button" id="reopen">重新打開 App</button>
+  </div>
+  <p class="state" id="state" role="status"></p>
+</section>
+
+<section class="card note" aria-labelledby="how-h">
+  <h2 id="how-h">怎麼比較</h2>
+  <p>用底部的切換列換方案。每個方案都按幾次 <strong>+250</strong>、<strong>記一餐</strong>、<strong>重新打開 App</strong>，看頂端的星座和背後的星空。</p>
+  <p>「重畫次數」是背景總共畫了幾張畫面：靜止時不會增加，代表不耗電。方案 2 每次轉動大約畫 150 張，之後就停下來。</p>
+  <p>喝到 2,000 ml 八顆星全亮，按「重設」回到 750 ml。這頁不會存任何資料。</p>
+  <p id="reduced" class="warn" hidden>這支手機開了「減少動態效果」，所以方案 2 不會轉動，看起來和方案 1 一樣。</p>
+</section>
+
+<nav class="switcher" aria-label="切換原型方案">
+  <button type="button" id="prev" aria-label="上一個方案">←</button>
+  <span class="label" id="label" aria-live="polite"></span>
+  <button type="button" id="next" aria-label="下一個方案">→</button>
+</nav>
+
+<script>
+"use strict";
+const VARIANTS = [
+  { key: "plan1", name: "方案 1・靜態 3D", depth: true, motion: false },
+  { key: "plan2", name: "方案 2・變化時轉動", depth: true, motion: true },
+  { key: "now", name: "現在的星空", depth: false, motion: false },
+];
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+document.getElementById("reduced").hidden = !reduceMotion;
+document.getElementById("date").textContent = new Date().toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
+
+let variantIndex = Math.max(0, VARIANTS.findIndex((v) => "#" + v.key === location.hash));
+const variant = () => VARIANTS[variantIndex];
+const GOAL = 2000;
+let water = 750;
+const litCount = () => Math.min(8, Math.floor((water / GOAL) * 8));
+
+// ---------- WebGL ----------
+const canvas = document.getElementById("sky");
+const gl = canvas.getContext("webgl", { antialias: false });
+
+const BG_VERT = "attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }";
+// 和 App 一樣的夜空漸層與星雲；uFlat = 1 時加上 App 現在的平面星星
+const BG_FRAG = `
+precision mediump float;
+uniform vec2 uRes; uniform float uDpr; uniform float uFlat;
+float h1(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(h1(i), h1(i + vec2(1.0, 0.0)), f.x), mix(h1(i + vec2(0.0, 1.0)), h1(i + vec2(1.0, 1.0)), f.x), f.y); }
+float fbm(vec2 p) { return 0.5 * vn(p) + 0.25 * vn(p * 2.03 + 7.1) + 0.125 * vn(p * 4.01 + 3.3); }
+void main() {
+  vec2 fc = gl_FragCoord.xy, uv = fc / uRes;
+  vec3 col = mix(vec3(0.031, 0.098, 0.169), vec3(0.055, 0.208, 0.314), smoothstep(0.0, 1.0, uv.y));
+  vec2 p = vec2(uv.x * uRes.x / uRes.y, uv.y);
+  float n = fbm(p * 1.6), n2 = fbm(p * 3.1 + n * 1.3);
+  col += vec3(0.04, 0.22, 0.30) * smoothstep(0.55, 0.95, n2) * 0.35 * smoothstep(0.2, 0.9, uv.y);
+  col += vec3(0.05, 0.25, 0.20) * smoothstep(0.60, 0.95, n) * 0.18;
+  if (uFlat > 0.5) {
+    for (int L = 0; L < 2; L++) {
+      float fl = float(L), cs = (fl < 0.5 ? 13.0 : 29.0) * uDpr;
+      vec2 cell = floor(fc / cs); float h = h1(cell + fl * 7.3);
+      vec2 cc = (cell + 0.5) * cs + (vec2(h1(cell + 1.9 + fl), h1(cell + 5.1 + fl)) - 0.5) * cs * 0.7;
+      float on = step(fl < 0.5 ? 0.90 : 0.80, h), r = (fl < 0.5 ? 0.55 : 1.0) * uDpr;
+      col += vec3(0.86, 0.93, 1.0) * (1.0 - smoothstep(r * 0.4, r * 1.6, length(fc - cc))) * on * (fl < 0.5 ? 0.45 : 0.85) * (0.6 + 0.4 * h);
+    }
+  }
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+// 星星：3D 空間裡的點，依視角轉動後做透視投影；uOffset 讓同一批點往旁邊錯開，用來做 RGB 分光
+const SP_VERT = `
+attribute vec3 aPos; attribute float aSize; attribute vec4 aColor;
+uniform mat3 uRot; uniform vec3 uPivot; uniform float uDolly; uniform float uF; uniform float uAspect;
+uniform float uDpr; uniform float uSizeMul; uniform vec2 uOffset; uniform float uFlat;
+varying vec4 vColor;
+void main() {
+  vec3 p = uRot * (aPos - uPivot) + uPivot;
+  p.z += uDolly;
+  float w = max(-p.z, 0.05);
+  gl_Position = vec4(p.x * uF / uAspect + uOffset.x * w, p.y * uF + uOffset.y * w, 0.0, w);
+  gl_PointSize = -p.z < 0.3 ? 0.0 : aSize * uDpr * uSizeMul * (uFlat > 0.5 ? 1.0 : 3.0 / w);
+  float fade = uFlat > 0.5 ? 1.0 : clamp(5.5 / w, 0.45, 1.0);
+  vColor = vec4(aColor.rgb, aColor.a * fade);
+}`;
+// uMode：0 星星本體、1 柔和光暈、2 彩虹光環（像光穿過稜鏡）
+const SP_FRAG = `
+precision mediump float;
+varying vec4 vColor; uniform vec3 uMask; uniform float uMode; uniform float uHue;
+vec3 rainbow(float h) { return 0.5 + 0.5 * cos(6.2831 * (h + vec3(0.0, 0.33, 0.67))); }
+void main() {
+  vec2 d = gl_PointCoord * 2.0 - 1.0; float r = length(d);
+  if (r > 1.0) discard;
+  vec3 c;
+  if (uMode < 0.5) c = vColor.rgb * exp(-r * r * 7.0);
+  else if (uMode < 1.5) c = vColor.rgb * exp(-r * r * 3.5) * (1.0 - r);
+  else {
+    float ring = exp(-pow((r - 0.62) / 0.16, 2.0));
+    c = (rainbow(r * 1.3 + uHue) * ring * 0.9 + vColor.rgb * exp(-r * r * 6.0) * 0.6) * (1.0 - r);
+  }
+  gl_FragColor = vec4(c * uMask * vColor.a, 1.0);
+}`;
+
+function compile(type, src) {
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+function program(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
+  const u = {}; const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const name = gl.getActiveUniform(p, i).name; u[name] = gl.getUniformLocation(p, name); }
+  return { p, u };
+}
+
+// 固定的亂數種子：每次打開星星都在同樣的位置
+function rng(seed) { return () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+// 頂端星座的八顆星：App 的座標（390×150）放進 3D 空間，各自有不同的深度
+const CONST_PX = [[196, 92], [222, 78], [250, 98], [278, 84], [304, 104], [330, 86], [356, 110], [330, 132]];
+const CONST_DEPTH = [0.45, -0.35, 0.2, -0.55, 0.3, -0.2, 0.55, 0.05];
+const CONST_3D = CONST_PX.map(([x, y], i) => [0.38 + ((x - 276) / 80) * 0.45, 1.5 - ((y - 78) / 54) * 0.42, -3.0 + CONST_DEPTH[i]]);
+const PIVOT = CONST_3D.reduce((s, p) => s.map((v, i) => v + p[i] / 8), [0, 0, 0]);
+
+let bg, sp, starBuf, starCount, dynBuf, quadBuf;
+if (gl) {
+  bg = program(BG_VERT, BG_FRAG);
+  sp = program(SP_VERT, SP_FRAG);
+  quadBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  // 3D 星空：大小、亮度、顏色略有不同，少數偏暖或偏冷
+  const r = rng(7); const stars = [];
+  for (let i = 0; i < 1400; i++) {
+    const tint = r();
+    const col = tint < 0.08 ? [1.0, 0.86, 0.78] : tint < 0.2 ? [0.75, 0.86, 1.0] : [0.9, 0.95, 1.0];
+    stars.push(r() * 7 - 3.5, r() * 9 - 4.5, -1.2 - r() * 8, 0.6 + Math.pow(r(), 3) * 1.8, ...col, 0.55 + r() * 0.45);
+  }
+  starCount = stars.length / 8;
+  starBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, starBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(stars), gl.STATIC_DRAW);
+  dynBuf = gl.createBuffer();
+  canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); setState("繪圖區被系統收回，請重新整理"); });
+}
+
+// ---------- 視角與動畫 ----------
+const REST = { yaw: 0.22, pitch: -0.1, dolly: 0 };
+let anim = null;      // { kind: "open" | "swing", start, dur, dir, newStars }
+let swingDir = 1;
+let frames = 0;
+let prevPose = null;
+const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+
+function poseAt(now) {
+  if (!variant().depth) return { yaw: 0, pitch: 0, dolly: 0 };
+  if (!anim) return { ...REST };
+  const p = Math.min(1, (now - anim.start) / anim.dur);
+  if (anim.kind === "open") {
+    const e = 1 - easeOut(p);
+    return { yaw: REST.yaw - 0.9 * e, pitch: REST.pitch + 0.25 * e, dolly: -2.4 * e };
+  }
+  const s = Math.sin(Math.PI * ease(p));
+  return { yaw: REST.yaw + 0.55 * s * anim.dir, pitch: REST.pitch - 0.12 * s, dolly: 0.6 * s };
+}
+
+function rotation(yaw, pitch) {
+  const cy = Math.cos(yaw), sy = Math.sin(yaw), cx = Math.cos(pitch), sx = Math.sin(pitch);
+  // R = Rx(pitch) · Ry(yaw)，依 WebGL 的欄優先排列
+  return new Float32Array([cy, sx * sy, -cx * sy, 0, cx, sx, sy, -sx * cy, cx * cy]);
+}
+
+// 一批點畫一次或分成 R、G、B 三次（往兩邊錯開 spreadPx 像素）
+function passes(spreadPx) {
+  if (spreadPx < 0.3) return [[[1, 1, 1], 0]];
+  const dx = (2 * spreadPx * dpr()) / canvas.width;
+  return [[[1, 0, 0], -dx], [[0, 1, 0], 0], [[0, 0, 1], dx]];
+}
+const dpr = () => Math.min(1.5, devicePixelRatio || 1);
+
+function drawPoints(buf, count, { mode, sizeMul = 1, spread = 0, hue = 0 }) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  const pos = gl.getAttribLocation(sp.p, "aPos"), size = gl.getAttribLocation(sp.p, "aSize"), col = gl.getAttribLocation(sp.p, "aColor");
+  gl.enableVertexAttribArray(pos); gl.enableVertexAttribArray(size); gl.enableVertexAttribArray(col);
+  gl.vertexAttribPointer(pos, 3, gl.FLOAT, false, 32, 0);
+  gl.vertexAttribPointer(size, 1, gl.FLOAT, false, 32, 12);
+  gl.vertexAttribPointer(col, 4, gl.FLOAT, false, 32, 16);
+  gl.uniform1f(sp.u.uMode, mode); gl.uniform1f(sp.u.uSizeMul, sizeMul); gl.uniform1f(sp.u.uHue, hue);
+  for (const [mask, dx] of passes(spread)) {
+    gl.uniform3fv(sp.u.uMask, mask); gl.uniform2f(sp.u.uOffset, dx, 0);
+    gl.drawArrays(gl.POINTS, 0, count);
+  }
+}
+function drawDynamic(points, opts) {
+  if (!points.length) return;
+  gl.bindBuffer(gl.ARRAY_BUFFER, dynBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.DYNAMIC_DRAW);
+  drawPoints(dynBuf, points.length / 8, opts);
+}
+
+function draw(now) {
+  if (!gl) return;
+  frames++;
+  const d = dpr(), w = Math.round(canvas.clientWidth * d), h = Math.round(canvas.clientHeight * d);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  gl.viewport(0, 0, w, h);
+  const v = variant(), lit = litCount(), pose = poseAt(now);
+
+  // 轉動速度（每秒幾弧度）：轉得越快，RGB 分得越開
+  const speed = prevPose ? Math.abs(pose.yaw - prevPose.yaw) / Math.max(1, now - prevPose.t) * 1000 : 0;
+  prevPose = anim ? { ...pose, t: now } : null;
+
+  gl.disable(gl.BLEND);
+  gl.useProgram(bg.p);
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+  const pl = gl.getAttribLocation(bg.p, "p"); gl.enableVertexAttribArray(pl); gl.vertexAttribPointer(pl, 2, gl.FLOAT, false, 0, 0);
+  gl.uniform2f(bg.u.uRes, w, h); gl.uniform1f(bg.u.uDpr, d); gl.uniform1f(bg.u.uFlat, v.depth ? 0 : 1);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  gl.disableVertexAttribArray(pl);
+
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+  gl.useProgram(sp.p);
+  gl.uniformMatrix3fv(sp.u.uRot, false, rotation(pose.yaw, pose.pitch));
+  gl.uniform3fv(sp.u.uPivot, PIVOT); gl.uniform1f(sp.u.uDolly, pose.dolly);
+  gl.uniform1f(sp.u.uF, 1 / Math.tan((70 * Math.PI) / 360)); gl.uniform1f(sp.u.uAspect, w / h);
+  gl.uniform1f(sp.u.uDpr, d); gl.uniform1f(sp.u.uFlat, v.depth ? 0 : 1);
+
+  const motionSpread = Math.min(9, speed * 14);
+  if (v.depth) drawPoints(starBuf, starCount, { mode: 0, sizeMul: 3.2, spread: motionSpread });
+
+  // 星座：點亮的星星之間連成發光的線（沿著線排一串小光點）
+  const lines = [];
+  for (let i = 0; i + 1 < lit; i++) {
+    const a = CONST_3D[i], b = CONST_3D[i + 1];
+    for (let k = 0; k <= 40; k++) {
+      const t = k / 40;
+      lines.push(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, v.depth ? 5 : 3, 0.55, 0.85, 1.0, v.depth ? 0.45 : 0.3);
+    }
+  }
+  drawDynamic(lines, { mode: 1, sizeMul: 1, spread: v.depth ? Math.max(0.8, motionSpread) : 0 });
+
+  // 星座的八顆星：沒點亮是暗的小點；點亮的有光暈，3D 方案再加 RGB 彩虹光環
+  const p = anim ? Math.min(1, (now - anim.start) / anim.dur) : 1;
+  const dim = [], cores = [], glows = [], halos = [], bloomHalos = [];
+  CONST_3D.forEach((s, i) => {
+    if (i >= lit) { dim.push(...s, 6, 0.92, 0.93, 1.0, 0.7); return; }
+    const isNew = anim && anim.newStars.includes(i);
+    const bell = isNew ? Math.exp(-Math.pow((p - 0.25) / 0.2, 2)) : 0;
+    cores.push(...s, 9 + 8 * bell, 0.85, 0.94, 1.0, 1.0);
+    glows.push(...s, v.depth ? 28 : 16, 0.43, 0.83, 1.0, 0.5);
+    if (!v.depth) return;
+    if (isNew) bloomHalos.push(...s, 52 * (1 + 1.6 * bell + 0.2 * p), 1, 1, 1, 0.35 + 1.4 * bell);
+    else halos.push(...s, 52, 1, 1, 1, 0.35);
+  });
+  drawDynamic(dim, { mode: 0 });
+  drawDynamic(glows, { mode: 1 });
+  drawDynamic(halos, { mode: 2, spread: 1.6 + motionSpread * 0.5 });
+  drawDynamic(bloomHalos, { mode: 2, spread: 2 + 12 * (1 - p), hue: p * 0.6 });
+  drawDynamic(cores, { mode: 0 });
+
+  setState();
+}
+
+let raf = 0;
+function loop(now) {
+  draw(now);
+  if (anim && now - anim.start < anim.dur) raf = requestAnimationFrame(loop);
+  else { anim = null; prevPose = null; raf = 0; draw(performance.now()); }
+}
+// 方案 2 才會轉動；其他方案（或減少動態效果）只畫一張
+function play(kind, newStars = []) {
+  if (!variant().motion || reduceMotion) { draw(performance.now()); return; }
+  cancelAnimationFrame(raf);
+  if (kind === "swing") swingDir = -swingDir;
+  anim = { kind, start: performance.now(), dur: kind === "open" ? 2600 : 2400, dir: swingDir, newStars };
+  prevPose = null;
+  raf = requestAnimationFrame(loop);
+}
+
+// ---------- 畫面上的數字與狀態 ----------
+const STAR_PATH = "M12 2.8l2.75 5.6 6.15.9-4.45 4.35 1.05 6.1L12 16.9l-5.5 2.85 1.05-6.1L3.1 9.3l6.15-.9z";
+const mini = document.getElementById("mini");
+for (let i = 0; i < 8; i++) mini.insertAdjacentHTML("beforeend", `<svg viewBox="0 0 24 24"><path d="${STAR_PATH}"/></svg>`);
+function renderNumbers() {
+  document.getElementById("water").textContent = water.toLocaleString("zh-TW");
+  [...mini.children].forEach((s, i) => s.classList.toggle("lit", i < litCount()));
+}
+function setState(note) {
+  const v = variant();
+  const moving = anim ? "轉動中" : "靜止";
+  document.getElementById("state").innerHTML = note ? note :
+    `<b>${v.name}</b>・點亮 <b class="n">${litCount()}</b> 顆・背景：<b>${moving}</b>・重畫次數 <b class="n">${frames.toLocaleString("zh-TW")}</b>`;
+  document.getElementById("label").textContent = `${variantIndex + 1}/3 ${v.name}`;
+}
+
+function addWater(ml) {
+  const before = litCount();
+  water += ml;
+  renderNumbers();
+  const after = litCount();
+  const newStars = Array.from({ length: after - before }, (_, k) => before + k);
+  play("swing", newStars);
+}
+document.getElementById("add250").addEventListener("click", () => addWater(250));
+document.getElementById("add500").addEventListener("click", () => addWater(500));
+document.getElementById("reset").addEventListener("click", () => { water = 750; renderNumbers(); cancelAnimationFrame(raf); anim = null; draw(performance.now()); });
+document.getElementById("meal").addEventListener("click", () => play("swing"));
+document.getElementById("reopen").addEventListener("click", () => play("open"));
+
+function switchTo(i) {
+  variantIndex = (i + VARIANTS.length) % VARIANTS.length;
+  try { history.replaceState(null, "", "#" + variant().key); } catch {}
+  cancelAnimationFrame(raf); anim = null; prevPose = null;
+  play("open");
+}
+document.getElementById("prev").addEventListener("click", () => switchTo(variantIndex - 1));
+document.getElementById("next").addEventListener("click", () => switchTo(variantIndex + 1));
+addEventListener("keydown", (e) => {
+  if (e.target.closest?.("input, textarea, [contenteditable]")) return;
+  if (e.key === "ArrowLeft") switchTo(variantIndex - 1);
+  if (e.key === "ArrowRight") switchTo(variantIndex + 1);
+});
+let resizeTimer = 0;
+addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (!anim) draw(performance.now()); }, 120); });
+
+renderNumbers();
+if (!gl) setState("這個瀏覽器不支援 WebGL，看不到星空");
+else play("open");
+</script>
