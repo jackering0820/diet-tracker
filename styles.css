@@ -1,42 +1,48 @@
+/* 觀星書房的冷色色票（只有深色）。配色邏輯：深色底、一個鮮明的主色給主要動作、
+   一個淺亮色當強調、綠色系代表達標、冷白文字；只有超過和錯誤用暖色。 */
 :root {
-  --bg: #f4f7f5;
-  --card: #ffffff;
-  --text: #1f2a24;
-  --muted: #66756c;
-  --accent: #2f855a;
-  --accent-text: #ffffff;
-  --danger: #c53030;
-  --border: #dde5df;
-  color-scheme: light dark;
+  --bg: #08192B;          /* 背景（夜空下方） */
+  --bg-top: #0E3550;      /* 背景（夜空上方） */
+  --card: #0D2A40;
+  --field: rgb(0 0 0 / 0.28);
+  --text: #EEF3F7;
+  --muted: rgb(238 243 247 / 0.70);
+  --border: rgb(238 243 247 / 0.14);
+  --accent: #1E88E5;      /* 主要按鍵 */
+  --accent-text: #04121F;
+  --accent-edge: #0B3E6B;
+  --secondary: #0F3A52;   /* 次要按鍵 */
+  --secondary-edge: rgb(238 243 247 / 0.72);
+  --highlight: #6FD3FF;   /* 強調、點亮的星星 */
+  --success: #3EE6B0;     /* 達標 */
+  --over: #FF5C7A;        /* 超過上限 */
+  --danger: #FF9DB0;      /* 錯誤文字、危險按鍵 */
+  --danger-text: #2A0D0B;
+  --danger-edge: #7A1E33;
+  color-scheme: dark;
 }
 
 /* hidden 屬性只是瀏覽器內建的一條 display: none，下面任何寫了 display 的規則都會蓋掉它
    （例如備份提醒的 display: flex 讓提醒永遠顯示）。這條讓 hidden 永遠優先。 */
 [hidden] { display: none !important; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121714;
-    --card: #1c231f;
-    --text: #e6ede8;
-    --muted: #93a39a;
-    --accent: #48bb78;
-    --accent-text: #0d1a12;
-    --danger: #fc8181;
-    --border: #2c3631;
-  }
-}
-
 * { box-sizing: border-box; }
 
+/* 背景：WebGL 夜空畫在 #sky；畫不出來時（不支援或被收回），這裡的漸層和星點就是夜空 */
 body {
   margin: 0;
+  min-height: 100dvh;
   padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 23px 31px, rgb(255 255 255 / 0.7) 0 0.8px, transparent 1.4px) 0 0 / 97px 89px,
+    radial-gradient(circle at 61px 13px, rgb(255 255 255 / 0.4) 0 0.7px, transparent 1.2px) 0 0 / 131px 117px,
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 60%);
   color: var(--text);
-  font-family: -apple-system, "PingFang TC", "Noto Sans TC", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", sans-serif;
   font-size: 17px;
+  -webkit-font-smoothing: antialiased;
 }
+#sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 
 header { padding: 16px 0 8px; }
 h1 { margin: 0; font-size: 28px; }
@@ -52,15 +58,95 @@ h1 { margin: 0; font-size: 28px; }
 h2 { margin: 0; font-size: 20px; }
 .total { font-size: 36px; font-weight: 700; margin: 8px 0 16px; }
 
-button {
+/* 按鍵：像實體按鍵。44px 的膠囊面加 2px 邊框，下面一塊同色、往下偏 4px 的底座（用陰影畫）。
+   按下：面在 70ms 內沉到底座上並縮到 97%；放開：0.34 秒帶點回彈地彈回。
+   點擊處擴散一圈漣漪（keys.js 給位置），滑過時左上角一顆小星星。 */
+button, .button-like {
+  --face: var(--accent);
+  --ink: var(--accent-text);
+  --edge: var(--accent-edge);
+  position: relative;
   font: inherit;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 16px;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-weight: 600;
+  font-weight: 700;
   min-height: 44px;
+  margin-bottom: 4px;
+  padding: 0 20px;
+  border: 2px solid var(--edge);
+  border-radius: 999px;
+  background: var(--face);
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--edge);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.34s cubic-bezier(0.3, 1.9, 0.5, 1), box-shadow 0.34s cubic-bezier(0.3, 1.9, 0.5, 1);
+}
+button:active, .button-like:active {
+  transform: translateY(4px) scale(0.97);
+  box-shadow: 0 0 0 var(--edge);
+  transition-duration: 0.07s;
+  transition-timing-function: ease-out;
+}
+button::after, .button-like::after {
+  content: "";
+  position: absolute;
+  left: var(--rx, 50%);
+  top: var(--ry, 50%);
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.4), transparent 70%);
+  opacity: 0;
+  transform: scale(0);
+  pointer-events: none;
+}
+.rip::after { animation: key-ripple 0.6s cubic-bezier(0.2, 0.7, 0.3, 1); }
+@keyframes key-ripple { from { opacity: 0.75; transform: scale(0.2); } to { opacity: 0; transform: scale(5); } }
+button::before, .button-like::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: -9px;
+  width: 11px;
+  height: 11px;
+  background: var(--highlight);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  opacity: 0;
+  transform: scale(0.3) rotate(-30deg);
+  transition: opacity 0.15s, transform 0.3s cubic-bezier(0.2, 1.6, 0.4, 1);
+  pointer-events: none;
+}
+@media (hover: hover) {
+  button:hover::before, .button-like:hover::before { opacity: 1; transform: none; }
+}
+/* 主要／次要／危險三種按鍵；停用的規則寫在後面，才蓋得過這三種顏色 */
+button.secondary, .button-like.secondary { --face: var(--secondary); --ink: var(--text); --edge: var(--secondary-edge); }
+button.danger { --face: var(--danger); --ink: var(--danger-text); --edge: var(--danger-edge); }
+button:disabled {
+  --face: #1A2B3A;
+  --ink: rgb(238 243 247 / 0.5);
+  --edge: #2A4055;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 0 var(--edge);
+}
+button:disabled::before, button:disabled::after { display: none; }
+
+/* 文字型的按鈕（連結、整列可點的餐點和日子、刪除）不是按鍵：沒有底座、不下沉、沒有漣漪和星星 */
+button.link, button.delete, .meal-row, .history-row {
+  margin-bottom: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  transition: none;
+}
+button.link:active, button.delete:active, .meal-row:active, .history-row:active { transform: none; opacity: 0.7; }
+button.link::before, button.link::after, button.delete::before, button.delete::after,
+.meal-row::before, .meal-row::after, .history-row::before, .history-row::after { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
 .quick-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -76,7 +162,7 @@ button {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--field);
   color: var(--text);
   min-height: 44px;
 }
@@ -93,7 +179,7 @@ button {
 }
 .entries .time { color: var(--muted); width: 3.5em; }
 .entries .ml { flex: 1; font-weight: 600; }
-.entries button.delete { background: transparent; color: var(--danger); padding: 8px 12px; }
+button.delete { color: var(--danger); padding: 8px 12px; }
 
 .empty { color: var(--muted); margin: 16px 0 0; }
 
@@ -109,9 +195,7 @@ button {
 .nutrition dd { grid-row: 2; margin: 0; font-weight: 700; font-size: 18px; }
 
 button.wide { width: 100%; margin-top: 16px; }
-button.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-button.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
-button.link { background: transparent; color: var(--accent); padding: 8px; }
+button.link { color: var(--highlight); padding: 8px; }
 .grow { flex: 1; min-width: 0; }
 
 .entries li:has(> .meal-row) { padding: 0; }
@@ -121,7 +205,6 @@ button.link { background: transparent; color: var(--accent); padding: 8px; }
   gap: 12px;
   width: 100%;
   padding: 12px 0;
-  background: transparent;
   color: var(--text);
   font-weight: 400;
   border-radius: 0;
@@ -140,7 +223,7 @@ dialog {
   background: var(--card);
   color: var(--text);
 }
-dialog::backdrop { background: rgb(0 0 0 / 0.4); }
+dialog::backdrop { background: rgb(2 8 16 / 0.65); }
 .editor { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
 .editor h3 { margin: 20px 0 0; font-size: 16px; color: var(--muted); }
 
@@ -153,7 +236,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--field);
   color: var(--text);
   min-height: 44px;
 }
@@ -183,9 +266,10 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 .progress-head .status { font-size: 14px; min-width: 4.5em; text-align: right; }
 .bar { height: 10px; border-radius: 5px; background: var(--border); overflow: hidden; }
 .bar > div { height: 100%; border-radius: 5px; background: var(--muted); }
-.achieved .bar > div { background: var(--accent); }
-.over .bar > div { background: var(--danger); }
-.over .status { color: var(--danger); }
+.achieved .bar > div { background: var(--success); }
+.achieved .status { color: var(--success); }
+.over .bar > div { background: var(--over); }
+.over .status { color: var(--over); }
 .unset .status { color: var(--muted); }
 
 /* 標題列按鈕、回到今天 */
@@ -208,7 +292,6 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
   gap: 6px;
   width: 100%;
   padding: 12px 0;
-  background: transparent;
   color: var(--text);
   font-weight: 400;
   border-radius: 0;
@@ -216,8 +299,9 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 }
 .history-date { font-weight: 700; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-size: 13px; padding: 2px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); }
-.chip.over, .chip.missed { color: var(--danger); }
+.chip { font-size: 13px; padding: 2px 8px; border-radius: 999px; background: var(--field); border: 1px solid var(--border); }
+.chip.over { color: var(--over); }
+.chip.missed { color: var(--danger); }
 .empty-inline { color: var(--muted); font-size: 14px; }
 .noRecords .status { color: var(--muted); }
 
@@ -225,25 +309,19 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
 #settings form + form { margin-top: 24px; padding-top: 4px; border-top: 1px solid var(--border); }
 #settings form .wide { margin-top: 12px; }
 #close-settings { margin-top: 24px; }
-.saved { color: var(--accent); margin: 12px 0 0; }
+.saved { color: var(--success); margin: 12px 0 0; }
 .key-status { margin: 12px 0 0; }
 #key-status { font-family: ui-monospace, Menlo, monospace; font-weight: 600; }
 /* 金鑰欄位：一般文字欄位，但把文字顯示成圓點（不用 type="password"，避免密碼管理工具介入） */
 .masked-input { -webkit-text-security: disc; text-security: disc; font-family: ui-monospace, Menlo, monospace; }
 
 /* 拍照記一餐 */
-.add-meal-buttons { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; margin-top: 16px; }
+.add-meal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.add-meal-buttons > * { padding: 0 10px; font-size: 16px; white-space: nowrap; }
 .button-like {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  padding: 12px 16px;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-weight: 600;
-  min-height: 44px;
-  cursor: pointer;
 }
 .photo-strip { display: flex; gap: 8px; overflow-x: auto; margin-top: 12px; }
 .photo-strip img { height: 96px; border-radius: 10px; flex: none; }
@@ -256,19 +334,17 @@ dialog::backdrop { background: rgb(0 0 0 / 0.4); }
   margin-right: 8px;
   vertical-align: -2px;
   border: 2px solid var(--border);
-  border-top-color: var(--accent);
+  border-top-color: var(--highlight);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 #analysis-actions { margin-top: 8px; }
 #analysis-actions button { flex: 1; }
-.notice { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--bg); color: var(--muted); font-size: 14px; }
+.notice { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--field); color: var(--muted); font-size: 14px; }
 .meal-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; flex: none; }
 .analysis-status.error { color: var(--danger); font-weight: 400; }
-button:disabled { opacity: 0.5; }
-.button-like.secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-.button-like.small { display: inline-flex; margin-top: 12px; padding: 8px 14px; min-height: 40px; font-size: 15px; }
+.button-like.small { display: inline-flex; margin-top: 12px; padding: 0 16px; font-size: 15px; }
 [inert] { opacity: 0.5; }
 
 /* 備份 */
