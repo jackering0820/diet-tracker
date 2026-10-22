@@ -1,7 +1,7 @@
 // 日記核心（Diary Core）：所有業務規則都在這裡，也是唯一的測試 seam。
 // 資料儲存（storage）和時間（clock）由外部注入。
 import { addDays, atTimeOnDay, dayKeyOf, dayRange, isDayKey, validateAt } from "./day.js";
-import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
+import { createMealDraft, defaultMealType, mealTitle, sumNutrients } from "./meal.js";
 import { goalProgress, validateGoals, withDefaults } from "./goals.js";
 import { ANALYSIS_ERRORS, AnalysisError } from "./analysis-error.js";
 import { buildBackup, parseBackup } from "./backup.js";
@@ -43,7 +43,7 @@ export function createDiary({ storage, clock, analyzer }) {
     const water = (await storage.listByTime(WATER, from, to)).sort(byTime);
     const meals = (await storage.listByTime(MEALS, from, to))
       .sort(byTime)
-      .map((meal) => ({ ...meal, totals: sumNutrients(meal.items) }));
+      .map((meal) => ({ ...meal, title: mealTitle(meal.items), totals: sumNutrients(meal.items) }));
     const waterTotalMl = water.reduce((sum, w) => sum + w.ml, 0);
     const nutritionTotals = sumNutrients(meals.flatMap((m) => m.items));
     const hasRecords = meals.length + water.length > 0;

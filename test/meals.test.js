@@ -161,3 +161,16 @@ test("草稿可以預先帶入食物和照片；之後打開修改再存，照�
   assert.deepEqual(meal.photos, photos);
   assert.equal(meal.totals.kcal, 920);
 });
+
+test("某一天的每一餐附上標題：食物名稱依加入順序用「、」串起來", async () => {
+  const { diary } = setup();
+  const draft = diary.newMealDraft();
+  draft.addItem(BENTO);
+  draft.addItem(SOY_MILK);
+  await diary.saveMeal(draft);
+  const single = diary.newMealDraft();
+  single.addItem(SOY_MILK);
+  await diary.saveMeal(single);
+  const { meals } = await diary.getDaySummary(diary.todayKey());
+  assert.deepEqual(meals.map((m) => m.title), ["雞腿便當、無糖豆漿", "無糖豆漿"]);
+});

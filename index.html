@@ -53,16 +53,16 @@
     </section>
 
     <section class="card" aria-labelledby="meals-title">
-      <h2 id="meals-title">🍱 吃了什麼</h2>
+      <div class="sec-h"><h2 id="meals-title">🍱 吃了什麼</h2><span id="meal-hint" class="hint n"></span></div>
       <dl id="nutrition-totals" class="nutrition"></dl>
-      <ul id="meal-list" class="entries"></ul>
-      <p id="meals-empty" class="empty">這天還沒有餐點紀錄</p>
-      <div class="add-meal-buttons">
-        <label class="button-like">
-          📷 拍照記一餐
-          <input id="meal-photos" type="file" accept="image/*" multiple hidden>
+      <!-- 依時間排序的每一餐，可以橫向滑動；今天最後一格是「下一餐」 -->
+      <div id="meal-list" class="shelf meal-shelf" role="group" aria-label="這一天的每一餐，點一下可以修改">
+        <label id="next-meal" class="meal">
+          <span class="cover ghost" aria-hidden="true"><span></span></span>
+          <span class="cap"><span class="t"></span><b>下一餐</b></span>
+          <!-- 選照片的欄位只在視覺上藏起來，鍵盤和 VoiceOver 仍然可以操作 -->
+          <input type="file" accept="image/*" multiple class="sr-only" data-meal-photos>
         </label>
-        <button type="button" id="add-meal" class="secondary">✍️ 手動新增</button>
       </div>
     </section>
 
@@ -93,6 +93,15 @@
       <div id="water-list" class="shelf" aria-label="喝水紀錄，點一筆可以改時間"></div>
       <p id="water-empty" class="empty">還沒有喝水紀錄</p>
     </section>
+
+    <!-- 底部固定：拍照記一餐、手寫 -->
+    <div class="dock">
+      <label class="button-like">
+        <span id="snap-meal-label">📷 拍照記一餐</span>
+        <input type="file" accept="image/*" multiple class="sr-only" data-meal-photos>
+      </label>
+      <button type="button" id="add-meal" class="secondary">✍️ 手寫</button>
+    </div>
   </main>
 
   <!-- 修改喝水時間：從下方滑出的面板 -->
