@@ -10,6 +10,10 @@
   color-scheme: light dark;
 }
 
+/* hidden 屬性只是瀏覽器內建的一條 display: none，下面任何寫了 display 的規則都會蓋掉它
+   （例如備份提醒的 display: flex 讓提醒永遠顯示）。這條讓 hidden 永遠優先。 */
+[hidden] { display: none !important; }
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #121714;
