@@ -85,7 +85,8 @@ test("核心會產生的每一種達標狀態，在狀態目錄裡都有文字�
   }
   assert.deepEqual([...produced].sort(), ["achieved", "missed", "noRecords", "over", "unset"]);
   for (const status of produced) {
-    assert.ok(GOAL_STATUSES[status]?.text, `${status} 缺少文字`);
-    assert.ok(GOAL_STATUSES[status]?.icon, `${status} 缺少圖示`);
+    // 只有文字；星星的樣子由畫面決定，核心不放圖示（decisions.md 觀星書房改版 Q19）
+    assert.deepEqual(Object.keys(GOAL_STATUSES[status]), ["text"], `${status} 應該只有文字`);
+    assert.ok(GOAL_STATUSES[status].text, `${status} 缺少文字`);
   }
 });

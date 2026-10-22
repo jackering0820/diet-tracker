@@ -3,9 +3,9 @@
 // 圖形只建立一次，之後只改屬性和 class：資料有變化時才會播放 CSS 的過場動畫。
 import { GOAL_MEASURES, formatMeasure } from "../core/measures.js";
 import { GOAL_STATUSES } from "../core/goals.js";
+import { STAR_PATH } from "./stars.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const STAR_PATH = "M12 2.8l2.75 5.6 6.15.9-4.45 4.35 1.05 6.1L12 16.9l-5.5 2.85 1.05-6.1L3.1 9.3l6.15-.9z";
 const STARS = 8;
 
 // 星盤：每圈畫四分之三圈（270 度），終點就是目標的刻度；熱量超過上限的紅色段最長 70 度。

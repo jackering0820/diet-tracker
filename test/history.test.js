@@ -121,3 +121,31 @@ test("網址指定今天以後的日子時，打開今天（不能在未來補�
   assert.equal(diary.dayOrToday("2026-10-12"), "2026-10-11");
   assert.equal(diary.dayOrToday("2026-10-11"), "2026-10-11");
 });
+
+// 一天吃到全部達標：熱量 1700 ≤ 1800、蛋白質 95 ≥ 90、蔬菜 3 ≥ 3，喝水 2000 ≥ 2000
+async function perfectDay(diary) {
+  await diary.saveMeal(diary.newMealDraft({ items: [DAY_FOOD] }));
+  await diary.addWater(2000);
+}
+
+test("四項目標都設定而且都達標時，那一天是「四項全達標」", async () => {
+  const { diary } = setup();
+  await diary.setGoals(GOALS);
+  await perfectDay(diary);
+  assert.equal((await diary.getDaySummary(diary.todayKey())).allAchieved, true);
+});
+
+test("有一項未設定、超過、未達標，或整天無紀錄時，都不是「四項全達標」", async () => {
+  const cases = [
+    ["喝水未設定", { ...GOALS, waterMl: null }, perfectDay],
+    ["熱量超過", { ...GOALS, kcal: 1500 }, perfectDay],
+    ["蛋白質未達標", { ...GOALS, protein: 120 }, perfectDay],
+    ["整天無紀錄", GOALS, async () => {}],
+  ];
+  for (const [name, goals, eat] of cases) {
+    const { diary } = setup();
+    await diary.setGoals(goals);
+    await eat(diary);
+    assert.equal((await diary.getDaySummary(diary.todayKey())).allAchieved, false, name);
+  }
+});
