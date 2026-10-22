@@ -9,11 +9,12 @@ import { createMealEditor, renderNutrition } from "./meal-editor.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
 import { createAstrolabe, createConstellation, createMiniConstellation } from "./astrolabe.js";
 import { createSettings } from "./settings-view.js";
-import { createHistory, formatDayTitle } from "./history-view.js";
+import { createHistory, dayTile, formatDayTitle } from "./history-view.js";
 import { startSky } from "./sky.js";
 import { installKeyRipple } from "./keys.js";
 
-startSky($("sky"));
+// 夜空：畫得出來時，星座也在夜空裡（3D），SVG 星座只在畫不出來時使用
+const sky = startSky($("sky"), { onLost: () => { $("constellation").hidden = false; } });
 installKeyRipple();
 
 // 新版 App 要升級資料庫時，重新整理以載入新版。
@@ -63,6 +64,7 @@ function waterItem(w, isNew) {
 // 星盤卡、頂端星座、喝水面板旁的小星座：只建立一次，之後每次重新整理只更新數值。
 const astrolabe = createAstrolabe({ chart: $("astrolabe"), centerBig: $("astro-big"), centerSmall: $("astro-small"), list: $("goal-progress") });
 const constellation = createConstellation($("constellation"));
+$("constellation").hidden = Boolean(sky);
 const miniConstellation = createMiniConstellation($("mini-constellation"));
 
 // 重新播放一次 CSS 動畫（例如數字變了時的跳一下）
@@ -74,28 +76,35 @@ function replay(el, cls) {
 
 // 「吃了什麼」貨架上的一張卡片：有照片用照片當封面，沒有照片是有橫線的羊皮紙卡片（手寫的一餐）。
 // 下方是時間・餐別、標題（日記核心串好的食物名稱）、熱量；點一下修改這一餐。
-function mealCard(meal) {
+// isNew：剛加入的那一餐（例如再記一次），滑進來。
+// 卡片的封面：有照片用照片；沒有照片是有橫線的羊皮紙，寫上標題（before／after：標題前後要加的元素）
+function mealCover(photo, title, { before, after } = {}) {
+  const cover = document.createElement("span");
+  if (photo) {
+    cover.className = "cover";
+    const img = document.createElement("img");
+    img.src = photo;
+    img.alt = "";
+    cover.append(img);
+    return cover;
+  }
+  cover.className = "cover note";
+  const name = document.createElement("b");
+  name.textContent = title;
+  cover.append(...[before, name, after].filter(Boolean));
+  return cover;
+}
+
+function mealCard(meal, isNew) {
   const card = document.createElement("button");
   card.type = "button";
-  card.className = "meal";
-  const cover = document.createElement("span");
-  if (meal.photos?.length) {
-    cover.className = "cover";
-    const photo = document.createElement("img");
-    photo.src = meal.photos[0];
-    photo.alt = "";
-    cover.append(photo);
-  } else {
-    cover.className = "cover note";
-    const type = document.createElement("span");
-    type.className = "k";
-    type.textContent = meal.mealType;
-    const title = document.createElement("b");
-    title.textContent = meal.title;
-    const tag = document.createElement("i");
-    tag.textContent = "手寫";
-    cover.append(type, title, tag);
-  }
+  card.className = isNew ? "meal fresh" : "meal";
+  const type = document.createElement("span");
+  type.className = "k";
+  type.textContent = meal.mealType;
+  const tag = document.createElement("i");
+  tag.textContent = "手寫";
+  const cover = mealCover(meal.photos?.[0], meal.title, { before: type, after: tag });
   const cap = document.createElement("span");
   cap.className = "cap";
   const when = document.createElement("span");
@@ -147,7 +156,12 @@ let lastShown = null;
 
 async function renderDay() {
   const shown = view;
-  const day = await diary.getDaySummary(currentDayKey());
+  // 同時讀取；最近吃過和本週只在今天顯示
+  const [day, recent, week] = await Promise.all([
+    diary.getDaySummary(currentDayKey()),
+    view.pastDay ? [] : diary.recentMeals(),
+    view.pastDay ? [] : diary.getHistory({ days: 7 }),
+  ]);
   // 等資料時已經切到別的畫面，就不要用舊的結果蓋掉新畫面的標題
   if (view !== shown) return;
   // 換到另一天不算資料變化：加上 instant 直接畫出來，不播放動畫
@@ -161,16 +175,22 @@ async function renderDay() {
   });
   astrolabe.update(day.progress, day.hasRecords);
   constellation.update(day.constellationLit);
+  // 同一天裡剛加入的喝水和餐點（換到另一天不算）
+  const isNewWater = (w) => sameDay && !lastShown.waterIds.includes(w.id);
+  const isNewMeal = (m) => sameDay && !lastShown.mealIds.includes(m.id);
+  // 夜空：加了水或記了一餐時轉動一下；換到另一天直接畫（打開 App 的飛入由夜空自己處理）
+  sky?.update(day.constellationLit, day.water.some(isNewWater) || day.meals.some(isNewMeal));
   miniConstellation.update(day.constellationLit);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
-  renderMealShelf(day, isToday);
+  renderMealShelf(day, isToday, isNewMeal);
+  renderRecent(recent);
+  renderWeek(week);
 
   const waterGoal = day.progress[WATER_MEASURE.key].goal;
   $("water-total").textContent = day.waterTotalMl.toLocaleString("zh-TW");
   $("water-goal").textContent = waterGoal === null ? " ml" : ` / ${waterGoal.toLocaleString("zh-TW")} ml`;
   $("water-empty").hidden = day.water.length > 0;
-  const shownWater = new Set(sameDay ? lastShown.waterIds : []);
-  $("water-list").replaceChildren(...day.water.map((w) => waterItem(w, sameDay && !shownWater.has(w.id))));
+  $("water-list").replaceChildren(...day.water.map((w) => waterItem(w, isNewWater(w))));
 
   if (sameDay) {
     if (day.waterTotalMl !== lastShown.waterTotalMl) replay($("water-total"), "bump");
@@ -179,7 +199,12 @@ async function renderDay() {
     void $("day-view").offsetWidth;
     $("day-view").classList.remove("instant");
   }
-  lastShown = { dayKey: day.dayKey, waterTotalMl: day.waterTotalMl, waterIds: day.water.map((w) => w.id) };
+  lastShown = {
+    dayKey: day.dayKey,
+    waterTotalMl: day.waterTotalMl,
+    waterIds: day.water.map((w) => w.id),
+    mealIds: day.meals.map((m) => m.id),
+  };
 }
 
 async function addWater(ml) {
@@ -208,15 +233,63 @@ const editor = createMealEditor({
 // 「下一餐」和「拍照記〇〇」的餐別是新的一餐會用的預設餐別（依現在時間，由日記核心決定）。
 // 「下一餐」卡片在過去某一天會被移出畫面，所以先留住它
 const nextMealCard = $("next-meal");
-function renderMealShelf(day, isToday) {
+// 本週：最近七天的小卡（最新的在左邊）；整週都沒有紀錄時不顯示
+function renderWeek(week) {
+  $("week-section").hidden = !week.some((d) => d.hasRecords);
+  const todayKey = diary.todayKey();
+  $("week-list").replaceChildren(...week.map((d) => dayTile(d, { isToday: d.dayKey === todayKey, onSelect: showDay })));
+}
+
+// isNew(meal)：這一餐是不是剛加入的
+function renderMealShelf(day, isToday, isNew) {
   const { meals, nutritionTotals } = day;
   $("meal-hint").textContent = meals.length ? `${meals.length} 餐・${formatWithUnit("kcal", nutritionTotals.kcal)}` : "還沒有紀錄";
   const nextType = diary.newMealDraft({ at: timeForNewRecord() }).mealType;
   nextMealCard.querySelector(".t").textContent = nextType;
   nextMealCard.querySelector(".ghost span").textContent = nextType.charAt(0);
   nextMealCard.setAttribute("aria-label", `記下一餐：${nextType}，拍照`);
-  $("meal-list").replaceChildren(...meals.map(mealCard), ...(isToday ? [nextMealCard] : []));
+  $("meal-list").replaceChildren(...meals.map((m) => mealCard(m, isNew(m))), ...(isToday ? [nextMealCard] : []));
   $("snap-meal-label").textContent = isToday ? `📷 拍照記${nextType}` : "📷 拍照補記一餐";
+}
+
+// 「最近吃過」：每一張卡片點一下就把那一餐再記一次（日記核心決定時間、餐別和要複製什麼）。
+function recentCard(recent) {
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = "rc";
+  const cover = mealCover(recent.photo, recent.title);
+  const row = document.createElement("span");
+  row.className = "row";
+  const text = document.createElement("span");
+  const title = document.createElement("b");
+  title.textContent = recent.title;
+  const kcal = document.createElement("small");
+  kcal.className = "n";
+  kcal.textContent = formatWithUnit("kcal", recent.kcal);
+  text.append(title, kcal);
+  const plus = document.createElement("span");
+  plus.className = "add";
+  plus.setAttribute("aria-hidden", "true");
+  plus.textContent = "+";
+  row.append(text, plus);
+  card.append(cover, row);
+  card.setAttribute("aria-label", `再記一次：${recent.title}，${kcal.textContent}`);
+  card.addEventListener("click", async () => {
+    card.disabled = true; // 連按兩下不會記兩次
+    try {
+      await diary.logAgain(recent.mealId);
+      await render();
+    } catch (err) {
+      card.disabled = false;
+      alert(`再記一次失敗：${err.message}`);
+    }
+  });
+  return card;
+}
+
+function renderRecent(recent) {
+  $("recent-section").hidden = recent.length === 0;
+  $("recent-list").replaceChildren(...recent.map(recentCard));
 }
 
 $("add-meal").addEventListener("click", () => editor.openNew(timeForNewRecord()));
@@ -317,8 +390,11 @@ $("custom-water").addEventListener("submit", async (event) => {
 
 // 從背景回到前景時重新整理，跨過午夜也會換成新的一天。
 // 設定分頁不重新整理，避免正在輸入的目標被換掉。
+// 回到前景就是又打開一次 App：夜空從遠處飛進來。
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && view.name !== "settings") render();
+  if (document.visibilityState !== "visible") return;
+  sky?.open();
+  if (view.name !== "settings") render();
 });
 
 // 捲動後頂端縮成半透明標題列：頂端的小標記離開畫面時加上 compact。

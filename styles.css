@@ -1,8 +1,9 @@
 /* 觀星書房的冷色色票（只有深色）。配色邏輯：深色底、一個鮮明的主色給主要動作、
    一個淺亮色當強調、綠色系代表達標、冷白文字；只有超過和錯誤用暖色。 */
 :root {
-  --bg: #08192B;          /* 背景（夜空下方） */
-  --bg-top: #0E3550;      /* 背景（夜空上方） */
+  --bg: #0A1115;          /* 背景（夜空下方）：參考動畫的灰藍色，接近黑色（和 WebGL 天空的下方同色） */
+  --bg-rgb: 10 17 21;     /* 同一個顏色，給半透明的標題列和底部固定列用 */
+  --bg-top: #2B3F4D;      /* 背景（夜空上方）：灰藍色 */
   --card: #0D2A40;
   --field: rgb(0 0 0 / 0.28);
   --text: #EEF3F7;
@@ -60,7 +61,7 @@ body {
   padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
 }
 #top-bar.compact {
-  background: rgb(8 25 43 / 0.78);
+  background: rgb(var(--bg-rgb) / 0.78);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
@@ -171,18 +172,18 @@ button:disabled {
 }
 button:disabled::before, button:disabled::after { display: none; }
 
-/* 文字型的按鈕（連結、餐點卡片、整列可點的日子、刪除、喝水紀錄的小標籤）不是按鍵：沒有底座、不下沉、沒有漣漪和星星 */
-button.link, button.delete, .meal, .history-row, .log {
+/* 文字型的按鈕（連結、餐點卡片、最近吃過的卡片、日子卡片、刪除、喝水紀錄的小標籤）不是按鍵：沒有底座、不下沉、沒有漣漪和星星 */
+button.link, button.delete, .meal, .rc, .day, .log {
   margin-bottom: 0;
   border: 0;
   box-shadow: none;
   background: transparent;
   transition: none;
 }
-button.link:active, button.delete:active, .history-row:active, .log:active { transform: none; opacity: 0.7; }
-.meal:active { transform: none; }
+button.link:active, button.delete:active, .log:active { transform: none; opacity: 0.7; }
+.meal:active, .rc:active { transform: none; }
 button.link::before, button.link::after, button.delete::before, button.delete::after,
-.meal::before, .meal::after, .history-row::before, .history-row::after, .log::before, .log::after { display: none; }
+.meal::before, .meal::after, .rc::before, .rc::after, .day::before, .day::after, .log::before, .log::after { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -255,6 +256,7 @@ button.link { color: var(--highlight); padding: 8px; }
 }
 .cover {
   position: relative;
+  flex: none;
   width: 140px;
   height: 140px;
   border-radius: 10px;
@@ -263,7 +265,7 @@ button.link { color: var(--highlight); padding: 8px; }
   box-shadow: 0 14px 26px -16px rgb(0 0 0 / 0.95);
   transition: transform 0.3s cubic-bezier(0.3, 1.7, 0.5, 1);
 }
-.meal:active .cover { transform: scale(0.96); transition-duration: 0.08s; }
+.meal:active .cover, .rc:active .cover { transform: scale(0.96); transition-duration: 0.08s; }
 .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 /* 沒有照片的一餐：有橫線的羊皮紙 */
 .cover.note {
@@ -292,6 +294,39 @@ button.link { color: var(--highlight); padding: 8px; }
   font-weight: 700;
   box-shadow: none;
 }
+/* 最近吃過：比較小的卡片，下方是名稱、熱量和「＋」 */
+.rc {
+  flex: none;
+  width: 112px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  padding: 0;
+  color: var(--text);
+  font-weight: 400;
+  text-align: left;
+  scroll-snap-align: start;
+}
+.rc:disabled { background: transparent; box-shadow: none; opacity: 0.6; }
+.rc .cover { width: 112px; height: 112px; }
+.rc .note b { font-size: 14px; }
+.rc .row { display: flex; align-items: center; gap: 6px; }
+.rc .row > span:first-child { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.rc .row b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc .row small { font-size: 12px; color: var(--muted); }
+.rc .add {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgb(111 211 255 / 0.5);
+  color: var(--highlight);
+  font-size: 18px;
+  font-weight: 700;
+}
 .cap { display: flex; flex-direction: column; line-height: 1.35; }
 .cap .t, .cap .k { font-size: 12px; color: var(--muted); }
 .cap b { font-size: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -306,7 +341,7 @@ button.link { color: var(--highlight); padding: 8px; }
   gap: 10px;
   margin: 26px -16px 0;
   padding: 20px 16px calc(16px + env(safe-area-inset-bottom));
-  background: linear-gradient(180deg, rgb(8 25 43 / 0), rgb(8 25 43 / 0.95) 34%);
+  background: linear-gradient(180deg, rgb(var(--bg-rgb) / 0), rgb(var(--bg-rgb) / 0.95) 34%);
 }
 .dock > * { white-space: nowrap; pointer-events: auto; }
 /* 漸層的透明部分不擋住下面的卡片和標籤 */
@@ -399,7 +434,7 @@ dialog::backdrop { background: rgb(2 8 16 / 0.65); }
 .mrow .l2 b { font-size: 15px; color: var(--text); }
 .n { font-variant-numeric: tabular-nums; }
 
-/* 頂端星座：依喝水進度點亮，點亮的星星之間連線 */
+/* 頂端星座的 SVG 版：WebGL 夜空畫不出來時才顯示（平常星座畫在 3D 夜空裡），依喝水進度點亮 */
 .constellation { position: absolute; top: 0; right: 0; width: min(390px, 100%); z-index: -1; pointer-events: none; }
 .c-line { stroke: rgb(111 211 255 / 0.5); stroke-width: 1; opacity: 0; transition: opacity 0.5s ease; }
 .c-glow { fill: rgb(111 211 255 / 0.24); opacity: 0; transition: opacity 0.5s ease; }
@@ -462,28 +497,47 @@ dialog.sheet[open] { animation: sheet-up 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
 /* 喝水紀錄的時間可以點來修改 */
 .entries .time.link { padding: 0; min-height: 0; text-align: left; text-decoration: underline dotted; }
 
-/* 歷史列表 */
-.history-list { list-style: none; padding: 0; margin: 0; }
-.history-list li + li { border-top: 1px solid var(--border); }
-.history-row {
+/* 歷史：一週一排的日子卡片；今天畫面的「本週」用同樣的卡片（比較窄） */
+#history-weeks .week { margin-top: 16px; }
+.day {
+  flex: none;
+  width: 96px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  width: 100%;
-  padding: 12px 0;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
   color: var(--text);
   font-weight: 400;
-  border-radius: 0;
   text-align: left;
+  scroll-snap-align: start;
+  transition: transform 0.3s cubic-bezier(0.3, 1.7, 0.5, 1);
 }
-.history-date { font-weight: 700; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-size: 13px; padding: 2px 8px; border-radius: 999px; background: var(--field); border: 1px solid var(--border); }
-.chip.over { color: var(--over); }
-.chip.missed { color: var(--danger); }
-.empty-inline { color: var(--muted); font-size: 14px; }
-.noRecords .status { color: var(--muted); }
+.day:active { transform: scale(0.96); transition-duration: 0.08s; }
+.day.wide { width: 116px; }
+.day.is-today { border-color: rgb(111 211 255 / 0.6); background: linear-gradient(160deg, #16466A, var(--card)); }
+.day.none { background: rgb(255 255 255 / 0.025); border-style: dashed; }
+.day .h { display: flex; flex-direction: column; line-height: 1.2; }
+.day .h span { font-size: 12px; color: var(--muted); }
+.day .h b { font-size: 16px; }
+.day .kc { font-size: 12px; color: var(--muted); }
+.day .none-t { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 50px; font-size: 13px; color: rgb(238 243 247 / 0.42); }
+.badge { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; background: var(--highlight); color: var(--accent-text); font-size: 10px; font-weight: 700; line-height: 16px; vertical-align: 2px; }
+.more { color: var(--highlight); font-size: 14px; font-weight: 700; text-decoration: none; }
+
+/* 星星的四種樣子：達標是亮的、超過上限是紅的、未達標是空心、未設定是「－」 */
+.stars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 6px; }
+.sg { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--muted); }
+.st { width: 15px; height: 15px; flex: none; }
+.st-achieved { fill: var(--highlight); stroke: var(--highlight); }
+.st-over { fill: var(--over); stroke: var(--over); }
+.st-missed { fill: none; stroke: rgb(238 243 247 / 0.62); stroke-width: 1.6; }
+.st-unset { display: inline-block; text-align: center; line-height: 15px; color: rgb(238 243 247 / 0.42); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
 
 /* 設定分頁 */
 #settings-view form:first-child h3 { margin-top: 0; }

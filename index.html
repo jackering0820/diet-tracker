@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#08192B">
+  <meta name="theme-color" content="#0A1115">
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="飲食紀錄">
@@ -29,14 +29,15 @@
   </header>
 
   <main id="history-view" hidden>
-    <section class="card" aria-label="歷史紀錄">
-      <ul id="history-list" class="history-list"></ul>
-      <button type="button" id="load-older" class="wide secondary">載入更早的日子</button>
-    </section>
+    <!-- 圖例：四種星星的意思 -->
+    <div id="history-legend" class="legend" role="group" aria-label="星星的意思"></div>
+    <!-- 一週一排，最新的一週在最上面 -->
+    <div id="history-weeks"></div>
+    <button type="button" id="load-older" class="wide secondary">載入更早的日子</button>
   </main>
 
   <main id="day-view">
-    <!-- 頂端星座：依喝水進度點亮（星座點亮數由日記核心決定） -->
+    <!-- 頂端星座的 SVG 版：WebGL 夜空畫不出來時才顯示（星座點亮數由日記核心決定） -->
     <svg id="constellation" class="constellation" aria-hidden="true" viewBox="0 0 390 150"></svg>
 
     <section class="astro-card" aria-label="今日星盤">
@@ -87,6 +88,18 @@
 
       <div id="water-list" class="shelf" aria-label="喝水紀錄，點一筆可以改時間"></div>
       <p id="water-empty" class="empty">還沒有喝水紀錄</p>
+    </section>
+
+    <!-- 最近吃過：只在今天顯示，點一張卡片再記一次 -->
+    <section id="recent-section" class="card" aria-labelledby="recent-title" hidden>
+      <div class="sec-h"><h2 id="recent-title">🔁 最近吃過</h2><span class="hint">點一下再記一次</span></div>
+      <div id="recent-list" class="shelf" role="group" aria-label="最近吃過的餐點"></div>
+    </section>
+
+    <!-- 本週：最近七天的小卡，點一天打開那一天（只在今天顯示） -->
+    <section id="week-section" class="card" aria-labelledby="week-title" hidden>
+      <div class="sec-h"><h2 id="week-title">📅 本週</h2><a class="more" href="#history">歷史 ›</a></div>
+      <div id="week-list" class="shelf"></div>
     </section>
 
     <!-- 底部固定：拍照記一餐、手寫 -->
