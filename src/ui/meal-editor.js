@@ -17,7 +17,7 @@ export function renderNutrition(dl, totals) {
 }
 
 // onDone 在儲存或刪除之後呼叫，讓「今天」畫面重新整理。
-// onOpenSettings 在還沒設定金鑰、使用者按「前往設定」時呼叫（編輯視窗保持打開，草稿不會不見）。
+// onOpenSettings 在還沒設定金鑰、使用者按「前往設定」時呼叫（編輯視窗先收起，草稿不會不見，之後用 resume() 打開）。
 export function createMealEditor({ diary, onDone, onOpenSettings }) {
   const dialog = $("meal-editor");
   const form = $("item-form");
@@ -160,7 +160,13 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
       event.target.value = "";
     }
   });
-  $("go-settings").addEventListener("click", () => onOpenSettings());
+  // 前往設定：先收起編輯視窗但保留草稿（照片和已輸入的食物），回到某一天的畫面時由 resume() 再打開。
+  let paused = false;
+  $("go-settings").addEventListener("click", () => {
+    paused = true;
+    dialog.close();
+    onOpenSettings();
+  });
 
   function renderDraft() {
     renderPhotos();
@@ -227,6 +233,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
   $("close-editor").addEventListener("click", () => dialog.close());
 
   function open(newDraft) {
+    paused = false;
     draft = newDraft;
     const isExisting = Boolean(draft.id);
     $("editor-title").textContent = isExisting ? "修改這一餐" : "新增一餐";
@@ -252,6 +259,13 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     },
     async openExisting(id) {
       open(await diary.loadMealDraft(id));
+    },
+    // 從設定回來：打開剛才收起的草稿，有照片就可以直接重新分析。
+    resume() {
+      if (!paused) return;
+      paused = false;
+      setAnalysisState({ canRetry: draft.photos.length > 0 });
+      dialog.showModal();
     },
   };
 }

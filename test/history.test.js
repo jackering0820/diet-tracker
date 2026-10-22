@@ -103,3 +103,21 @@ test("把紀錄改到 23:59 和隔天 00:00，會分屬兩天", async () => {
   assert.equal((await diary.getDaySummary("2026-10-10")).waterTotalMl, 700);
   assert.equal((await diary.getDaySummary("2026-10-11")).waterTotalMl, 0);
 });
+
+test("網址指定過去的某一天時，打開的就是那一天", () => {
+  const { diary } = setup(new Date(2026, 9, 11, 12, 0));
+  assert.equal(diary.dayOrToday("2026-10-05"), "2026-10-05");
+});
+
+test("網址的日期格式不對或日曆上不存在時，打開今天", () => {
+  const { diary } = setup(new Date(2026, 9, 11, 12, 0));
+  for (const bad of [undefined, "", "abc", "2026-1-5", "2026/10/05", "2026-10-05x", "2026-02-30", "2026-13-01"]) {
+    assert.equal(diary.dayOrToday(bad), "2026-10-11", `「${bad}」應該打開今天`);
+  }
+});
+
+test("網址指定今天以後的日子時，打開今天（不能在未來補記）", () => {
+  const { diary } = setup(new Date(2026, 9, 11, 12, 0));
+  assert.equal(diary.dayOrToday("2026-10-12"), "2026-10-11");
+  assert.equal(diary.dayOrToday("2026-10-11"), "2026-10-11");
+});

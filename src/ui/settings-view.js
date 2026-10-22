@@ -1,4 +1,4 @@
-// 設定視窗：每日目標、AI 分析的 API 金鑰和模型、備份。
+// 設定分頁：每日目標、AI 分析的 API 金鑰和模型、備份。
 // 畫面永遠拿不到完整金鑰：只送出使用者剛貼上的值，顯示時只用遮罩後的片段。
 import { MODEL_OPTIONS } from "../core/ai-settings.js";
 import { byId as $, showMessage } from "./dom.js";
@@ -6,9 +6,7 @@ import { GOAL_MEASURES } from "../core/measures.js";
 import { goalLabel, renderMeasureInputs } from "./measure-fields.js";
 import { formatLastExport, saveBackup } from "./backup.js";
 
-// onClose 在關閉視窗之後呼叫，讓畫面重新整理；onDataChanged 在匯入備份之後馬上呼叫。
-export function createSettings({ diary, onClose, onDataChanged }) {
-  const dialog = $("settings");
+export function createSettings({ diary }) {
   const goalsForm = $("goals-form");
   const aiForm = $("ai-form");
   const goalKeys = GOAL_MEASURES.map((m) => m.key);
@@ -84,7 +82,6 @@ export function createSettings({ diary, onClose, onDataChanged }) {
     try {
       await diary.importBackup(await file.text());
       showMessage("backup-saved", "✓ 已從備份還原");
-      await onDataChanged();
       // 目標也被還原了，重新填入表單
       const goals = await diary.getGoals();
       for (const key of goalKeys) goalsForm.elements[key].value = goals[key] ?? "";
@@ -93,13 +90,8 @@ export function createSettings({ diary, onClose, onDataChanged }) {
     }
   });
 
-  $("close-settings").addEventListener("click", () => dialog.close());
-  dialog.addEventListener("close", () => {
-    aiForm.elements.apiKey.value = ""; // 不讓貼上的金鑰留在畫面上
-    onClose();
-  });
-
   return {
+    // 進入設定分頁時，填入目前的設定。
     async open() {
       const goals = await diary.getGoals();
       for (const key of goalKeys) goalsForm.elements[key].value = goals[key] ?? "";
@@ -108,7 +100,10 @@ export function createSettings({ diary, onClose, onDataChanged }) {
       await renderKeyStatus();
       await renderLastExport();
       clearMessages();
-      dialog.showModal();
+    },
+    // 離開設定分頁時，不讓貼上的金鑰留在畫面上。
+    leave() {
+      aiForm.elements.apiKey.value = "";
     },
   };
 }
