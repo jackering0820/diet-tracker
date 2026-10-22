@@ -29,10 +29,11 @@
   </header>
 
   <main id="history-view" hidden>
-    <section class="card" aria-label="歷史紀錄">
-      <ul id="history-list" class="history-list"></ul>
-      <button type="button" id="load-older" class="wide secondary">載入更早的日子</button>
-    </section>
+    <!-- 圖例：四種星星的意思 -->
+    <div id="history-legend" class="legend" role="group" aria-label="星星的意思"></div>
+    <!-- 一週一排，最新的一週在最上面 -->
+    <div id="history-weeks"></div>
+    <button type="button" id="load-older" class="wide secondary">載入更早的日子</button>
   </main>
 
   <main id="day-view">
@@ -98,6 +99,12 @@
     <section id="recent-section" class="card" aria-labelledby="recent-title" hidden>
       <div class="sec-h"><h2 id="recent-title">🔁 最近吃過</h2><span class="hint">點一下再記一次</span></div>
       <div id="recent-list" class="shelf" role="group" aria-label="最近吃過的餐點"></div>
+    </section>
+
+    <!-- 本週：最近七天的小卡，點一天打開那一天（只在今天顯示） -->
+    <section id="week-section" class="card" aria-labelledby="week-title" hidden>
+      <div class="sec-h"><h2 id="week-title">📅 本週</h2><a class="more" href="#history">歷史 ›</a></div>
+      <div id="week-list" class="shelf"></div>
     </section>
 
     <!-- 底部固定：拍照記一餐、手寫 -->

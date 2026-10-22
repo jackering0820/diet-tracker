@@ -2,7 +2,7 @@
 // 資料儲存（storage）和時間（clock）由外部注入。
 import { addDays, atTimeOnDay, dayKeyOf, dayRange, isDayKey, validateAt } from "./day.js";
 import { createMealDraft, defaultMealType, foodCombination, mealTitle, sumNutrients } from "./meal.js";
-import { goalProgress, validateGoals, withDefaults } from "./goals.js";
+import { allGoalsAchieved, goalProgress, validateGoals, withDefaults } from "./goals.js";
 import { ANALYSIS_ERRORS, AnalysisError } from "./analysis-error.js";
 import { buildBackup, parseBackup } from "./backup.js";
 import { constellationLit, validateWaterMl } from "./water.js";
@@ -49,6 +49,7 @@ export function createDiary({ storage, clock, analyzer }) {
     const nutritionTotals = sumNutrients(meals.flatMap((m) => m.items));
     const hasRecords = meals.length + water.length > 0;
     const goals = await getGoals();
+    const progress = goalProgress({ ...nutritionTotals, [WATER_MEASURE.key]: waterTotalMl }, goals, hasRecords);
     return {
       dayKey,
       hasRecords,
@@ -57,7 +58,8 @@ export function createDiary({ storage, clock, analyzer }) {
       constellationLit: constellationLit(waterTotalMl, goals[WATER_MEASURE.key]),
       meals,
       nutritionTotals,
-      progress: goalProgress({ ...nutritionTotals, [WATER_MEASURE.key]: waterTotalMl }, goals, hasRecords),
+      progress,
+      allAchieved: allGoalsAchieved(progress),
     };
   }
 

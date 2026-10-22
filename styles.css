@@ -172,18 +172,18 @@ button:disabled {
 }
 button:disabled::before, button:disabled::after { display: none; }
 
-/* 文字型的按鈕（連結、餐點卡片、最近吃過的卡片、整列可點的日子、刪除、喝水紀錄的小標籤）不是按鍵：沒有底座、不下沉、沒有漣漪和星星 */
-button.link, button.delete, .meal, .rc, .history-row, .log {
+/* 文字型的按鈕（連結、餐點卡片、最近吃過的卡片、日子卡片、刪除、喝水紀錄的小標籤）不是按鍵：沒有底座、不下沉、沒有漣漪和星星 */
+button.link, button.delete, .meal, .rc, .day, .log {
   margin-bottom: 0;
   border: 0;
   box-shadow: none;
   background: transparent;
   transition: none;
 }
-button.link:active, button.delete:active, .history-row:active, .log:active { transform: none; opacity: 0.7; }
+button.link:active, button.delete:active, .log:active { transform: none; opacity: 0.7; }
 .meal:active, .rc:active { transform: none; }
 button.link::before, button.link::after, button.delete::before, button.delete::after,
-.meal::before, .meal::after, .rc::before, .rc::after, .history-row::before, .history-row::after, .log::before, .log::after { display: none; }
+.meal::before, .meal::after, .rc::before, .rc::after, .day::before, .day::after, .log::before, .log::after { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -497,28 +497,47 @@ dialog.sheet[open] { animation: sheet-up 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
 /* 喝水紀錄的時間可以點來修改 */
 .entries .time.link { padding: 0; min-height: 0; text-align: left; text-decoration: underline dotted; }
 
-/* 歷史列表 */
-.history-list { list-style: none; padding: 0; margin: 0; }
-.history-list li + li { border-top: 1px solid var(--border); }
-.history-row {
+/* 歷史：一週一排的日子卡片；今天畫面的「本週」用同樣的卡片（比較窄） */
+#history-weeks .week { margin-top: 16px; }
+.day {
+  flex: none;
+  width: 96px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  width: 100%;
-  padding: 12px 0;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
   color: var(--text);
   font-weight: 400;
-  border-radius: 0;
   text-align: left;
+  scroll-snap-align: start;
+  transition: transform 0.3s cubic-bezier(0.3, 1.7, 0.5, 1);
 }
-.history-date { font-weight: 700; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-size: 13px; padding: 2px 8px; border-radius: 999px; background: var(--field); border: 1px solid var(--border); }
-.chip.over { color: var(--over); }
-.chip.missed { color: var(--danger); }
-.empty-inline { color: var(--muted); font-size: 14px; }
-.noRecords .status { color: var(--muted); }
+.day:active { transform: scale(0.96); transition-duration: 0.08s; }
+.day.wide { width: 116px; }
+.day.is-today { border-color: rgb(111 211 255 / 0.6); background: linear-gradient(160deg, #16466A, var(--card)); }
+.day.none { background: rgb(255 255 255 / 0.025); border-style: dashed; }
+.day .h { display: flex; flex-direction: column; line-height: 1.2; }
+.day .h span { font-size: 12px; color: var(--muted); }
+.day .h b { font-size: 16px; }
+.day .kc { font-size: 12px; color: var(--muted); }
+.day .none-t { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 50px; font-size: 13px; color: rgb(238 243 247 / 0.42); }
+.badge { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; background: var(--highlight); color: var(--accent-text); font-size: 10px; font-weight: 700; line-height: 16px; vertical-align: 2px; }
+.more { color: var(--highlight); font-size: 14px; font-weight: 700; text-decoration: none; }
+
+/* 星星的四種樣子：達標是亮的、超過上限是紅的、未達標是空心、未設定是「－」 */
+.stars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 6px; }
+.sg { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--muted); }
+.st { width: 15px; height: 15px; flex: none; }
+.st-achieved { fill: var(--highlight); stroke: var(--highlight); }
+.st-over { fill: var(--over); stroke: var(--over); }
+.st-missed { fill: none; stroke: rgb(238 243 247 / 0.62); stroke-width: 1.6; }
+.st-unset { display: inline-block; text-align: center; line-height: 15px; color: rgb(238 243 247 / 0.42); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
 
 /* 設定分頁 */
 #settings-view form:first-child h3 { margin-top: 0; }

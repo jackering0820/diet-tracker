@@ -4,13 +4,13 @@ import { GOAL_MEASURES, roundMeasure } from "./measures.js";
 // 第一次使用時的目標：依指標目錄的預設值（null 表示未設定）。
 const DEFAULT_GOALS = Object.fromEntries(GOAL_MEASURES.map((m) => [m.key, m.goal.default]));
 
-// 達標狀態目錄：每一種狀態的文字和圖示，今天畫面和歷史列表都從這裡讀。
+// 達標狀態目錄：每一種狀態的文字，今天畫面和歷史列表都從這裡讀。星星的樣子由畫面決定。
 export const GOAL_STATUSES = Object.freeze({
-  achieved: Object.freeze({ text: "達標", icon: "✅" }),
-  over: Object.freeze({ text: "超過", icon: "❌" }),
-  missed: Object.freeze({ text: "未達標", icon: "❌" }),
-  unset: Object.freeze({ text: "未設定", icon: "－" }),
-  noRecords: Object.freeze({ text: "無紀錄", icon: "－" }),
+  achieved: Object.freeze({ text: "達標" }),
+  over: Object.freeze({ text: "超過" }),
+  missed: Object.freeze({ text: "未達標" }),
+  unset: Object.freeze({ text: "未設定" }),
+  noRecords: Object.freeze({ text: "無紀錄" }),
 });
 
 // 檢查並整理目標：每項必須是 0 或正數，null 表示未設定。
@@ -63,4 +63,9 @@ export function goalProgress(values, goals, hasRecords) {
       return [measure.key, { value, goal, status: goalStatus(measure, value, goal, hasRecords) }];
     }),
   );
+}
+
+// 四項全達標：每一項目標都已設定、而且都達標才算（未設定、超過、未達標、無紀錄都不算）。
+export function allGoalsAchieved(progress) {
+  return GOAL_MEASURES.every(({ key }) => progress[key].status === "achieved");
 }

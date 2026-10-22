@@ -10,7 +10,7 @@ import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "
 import { createAstrolabe, createConstellation, createMiniConstellation } from "./astrolabe.js";
 import { createSettings } from "./settings-view.js";
 import { saveBackup } from "./backup.js";
-import { createHistory, formatDayTitle } from "./history-view.js";
+import { createHistory, dayTile, formatDayTitle } from "./history-view.js";
 import { startSky } from "./sky.js";
 import { installKeyRipple } from "./keys.js";
 
@@ -157,9 +157,13 @@ let lastShown = null;
 
 async function renderDay() {
   const shown = view;
-  const reminderDue = await diary.backupReminderDue();
-  const day = await diary.getDaySummary(currentDayKey());
-  const recent = view.pastDay ? [] : await diary.recentMeals(); // 過去某一天不顯示最近吃過
+  // 同時讀取；最近吃過和本週只在今天顯示
+  const [reminderDue, day, recent, week] = await Promise.all([
+    diary.backupReminderDue(),
+    diary.getDaySummary(currentDayKey()),
+    view.pastDay ? [] : diary.recentMeals(),
+    view.pastDay ? [] : diary.getHistory({ days: 7 }),
+  ]);
   // 等資料時已經切到別的畫面，就不要用舊的結果蓋掉新畫面的標題
   if (view !== shown) return;
   // 換到另一天不算資料變化：加上 instant 直接畫出來，不播放動畫
@@ -183,6 +187,7 @@ async function renderDay() {
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
   renderMealShelf(day, isToday, isNewMeal);
   renderRecent(recent);
+  renderWeek(week);
 
   const waterGoal = day.progress[WATER_MEASURE.key].goal;
   $("water-total").textContent = day.waterTotalMl.toLocaleString("zh-TW");
@@ -231,6 +236,13 @@ const editor = createMealEditor({
 // 「下一餐」和「拍照記〇〇」的餐別是新的一餐會用的預設餐別（依現在時間，由日記核心決定）。
 // 「下一餐」卡片在過去某一天會被移出畫面，所以先留住它
 const nextMealCard = $("next-meal");
+// 本週：最近七天的小卡（最新的在左邊）；整週都沒有紀錄時不顯示
+function renderWeek(week) {
+  $("week-section").hidden = !week.some((d) => d.hasRecords);
+  const todayKey = diary.todayKey();
+  $("week-list").replaceChildren(...week.map((d) => dayTile(d, { isToday: d.dayKey === todayKey, onSelect: showDay })));
+}
+
 // isNew(meal)：這一餐是不是剛加入的
 function renderMealShelf(day, isToday, isNew) {
   const { meals, nutritionTotals } = day;
