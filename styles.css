@@ -19,6 +19,12 @@
   --danger: #FF9DB0;      /* 錯誤文字、危險按鍵 */
   --danger-text: #2A0D0B;
   --danger-edge: #7A1E33;
+  /* 星盤四圈和指標的顏色 */
+  --kcal: #6FD3FF;
+  --protein: #EEF3F7;
+  --veg: #3EE6B0;
+  --water: #8FA8FF;
+  --star: #BFEAFF;
   color-scheme: dark;
 }
 
@@ -89,7 +95,6 @@ h1 { margin: 12px 0 0; font-size: 28px; }
   margin: 12px 0;
 }
 h2 { margin: 0; font-size: 20px; }
-.total { font-size: 36px; font-weight: 700; margin: 8px 0 16px; }
 
 /* 按鍵：像實體按鍵。44px 的膠囊面加 2px 邊框，下面一塊同色、往下偏 4px 的底座（用陰影畫）。
    按下：面在 70ms 內沉到底座上並縮到 97%；放開：0.34 秒帶點回彈地彈回。
@@ -166,27 +171,25 @@ button:disabled {
 }
 button:disabled::before, button:disabled::after { display: none; }
 
-/* 文字型的按鈕（連結、整列可點的餐點和日子、刪除）不是按鍵：沒有底座、不下沉、沒有漣漪和星星 */
-button.link, button.delete, .meal-row, .history-row {
+/* 文字型的按鈕（連結、整列可點的餐點和日子、刪除、喝水紀錄的小標籤）不是按鍵：沒有底座、不下沉、沒有漣漪和星星 */
+button.link, button.delete, .meal-row, .history-row, .log {
   margin-bottom: 0;
   border: 0;
   box-shadow: none;
   background: transparent;
   transition: none;
 }
-button.link:active, button.delete:active, .meal-row:active, .history-row:active { transform: none; opacity: 0.7; }
+button.link:active, button.delete:active, .meal-row:active, .history-row:active, .log:active { transform: none; opacity: 0.7; }
 button.link::before, button.link::after, button.delete::before, button.delete::after,
-.meal-row::before, .meal-row::after, .history-row::before, .history-row::after { display: none; }
+.meal-row::before, .meal-row::after, .history-row::before, .history-row::after, .log::before, .log::after { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-.quick-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.quick-buttons button { font-size: 20px; padding: 16px; }
+.quick-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.quick-buttons button { padding: 0; }
 
-#custom-water { margin-top: 16px; }
-#custom-water label { display: block; color: var(--muted); margin-bottom: 6px; }
 .row { display: flex; align-items: center; gap: 8px; }
 .row input {
   flex: 1;
@@ -291,17 +294,99 @@ dialog::backdrop { background: rgb(2 8 16 / 0.65); }
 /* 說明文字 */
 .hint { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
 
-/* 今日目標的進度條 */
-.progress-list { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 14px; }
-.progress-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-.progress-head .status { font-size: 14px; min-width: 4.5em; text-align: right; }
-.bar { height: 10px; border-radius: 5px; background: var(--border); overflow: hidden; }
-.bar > div { height: 100%; border-radius: 5px; background: var(--muted); }
-.achieved .bar > div { background: var(--success); }
-.achieved .status { color: var(--success); }
-.over .bar > div { background: var(--over); }
-.over .status { color: var(--over); }
-.unset .status { color: var(--muted); }
+/* 星盤卡：左邊四圈圓弧（由外到內熱量、蛋白質、蔬菜、喝水），右邊四項指標的數字和達標狀態 */
+.astro-card {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 16px;
+  margin: 12px 0;
+  padding: 16px;
+  border-radius: 24px;
+  background: linear-gradient(150deg, #16466A 0%, var(--card) 55%, #0A2236 100%);
+  border: 1px solid rgb(111 211 255 / 0.28);
+  box-shadow: 0 24px 48px -28px rgb(0 0 0 / 0.95);
+}
+.astro { position: relative; width: 132px; height: 132px; }
+.astro svg circle { fill: none; }
+.ring-kcal { --ring: var(--kcal); }
+.ring-protein { --ring: var(--protein); }
+.ring-veg { --ring: var(--veg); }
+.ring-waterMl { --ring: var(--water); }
+.ring-track { stroke: rgb(238 243 247 / 0.10); stroke-dasharray: 270 360; }
+.ring-arc { stroke: var(--ring); stroke-dasharray: 0 360; transition: stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.ring-over { stroke: var(--over); stroke-dasharray: 0 360; stroke-dashoffset: -270; transition: stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.ring-tick { stroke: rgb(238 243 247 / 0.7); stroke-width: 1.4; }
+.ring-star { fill: var(--star); stroke: #1C5A86; stroke-width: 1; opacity: 0; transition: opacity 0.5s ease; }
+.ring-star.lit { opacity: 1; }
+.astro-c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+.astro-c b { font-size: 20px; font-weight: 700; }
+.astro-c span { font-size: 10px; color: var(--muted); }
+.mlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.mrow { display: flex; flex-direction: column; font-size: 12px; line-height: 1.35; }
+.mrow .l1 { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.mrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ring); flex: none; }
+.mrow .s { margin-left: auto; font-weight: 600; }
+.mrow .s.achieved { color: var(--success); }
+.mrow .s.over, .mrow .s.missed { color: var(--danger); }
+.mrow .l2 { padding-left: 14px; color: var(--muted); }
+.mrow .l2 b { font-size: 15px; color: var(--text); }
+.n { font-variant-numeric: tabular-nums; }
+
+/* 頂端星座：依喝水進度點亮，點亮的星星之間連線 */
+.constellation { position: absolute; top: 0; right: 0; width: min(390px, 100%); z-index: -1; pointer-events: none; }
+.c-line { stroke: rgb(111 211 255 / 0.5); stroke-width: 1; opacity: 0; transition: opacity 0.5s ease; }
+.c-glow { fill: rgb(111 211 255 / 0.24); opacity: 0; transition: opacity 0.5s ease; }
+.c-dot { fill: rgb(235 238 255 / 0.45); transform: scale(0.58); transform-box: fill-box; transform-origin: center; transition: transform 0.5s ease, fill 0.5s ease; }
+.c-line.lit, .c-star.lit .c-glow { opacity: 1; }
+.c-star.lit .c-dot { fill: var(--star); transform: none; }
+
+/* 喝水面板：大字的喝水量、八顆小星星、喝水紀錄的小標籤 */
+.big { display: flex; align-items: baseline; gap: 6px; margin-top: 8px; }
+.big b { font-size: 44px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; }
+.big span { font-size: 14px; color: var(--muted); white-space: nowrap; }
+.mini-constellation { display: flex; gap: 3px; margin-left: auto; align-self: center; }
+.mini-star { fill: none; stroke: rgb(238 243 247 / 0.35); stroke-width: 1.6; transition: fill 0.5s ease, stroke 0.5s ease; }
+.mini-constellation .lit .mini-star { fill: var(--star); stroke: var(--star); }
+#custom-water { margin-top: 10px; }
+.shelf {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 14px -16px 0;
+  padding: 2px 16px 8px;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 16px;
+  scrollbar-width: none;
+}
+.shelf::-webkit-scrollbar { display: none; }
+.log {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid rgb(143 168 255 / 0.3);
+  background: rgb(143 168 255 / 0.12);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 400;
+  scroll-snap-align: start;
+}
+
+/* 資料變化時的動畫：數字跳一下、新的一筆滑進來；換到另一天時（instant）不播 */
+.bump { display: inline-block; animation: bump 0.45s cubic-bezier(0.3, 1.8, 0.5, 1); }
+@keyframes bump { from { transform: translateY(-3px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+.fresh { animation: fresh 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes fresh { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
+.instant, .instant * { transition: none !important; animation: none !important; }
+
+/* 修改喝水時間：從下方滑出的面板 */
+dialog.sheet[open] { animation: sheet-up 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+.grab { display: block; width: 40px; height: 5px; margin: -4px auto 12px; border-radius: 3px; background: rgb(255 255 255 / 0.26); }
+.keyrow { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 0; }
+.keyrow span { margin-left: auto; color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 
 .two-columns { display: grid; grid-template-columns: minmax(6em, 1fr) 2fr; gap: 0 12px; }

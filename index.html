@@ -41,9 +41,15 @@
       <button type="button" id="reminder-export">匯出備份</button>
     </div>
 
-    <section class="card" aria-labelledby="progress-title">
-      <h2 id="progress-title">🎯 目標</h2>
-      <ul id="goal-progress" class="progress-list"></ul>
+    <!-- 頂端星座：依喝水進度點亮（星座點亮數由日記核心決定） -->
+    <svg id="constellation" class="constellation" aria-hidden="true" viewBox="0 0 390 150"></svg>
+
+    <section class="astro-card" aria-label="今日星盤">
+      <div class="astro">
+        <svg id="astrolabe" role="img" width="132" height="132" viewBox="0 0 132 132"></svg>
+        <div class="astro-c" aria-hidden="true"><b id="astro-big" class="n"></b><span id="astro-small"></span></div>
+      </div>
+      <ul id="goal-progress" class="mlist"></ul>
     </section>
 
     <section class="card" aria-labelledby="meals-title">
@@ -62,37 +68,45 @@
 
     <section class="card" aria-labelledby="water-title">
       <h2 id="water-title">💧 喝水</h2>
-      <p class="total"><span id="water-total">0</span> ml</p>
-
-      <div class="quick-buttons">
-        <button type="button" data-ml="250">+250ml</button>
-        <button type="button" data-ml="500">+500ml</button>
+      <div class="big">
+        <b id="water-total" class="n">0</b><span id="water-goal" class="n"> ml</span>
+        <span id="mini-constellation" class="mini-constellation" aria-hidden="true"></span>
       </div>
 
-      <form id="custom-water">
-        <label for="custom-ml">自訂數量</label>
+      <div class="quick-buttons">
+        <button type="button" class="secondary n" data-ml="250">+250</button>
+        <button type="button" class="secondary n" data-ml="500">+500</button>
+        <button type="button" id="toggle-custom" class="secondary" aria-expanded="false" aria-controls="custom-water">自訂</button>
+      </div>
+
+      <form id="custom-water" novalidate hidden>
+        <label class="sr-only" for="custom-ml">自訂毫升數</label>
         <div class="row">
           <input id="custom-ml" type="number" inputmode="numeric" min="1" step="1" placeholder="例如 350">
           <span>ml</span>
-          <button type="submit">新增</button>
+          <button type="submit" class="secondary">加入</button>
         </div>
       </form>
 
       <p id="water-error" class="error" role="alert" hidden></p>
 
-      <ul id="water-list" class="entries"></ul>
-      <p id="water-empty" class="empty">這天還沒有喝水紀錄</p>
+      <div id="water-list" class="shelf" aria-label="喝水紀錄，點一筆可以改時間"></div>
+      <p id="water-empty" class="empty">還沒有喝水紀錄</p>
     </section>
   </main>
 
-  <dialog id="water-time" aria-labelledby="water-time-title">
+  <!-- 修改喝水時間：從下方滑出的面板 -->
+  <dialog id="water-time" class="sheet" aria-labelledby="water-time-title">
     <form id="water-time-form" class="editor" novalidate>
+      <span class="grab" aria-hidden="true"></span>
       <h2 id="water-time-title">修改喝水時間</h2>
+      <p class="keyrow"><b id="water-time-ml" class="n"></b><span id="water-time-was" class="n"></span></p>
       <label class="field"><span>日期時間</span><input name="at" type="datetime-local"></label>
       <p id="water-time-error" class="error" role="alert" hidden></p>
       <div class="editor-actions">
         <button type="submit">儲存</button>
         <button type="button" id="close-water-time" class="secondary">取消</button>
+        <button type="button" id="delete-water" class="danger">刪除這一筆</button>
       </div>
     </form>
   </dialog>

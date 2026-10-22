@@ -5,7 +5,7 @@ import { createMealDraft, defaultMealType, sumNutrients } from "./meal.js";
 import { goalProgress, validateGoals, withDefaults } from "./goals.js";
 import { ANALYSIS_ERRORS, AnalysisError } from "./analysis-error.js";
 import { buildBackup, parseBackup } from "./backup.js";
-import { validateWaterMl } from "./water.js";
+import { constellationLit, validateWaterMl } from "./water.js";
 import { DEFAULT_MODEL, isBlankKey, keyStatus, normalizeKey, validateModel } from "./ai-settings.js";
 import { WATER_MEASURE } from "./measures.js";
 
@@ -47,18 +47,16 @@ export function createDiary({ storage, clock, analyzer }) {
     const waterTotalMl = water.reduce((sum, w) => sum + w.ml, 0);
     const nutritionTotals = sumNutrients(meals.flatMap((m) => m.items));
     const hasRecords = meals.length + water.length > 0;
+    const goals = await getGoals();
     return {
       dayKey,
       hasRecords,
       water,
       waterTotalMl,
+      constellationLit: constellationLit(waterTotalMl, goals[WATER_MEASURE.key]),
       meals,
       nutritionTotals,
-      progress: goalProgress(
-        { ...nutritionTotals, [WATER_MEASURE.key]: waterTotalMl },
-        await getGoals(),
-        hasRecords,
-      ),
+      progress: goalProgress({ ...nutritionTotals, [WATER_MEASURE.key]: waterTotalMl }, goals, hasRecords),
     };
   }
 
