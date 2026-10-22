@@ -53,3 +53,36 @@ test("重新打開 App 後，今天的喝水紀錄依時間排序列出", async 
     [[9, 250], [15, 500]],
   );
 });
+
+test("有喝水目標時，星座依喝水比例點亮：目標 2000 ml、喝了 750 ml 亮 3 顆", async () => {
+  const { diary } = setup();
+  await diary.setGoals({ waterMl: 2000 });
+  await diary.addWater(750);
+  const day = await diary.getDaySummary(diary.todayKey());
+  assert.equal(day.constellationLit, 3);
+});
+
+test("喝到剛好達標時星座全亮 8 顆，超過目標仍是 8 顆", async () => {
+  const { diary } = setup();
+  await diary.setGoals({ waterMl: 2000 });
+  await diary.addWater(2000);
+  assert.equal((await diary.getDaySummary(diary.todayKey())).constellationLit, 8);
+  await diary.addWater(1500);
+  assert.equal((await diary.getDaySummary(diary.todayKey())).constellationLit, 8);
+});
+
+test("沒有喝水目標時每 250 ml 亮一顆星，最多 8 顆；沒喝水是 0 顆", async () => {
+  const { diary } = setup();
+  await diary.setGoals({ waterMl: null });
+  assert.equal((await diary.getDaySummary(diary.todayKey())).constellationLit, 0);
+  await diary.addWater(600);
+  assert.equal((await diary.getDaySummary(diary.todayKey())).constellationLit, 2);
+  await diary.addWater(3000);
+  assert.equal((await diary.getDaySummary(diary.todayKey())).constellationLit, 8);
+});
+
+test("有喝水目標但還沒喝水時，星座 0 顆", async () => {
+  const { diary } = setup();
+  await diary.setGoals({ waterMl: 2000 });
+  assert.equal((await diary.getDaySummary(diary.todayKey())).constellationLit, 0);
+});

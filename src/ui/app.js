@@ -7,7 +7,7 @@ import { createClaudeAnalyzer } from "../adapters/claude-analyzer.js";
 import { resizePhotos } from "./photos.js";
 import { createMealEditor, renderNutrition } from "./meal-editor.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
-import { renderProgress } from "./goals-view.js";
+import { createAstrolabe, createConstellation, createWaterStars } from "./astrolabe.js";
 import { createSettings } from "./settings-view.js";
 import { saveBackup } from "./backup.js";
 import { createHistory, formatDayTitle } from "./history-view.js";
@@ -49,28 +49,28 @@ const currentDayKey = () => view.pastDay ?? diary.todayKey();
 // 在過去的日子新增紀錄就是補記，時間規則由日記核心決定。
 const timeForNewRecord = () => diary.timeForNewRecord(currentDayKey());
 
-function waterItem(w) {
-  const li = document.createElement("li");
-  const time = document.createElement("button");
-  time.type = "button";
-  time.className = "time link";
-  time.textContent = formatTime(w.at);
-  time.setAttribute("aria-label", `修改 ${formatTime(w.at)} 的 ${w.ml} ml 的時間`);
-  time.addEventListener("click", () => openWaterTime(w));
-  const ml = document.createElement("span");
-  ml.className = "ml";
-  ml.textContent = `${w.ml} ml`;
-  const del = document.createElement("button");
-  del.type = "button";
-  del.className = "delete";
-  del.textContent = "刪除";
-  del.setAttribute("aria-label", `刪除 ${formatTime(w.at)} 的 ${w.ml} ml`);
-  del.addEventListener("click", async () => {
-    await diary.deleteWater(w.id);
-    await render();
-  });
-  li.append(time, ml, del);
-  return li;
+// 喝水紀錄是一排小標籤，點一筆打開「修改喝水時間」面板（也可以在面板裡刪除）。
+// isNew：剛加入的那一筆，滑進來。
+function waterItem(w, isNew) {
+  const chip = document.createElement("button");
+  chip.type = "button";
+  chip.className = isNew ? "log n fresh" : "log n";
+  chip.textContent = `${formatTime(w.at)}・${w.ml} ml`;
+  chip.setAttribute("aria-label", `${formatTime(w.at)} 喝了 ${w.ml} ml，點一下修改時間`);
+  chip.addEventListener("click", () => openWaterTime(w));
+  return chip;
+}
+
+// 星盤卡、頂端星座、喝水的小星星：只建立一次，之後每次重新整理只更新數值。
+const astrolabe = createAstrolabe({ chart: $("astrolabe"), centerBig: $("astro-big"), centerSmall: $("astro-small"), list: $("goal-progress") });
+const constellation = createConstellation($("constellation"));
+const waterStars = createWaterStars($("water-stars"));
+
+// 重新播放一次 CSS 動畫（例如數字變了時的跳一下）
+function replay(el, cls) {
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
 }
 
 function mealRow(meal) {
@@ -129,12 +129,18 @@ async function render() {
   }
 }
 
+// 上一次畫出來的那一天：判斷是不是「同一天的資料變了」
+let lastShown = null;
+
 async function renderDay() {
   const shown = view;
   const reminderDue = await diary.backupReminderDue();
   const day = await diary.getDaySummary(currentDayKey());
   // 等資料時已經切到別的畫面，就不要用舊的結果蓋掉新畫面的標題
   if (view !== shown) return;
+  // 換到另一天不算資料變化：加上 instant 直接畫出來，不播放動畫
+  const sameDay = day.dayKey === lastShown?.dayKey;
+  if (!sameDay) $("day-view").classList.add("instant");
   $("backup-reminder").hidden = !reminderDue;
   const isToday = day.dayKey === diary.todayKey();
   $("page-title").textContent = isToday ? "今天" : formatDayTitle(day.dayKey);
@@ -142,13 +148,28 @@ async function renderDay() {
   $("today-date").textContent = new Date(dayRange(day.dayKey).from).toLocaleDateString("zh-TW", {
     year: "numeric", month: "long", day: "numeric", weekday: "long",
   });
-  renderProgress($("goal-progress"), day.progress);
+  astrolabe.update(day.progress, day.hasRecords);
+  constellation.update(day.constellationLit);
+  waterStars.update(day.constellationLit);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
   $("meals-empty").hidden = day.meals.length > 0;
   $("meal-list").replaceChildren(...day.meals.map(mealRow));
+
+  const waterGoal = day.progress.waterMl.goal;
   $("water-total").textContent = day.waterTotalMl.toLocaleString("zh-TW");
+  $("water-goal").textContent = waterGoal === null ? " ml" : ` / ${waterGoal.toLocaleString("zh-TW")} ml`;
   $("water-empty").hidden = day.water.length > 0;
-  $("water-list").replaceChildren(...day.water.map(waterItem));
+  const shownWater = new Set(sameDay ? lastShown.waterIds : []);
+  $("water-list").replaceChildren(...day.water.map((w) => waterItem(w, sameDay && !shownWater.has(w.id))));
+
+  if (sameDay) {
+    if (day.waterTotalMl !== lastShown.waterTotalMl) replay($("water-total"), "bump");
+  } else {
+    // 先讀一次版面，讓瀏覽器在沒有動畫的狀態下套用新數值，再拿掉 instant
+    void $("day-view").offsetWidth;
+    $("day-view").classList.remove("instant");
+  }
+  lastShown = { dayKey: day.dayKey, waterTotalMl: day.waterTotalMl, waterIds: day.water.map((w) => w.id) };
 }
 
 async function addWater(ml) {
@@ -189,14 +210,21 @@ $("meal-photos").addEventListener("change", async (event) => {
   }
 });
 
-// 修改喝水時間的視窗
+// 修改喝水時間的面板（從下方滑出）：改時間或刪除這一筆
 let movingWater = null;
 function openWaterTime(w) {
   movingWater = w;
+  $("water-time-ml").textContent = `${w.ml} ml`;
+  $("water-time-was").textContent = `原本 ${formatTime(w.at)}`;
   $("water-time-form").elements.at.value = toLocalInputValue(w.at);
   showMessage("water-time-error", "");
   $("water-time").showModal();
 }
+$("delete-water").addEventListener("click", async () => {
+  await diary.deleteWater(movingWater.id);
+  $("water-time").close();
+  await render();
+});
 $("water-time-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
@@ -237,11 +265,25 @@ for (const btn of document.querySelectorAll("[data-ml]")) {
   btn.addEventListener("click", () => addWater(Number(btn.dataset.ml)));
 }
 
+// 「自訂」展開或收起輸入欄
+function showCustomWater(open) {
+  $("custom-water").hidden = !open;
+  $("toggle-custom").setAttribute("aria-expanded", String(open));
+}
+$("toggle-custom").addEventListener("click", () => {
+  const open = $("custom-water").hidden;
+  showCustomWater(open);
+  if (open) $("custom-ml").focus();
+});
+
 $("custom-water").addEventListener("submit", async (event) => {
   event.preventDefault();
   const input = $("custom-ml");
   const raw = input.value.trim();
-  if (await addWater(raw === "" ? NaN : Number(raw))) input.value = "";
+  if (await addWater(raw === "" ? NaN : Number(raw))) {
+    input.value = "";
+    showCustomWater(false);
+  }
 });
 
 // 從背景回到前景時重新整理，跨過午夜也會換成新的一天。
