@@ -190,8 +190,6 @@ button.link::before, button.link::after, button.delete::before, button.delete::a
 .quick-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
 .quick-buttons button { padding: 0; }
 
-#custom-water { margin-top: 16px; }
-#custom-water label { display: block; color: var(--muted); margin-bottom: 6px; }
 .row { display: flex; align-items: center; gap: 8px; }
 .row input {
   flex: 1;
@@ -346,9 +344,9 @@ dialog::backdrop { background: rgb(2 8 16 / 0.65); }
 .big { display: flex; align-items: baseline; gap: 6px; margin-top: 8px; }
 .big b { font-size: 44px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; }
 .big span { font-size: 14px; color: var(--muted); white-space: nowrap; }
-.water-stars { display: flex; gap: 3px; margin-left: auto; align-self: center; }
-.w-star { fill: none; stroke: rgb(238 243 247 / 0.35); stroke-width: 1.6; transition: fill 0.5s ease, stroke 0.5s ease; }
-.water-stars .lit .w-star { fill: var(--star); stroke: var(--star); }
+.mini-constellation { display: flex; gap: 3px; margin-left: auto; align-self: center; }
+.mini-star { fill: none; stroke: rgb(238 243 247 / 0.35); stroke-width: 1.6; transition: fill 0.5s ease, stroke 0.5s ease; }
+.mini-constellation .lit .mini-star { fill: var(--star); stroke: var(--star); }
 #custom-water { margin-top: 10px; }
 .shelf {
   display: flex;

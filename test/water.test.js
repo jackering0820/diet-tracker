@@ -86,3 +86,10 @@ test("有喝水目標但還沒喝水時，星座 0 顆", async () => {
   await diary.setGoals({ waterMl: 2000 });
   assert.equal((await diary.getDaySummary(diary.todayKey())).constellationLit, 0);
 });
+
+test("喝水目標是 0 時已經達標，星座全亮 8 顆（不是改用每 250 ml 一顆）", async () => {
+  const { diary } = setup();
+  await diary.setGoals({ waterMl: 0 });
+  await diary.addWater(250);
+  assert.equal((await diary.getDaySummary(diary.todayKey())).constellationLit, 8);
+});

@@ -11,8 +11,10 @@ export function validateWaterMl(ml) {
 const CONSTELLATION_STARS = 8;
 const ML_PER_STAR_WITHOUT_GOAL = 250;
 
-// 星座點亮數：有喝水目標時依目標的比例點亮 8 顆星；沒有目標時每 250 ml 一顆。最多 8 顆。
+// 星座點亮數：有喝水目標時依目標的比例點亮 8 顆星；沒有目標（null）時每 250 ml 一顆。最多 8 顆。
+// 目標是 0 時任何喝水量都已達標，全亮。
 export function constellationLit(waterMl, goalMl) {
-  const lit = goalMl ? (waterMl / goalMl) * CONSTELLATION_STARS : waterMl / ML_PER_STAR_WITHOUT_GOAL;
+  if (goalMl === 0) return CONSTELLATION_STARS;
+  const lit = goalMl === null ? waterMl / ML_PER_STAR_WITHOUT_GOAL : (waterMl / goalMl) * CONSTELLATION_STARS;
   return Math.min(CONSTELLATION_STARS, Math.floor(lit));
 }

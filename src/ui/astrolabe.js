@@ -34,7 +34,7 @@ function ratio({ value, goal, status }) {
   return status === "unset" || status === "noRecords" ? 0 : 1;
 }
 
-// 星盤卡：chart 是星盤的 <svg>，center 是中間的「N/4 項達標」，list 是旁邊四項指標的 <ul>。
+// 星盤卡：chart 是星盤的 <svg>，centerBig、centerSmall 是中間的「N/4」和「項達標」，list 是旁邊四項指標的 <ul>。
 export function createAstrolabe({ chart, centerBig, centerSmall, list }) {
   const rings = svg("g", { transform: `rotate(135 ${CENTER} ${CENTER})` });
   const parts = GOAL_MEASURES.map((measure, i) => {
@@ -81,7 +81,9 @@ export function createAstrolabe({ chart, centerBig, centerSmall, list }) {
         const deg = Math.min(1, f) * ARC;
         arc.style.strokeDasharray = `${deg.toFixed(1)} 360`;
         arc.style.strokeLinecap = deg > 0 ? "round" : "butt"; // 長度 0 時圓頭會留下一個點
-        if (over) over.style.strokeDasharray = `${(p.status === "over" ? Math.min(MAX_OVER, (f - 1) * ARC) : 0).toFixed(1)} 360`;
+        // 超過上限的紅色段；目標是 0 時算不出比例，超過就畫滿
+        const overDeg = p.status !== "over" ? 0 : p.goal > 0 ? Math.min(MAX_OVER, (f - 1) * ARC) : MAX_OVER;
+        if (over) over.style.strokeDasharray = `${overDeg.toFixed(1)} 360`;
         goalStar.classList.toggle("lit", p.status === "achieved");
         if (p.status === "achieved") met += 1;
 
@@ -123,11 +125,11 @@ export function createConstellation(chart) {
   };
 }
 
-// 喝水面板旁的八顆小星星
-export function createWaterStars(container) {
+// 喝水面板旁的小星座：和頂端星座一樣依星座點亮數點亮的八顆小星星
+export function createMiniConstellation(container) {
   const stars = Array.from({ length: STARS }, () => {
     const icon = svg("svg", { width: 14, height: 14, viewBox: "0 0 24 24" });
-    icon.append(star({ class: "w-star" }));
+    icon.append(star({ class: "mini-star" }));
     return icon;
   });
   container.replaceChildren(...stars);

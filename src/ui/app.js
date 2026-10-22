@@ -1,13 +1,13 @@
 // 畫面層（UI Shell）：只處理畫面，所有規則交給日記核心。
 import { createDiary } from "../core/diary.js";
 import { dayRange } from "../core/day.js";
-import { formatWithUnit } from "../core/measures.js";
+import { WATER_MEASURE, formatWithUnit } from "../core/measures.js";
 import { createIndexedDbStorage } from "../adapters/indexeddb-storage.js";
 import { createClaudeAnalyzer } from "../adapters/claude-analyzer.js";
 import { resizePhotos } from "./photos.js";
 import { createMealEditor, renderNutrition } from "./meal-editor.js";
 import { byId as $, fromLocalInputValue, showMessage, toLocalInputValue } from "./dom.js";
-import { createAstrolabe, createConstellation, createWaterStars } from "./astrolabe.js";
+import { createAstrolabe, createConstellation, createMiniConstellation } from "./astrolabe.js";
 import { createSettings } from "./settings-view.js";
 import { saveBackup } from "./backup.js";
 import { createHistory, formatDayTitle } from "./history-view.js";
@@ -61,10 +61,10 @@ function waterItem(w, isNew) {
   return chip;
 }
 
-// 星盤卡、頂端星座、喝水的小星星：只建立一次，之後每次重新整理只更新數值。
+// 星盤卡、頂端星座、喝水面板旁的小星座：只建立一次，之後每次重新整理只更新數值。
 const astrolabe = createAstrolabe({ chart: $("astrolabe"), centerBig: $("astro-big"), centerSmall: $("astro-small"), list: $("goal-progress") });
 const constellation = createConstellation($("constellation"));
-const waterStars = createWaterStars($("water-stars"));
+const miniConstellation = createMiniConstellation($("mini-constellation"));
 
 // 重新播放一次 CSS 動畫（例如數字變了時的跳一下）
 function replay(el, cls) {
@@ -150,12 +150,12 @@ async function renderDay() {
   });
   astrolabe.update(day.progress, day.hasRecords);
   constellation.update(day.constellationLit);
-  waterStars.update(day.constellationLit);
+  miniConstellation.update(day.constellationLit);
   renderNutrition($("nutrition-totals"), day.nutritionTotals);
   $("meals-empty").hidden = day.meals.length > 0;
   $("meal-list").replaceChildren(...day.meals.map(mealRow));
 
-  const waterGoal = day.progress.waterMl.goal;
+  const waterGoal = day.progress[WATER_MEASURE.key].goal;
   $("water-total").textContent = day.waterTotalMl.toLocaleString("zh-TW");
   $("water-goal").textContent = waterGoal === null ? " ml" : ` / ${waterGoal.toLocaleString("zh-TW")} ml`;
   $("water-empty").hidden = day.water.length > 0;
@@ -218,12 +218,23 @@ function openWaterTime(w) {
   $("water-time-was").textContent = `原本 ${formatTime(w.at)}`;
   $("water-time-form").elements.at.value = toLocalInputValue(w.at);
   showMessage("water-time-error", "");
+  askDeleteWater(false);
   $("water-time").showModal();
 }
+// 刪除要按兩下：第一下把按鍵換成確認文字，第二下才刪除（畫面內確認，不用瀏覽器的確認視窗）
+function askDeleteWater(asking) {
+  $("delete-water").dataset.asking = String(asking);
+  $("delete-water").textContent = asking ? "再按一次確定刪除" : "刪除這一筆";
+}
 $("delete-water").addEventListener("click", async () => {
-  await diary.deleteWater(movingWater.id);
-  $("water-time").close();
-  await render();
+  if ($("delete-water").dataset.asking !== "true") return askDeleteWater(true);
+  try {
+    await diary.deleteWater(movingWater.id);
+    $("water-time").close();
+    await render();
+  } catch (err) {
+    showMessage("water-time-error", `刪除失敗：${err.message}`);
+  }
 });
 $("water-time-form").addEventListener("submit", async (event) => {
   event.preventDefault();
