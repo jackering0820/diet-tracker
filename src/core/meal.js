@@ -112,3 +112,8 @@ export function createMealDraft({ id, at, mealType, items = [], photos = [], sou
 export function mealTitle(items) {
   return items.map((item) => item.name).join("、");
 }
+
+// 一餐的「食物組合」：只看食物名稱、不看順序，用來判斷兩餐是不是吃同樣的東西。
+export function foodCombination(items) {
+  return JSON.stringify(items.map((item) => item.name).sort());
+}
