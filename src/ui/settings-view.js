@@ -4,6 +4,7 @@ import { MODEL_OPTIONS } from "../core/ai-settings.js";
 import { byId as $, showMessage } from "./dom.js";
 import { GOAL_MEASURES, formatMeasure } from "../core/measures.js";
 import { createBackupReceipt } from "./backup-receipt.js";
+import { formatKilobytes } from "./backup.js";
 
 const GOALS_DIRTY = "有變更還沒儲存";
 
@@ -184,7 +185,7 @@ export function createSettings({ diary }) {
   async function renderBackupInfo() {
     await renderLastExport();
     const { days, bytes } = diary.backupSummary(await diary.exportBackup());
-    $("data-amount").textContent = `${days} 天・${Math.max(1, Math.round(bytes / 1024)).toLocaleString("zh-TW")} KB`;
+    $("data-amount").textContent = `${days} 天・${formatKilobytes(bytes)}`;
   }
 
   // 匯出：交給分享選單儲存，之後顯示卷軸收據（或取消畫面）；每次匯出後更新上次匯出

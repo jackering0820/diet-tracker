@@ -28,6 +28,11 @@ function download(file) {
 
 // 匯出並交給手機儲存。回傳 { saved, name, text }（text 是備份檔的內容，用來算備份摘要）；使用者在分享選單按取消時 saved 是 false，
 // 這時不標記為已備份，「上次匯出」不會更新。
+// 檔案大小，例如「184 KB」（不到 1 KB 也寫 1 KB）
+export function formatKilobytes(bytes) {
+  return `${Math.max(1, Math.round(bytes / 1024)).toLocaleString("zh-TW")} KB`;
+}
+
 export async function saveBackup(diary) {
   const text = await diary.exportBackup();
   const file = new File([text], backupFileName(), { type: "application/json" });

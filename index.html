@@ -290,11 +290,13 @@
     </div>
   </dialog>
   <!-- 匯出備份的結果：完成時是卷軸收據，在分享選單按取消時是取消畫面 -->
-  <dialog id="backup-receipt" class="fullscreen" aria-labelledby="receipt-title">
+  <dialog id="backup-receipt" class="fullscreen" aria-labelledby="receipt-heading">
     <div class="editor">
       <div class="editor-top">
         <button type="button" id="receipt-back" class="link back-button">‹ 設定</button>
+        <p id="receipt-heading" class="top-title">匯出備份</p>
       </div>
+      <p id="receipt-error" class="error" role="alert" tabindex="-1" hidden></p>
 
       <div id="receipt-done">
         <div class="result-hero">
@@ -335,7 +337,6 @@
           </div>
         </div>
       </div>
-      <p id="receipt-error" class="error" role="alert" hidden></p>
     </div>
   </dialog>
 </body>

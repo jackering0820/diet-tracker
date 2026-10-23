@@ -714,3 +714,4 @@ dialog.fullscreen .editor { min-height: 100%; display: flex; flex-direction: col
 .result-icon.cancelled { background: rgb(255 157 176 / 0.16); color: var(--danger); }
 .receipt-note { margin: 0; font-size: 14px; line-height: 1.7; }
 #backup-receipt .editor-dock { margin-top: 28px; }
+.top-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--muted); }
