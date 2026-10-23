@@ -28,6 +28,12 @@ export function atTimeOnDay(dayKey, time) {
   return new Date(y, m - 1, d, time.getHours(), time.getMinutes()).getTime();
 }
 
+// 兩個 "YYYY-MM-DD" 相差幾天（照日曆，不受日光節約時間影響）
+export function daysBetween(fromKey, toKey) {
+  const utc = (key) => { const [y, m, d] = key.split("-").map(Number); return Date.UTC(y, m - 1, d); };
+  return Math.round((utc(toKey) - utc(fromKey)) / 86_400_000);
+}
+
 // "YYYY-MM-DD" 加減天數（n 可以是負數），依當地日曆計算。
 export function addDays(dayKey, n) {
   const [y, m, d] = dayKey.split("-").map(Number);

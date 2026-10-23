@@ -3,8 +3,8 @@
 
 // 可以選的模型。畫面依這份清單產生選項，新增模型只要改這裡。
 export const MODEL_OPTIONS = [
-  { id: "claude-sonnet-5-5", label: "Sonnet 5.5（較準確，預設）" },
-  { id: "claude-haiku-5-5", label: "Haiku 5.5（較便宜、較快）" },
+  { id: "claude-sonnet-5-5", name: "Sonnet 5.5", note: "較準確，預設" },
+  { id: "claude-haiku-5-5", name: "Haiku 5.5", note: "較便宜、較快" },
 ];
 export const DEFAULT_MODEL = "claude-sonnet-5-5";
 
@@ -22,11 +22,11 @@ export function keyStatus(key) {
   return key ? { isSet: true, masked: maskKey(key) } : { isSet: false, masked: null };
 }
 
-// 只露出開頭 7 個字（例如 "sk-ant-"）和最後 4 個字，讓使用者認得是哪一把金鑰。
+// 只露出最後 4 個字（例如「…WXYZ」），讓使用者認得是哪一把金鑰。
 // 太短的金鑰不露出任何字元。
 function maskKey(key) {
   if (key.length <= 12) return "••••";
-  return `${key.slice(0, 7)}…${key.slice(-4)}`;
+  return `…${key.slice(-4)}`;
 }
 
 // 整理並檢查貼上的金鑰：去掉前後的空白和換行。

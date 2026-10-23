@@ -1,6 +1,6 @@
 // 備份檔的格式：匯出成 JSON 文字，匯入時先完整檢查再交給日記核心。
 // 刻意「挑選」要放進備份的內容（餐點、喝水、目標），API 金鑰和其他設定一律不放。
-import { validateAt } from "./day.js";
+import { dayKeyOf, validateAt } from "./day.js";
 import { validateGoals } from "./goals.js";
 import { createMealDraft } from "./meal.js";
 import { validateWaterMl } from "./water.js";
@@ -73,4 +73,17 @@ export function parseBackup(text) {
     fail(`備份檔的目標有問題：${err.message}`);
   }
   return { meals, water, goals };
+}
+
+// 備份摘要：一份備份裡有什麼。紀錄天數是有任何餐點或喝水的日子，檔案大小是備份檔的位元組數。
+export function summarizeBackup(text) {
+  const { meals, water } = parseBackup(text);
+  const days = new Set([...meals, ...water].map((record) => dayKeyOf(new Date(record.at))));
+  return {
+    days: days.size,
+    meals: meals.length,
+    photos: meals.reduce((sum, meal) => sum + meal.photos.length, 0),
+    water: water.length,
+    bytes: new TextEncoder().encode(text).length,
+  };
 }

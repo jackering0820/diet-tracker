@@ -27,7 +27,7 @@ function download(file) {
 }
 
 // 匯出並交給手機儲存。回傳 { saved, name }；使用者在分享選單按取消時 saved 是 false，
-// 這時不標記為已備份，提醒會繼續出現。
+// 這時不標記為已備份，「上次匯出」不會更新。
 export async function saveBackup(diary) {
   const file = new File([await diary.exportBackup()], backupFileName(), { type: "application/json" });
   if (canShareFile(file)) {
@@ -43,9 +43,4 @@ export async function saveBackup(diary) {
   // 一般下載無法知道使用者有沒有真的存好，只能當作已儲存。
   await diary.markExported();
   return { saved: true, name: file.name };
-}
-
-export function formatLastExport(ms) {
-  if (ms === null) return "還沒匯出過";
-  return new Date(ms).toLocaleString("zh-TW", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
 }
