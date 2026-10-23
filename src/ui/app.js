@@ -249,7 +249,7 @@ function renderMealShelf(day, isToday, isNew) {
   nextMealCard.querySelector(".ghost span").textContent = nextType.charAt(0);
   nextMealCard.setAttribute("aria-label", `記下一餐：${nextType}，拍照`);
   $("meal-list").replaceChildren(...meals.map((m) => mealCard(m, isNew(m))), ...(isToday ? [nextMealCard] : []));
-  $("snap-meal-label").textContent = isToday ? `📷 拍照記${nextType}` : "📷 拍照補記一餐";
+  $("snap-meal-label").textContent = isToday ? `拍照記${nextType}` : "拍照補記一餐";
 }
 
 // 「最近吃過」：每一張卡片點一下就把那一餐再記一次（日記核心決定時間、餐別和要複製什麼）。

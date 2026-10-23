@@ -147,7 +147,7 @@ export function createSettings({ diary }) {
     try {
       await diary.setGoals(goals);
       fillGoals(await diary.getGoals()); // 存下來的是四捨五入後的數字，欄位跟著更新
-      $("goals-status").textContent = "✓ 已儲存目標";
+      $("goals-status").textContent = "已儲存目標";
     } catch (err) {
       showMessage("goals-error", err.message);
       renderGoalsState();
@@ -170,7 +170,7 @@ export function createSettings({ diary }) {
       await diary.saveAiSettings({ key: keyInput.value, model: aiForm.elements.model.value });
       keyInput.value = "";
       await renderKeyStatus();
-      showMessage("ai-saved", "✓ 已儲存 AI 設定");
+      showMessage("ai-saved", "已儲存 AI 設定");
     } catch (err) {
       showMessage("ai-error", err.message);
     }
@@ -204,7 +204,7 @@ export function createSettings({ diary }) {
   function askImport(file) {
     const wasAsking = Boolean(pendingImport);
     pendingImport = file;
-    $("import-file-name").textContent = file ? `📄 ${file.name}` : "";
+    $("import-file-name").textContent = file ? file.name : "";
     $("import-confirm").hidden = !file;
     $("backup-buttons").hidden = Boolean(file);
     // 確認出現時焦點移到「不要」（比較安全的選擇）；關掉時回到「匯入備份」
@@ -228,7 +228,7 @@ export function createSettings({ diary }) {
     askImport(null);
     try {
       await diary.importBackup(await file.text());
-      showMessage("backup-saved", "✓ 已匯入備份");
+      showMessage("backup-saved", "已匯入備份");
       fillGoals(await diary.getGoals()); // 目標也被還原了，重新填入
       await renderBackupInfo();
     } catch (err) {
