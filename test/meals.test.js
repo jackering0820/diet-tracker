@@ -174,3 +174,41 @@ test("某一天的每一餐附上標題：食物名稱依加入順序用「、�
   const { meals } = await diary.getDaySummary(diary.todayKey());
   assert.deepEqual(meals.map((m) => m.title), ["雞腿便當、無糖豆漿", "無糖豆漿"]);
 });
+
+test("這餐總計的預覽：表單打到一半的數字也算進去（修改是取代那一項、新增是加上去），無法解讀或負數先當 0", () => {
+  const { diary } = setup();
+  const draft = diary.newMealDraft();
+  const bento = draft.addItem(BENTO); // 800 大卡
+  draft.addItem(SOY_MILK); // 120 大卡
+  assert.equal(draft.previewTotals(null).kcal, 920, "表單沒開");
+  assert.equal(draft.previewTotals({ kcal: 885, protein: 35 }, bento.id).kcal, 1005, "修改便當：800 → 885");
+  assert.equal(draft.previewTotals({ kcal: 60 }, null).kcal, 980, "新增一項 60 大卡");
+  assert.equal(draft.previewTotals({ kcal: NaN, protein: -3 }, null).kcal, 920, "無法解讀的數字先當 0");
+  assert.equal(draft.previewTotals({ kcal: NaN, protein: -3 }, null).protein, 46, "負數先當 0");
+  assert.equal(draft.totals().kcal, 920, "預覽不會改到草稿");
+});
+
+test("存了之後那一天的熱量預告：加上同一天其他餐，修改時不重複算自己，超過上限時算出超過多少", async () => {
+  const { diary } = setup(new Date(2026, 9, 11, 12, 0));
+  await diary.setGoals({ kcal: 1800 });
+  const at = new Date(2026, 9, 11, 8, 0).getTime();
+  await diary.saveMeal(diary.newMealDraft({ at, items: [{ ...BENTO, kcal: 570 }] }));
+  const lunch = await diary.saveMeal(diary.newMealDraft({ items: [{ ...BENTO, kcal: 600 }] }));
+
+  assert.deepEqual(await diary.previewDayKcal({ mealId: null, at, kcal: 610 }), { kcal: 1780, goal: 1800, overBy: 0 }, "新增一餐：570 + 600 + 610");
+  assert.deepEqual(await diary.previewDayKcal({ mealId: lunch.id, at, kcal: 610 }), { kcal: 1180, goal: 1800, overBy: 0 }, "修改午餐：600 換成 610");
+  assert.deepEqual(await diary.previewDayKcal({ mealId: lunch.id, at, kcal: 1430 }), { kcal: 2000, goal: 1800, overBy: 200 }, "會超過上限 200");
+  assert.deepEqual(await diary.previewDayKcal({ mealId: null, at: new Date(2026, 9, 10, 19, 0).getTime(), kcal: 500 }), { kcal: 500, goal: 1800, overBy: 0 }, "補記前一天：只算那一天");
+
+  await diary.setGoals({ kcal: null });
+  assert.deepEqual(await diary.previewDayKcal({ mealId: null, at, kcal: 610 }), { kcal: 1780, goal: null, overBy: null }, "沒設定熱量上限");
+});
+
+test("依時間的預設餐別：給一個時間就知道，和新增一餐時預設的一樣", () => {
+  const { diary } = setup();
+  for (const [hour, minute, expected] of [[8, 0, "早餐"], [12, 40, "午餐"], [15, 0, "點心"], [19, 0, "晚餐"], [23, 30, "點心"]]) {
+    const at = new Date(2026, 9, 11, hour, minute).getTime();
+    assert.equal(diary.defaultMealType(at), expected);
+    assert.equal(diary.newMealDraft({ at }).mealType, expected);
+  }
+});
