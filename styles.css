@@ -4,7 +4,9 @@
   --bg: #0A1115;          /* 背景（夜空下方）：參考動畫的灰藍色，接近黑色（和 WebGL 天空的下方同色） */
   --bg-rgb: 10 17 21;     /* 同一個顏色，給半透明的標題列和底部固定列用 */
   --bg-top: #2B3F4D;      /* 背景（夜空上方）：灰藍色 */
-  --card: #0D2A40;
+  /* 顯示框半透明，捲動時也看得到後面的星空；彈出來蓋在內容上的面板用不透明的 --card-solid，才不會和後面的內容疊在一起 */
+  --card: rgb(13 42 64 / 0.42);
+  --card-solid: #0D2A40;
   --field: rgb(0 0 0 / 0.28);
   --text: #EEF3F7;
   --muted: rgb(238 243 247 / 0.70);
@@ -348,7 +350,7 @@ dialog {
   padding: 0;
   border: none;
   border-radius: 16px 16px 0 0;
-  background: var(--card);
+  background: var(--card-solid);
   color: var(--text);
 }
 dialog::backdrop { background: rgb(2 8 16 / 0.65); }
@@ -390,7 +392,7 @@ dialog::backdrop { background: rgb(2 8 16 / 0.65); }
   margin: 12px 0;
   padding: 16px;
   border-radius: 24px;
-  background: linear-gradient(150deg, #16466A 0%, var(--card) 55%, #0A2236 100%);
+  background: linear-gradient(150deg, rgb(22 70 106 / 0.5) 0%, var(--card) 55%, rgb(10 34 54 / 0.45) 100%);
   border: 1px solid rgb(111 211 255 / 0.28);
   box-shadow: 0 24px 48px -28px rgb(0 0 0 / 0.95);
 }
@@ -499,7 +501,7 @@ dialog.sheet[open] { animation: sheet-up 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
 }
 .day:active { transform: scale(0.96); transition-duration: 0.08s; }
 .day.wide { width: 116px; }
-.day.is-today { border-color: rgb(111 211 255 / 0.6); background: linear-gradient(160deg, #16466A, var(--card)); }
+.day.is-today { border-color: rgb(111 211 255 / 0.6); background: linear-gradient(160deg, rgb(22 70 106 / 0.55), var(--card)); }
 .day.none { background: rgb(255 255 255 / 0.025); border-style: dashed; }
 .day .h { display: flex; flex-direction: column; line-height: 1.2; }
 .day .h span { font-size: 12px; color: var(--muted); }
