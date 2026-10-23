@@ -54,6 +54,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
   renderMeasureInputs($("nutrient-fields"), NUTRIENTS, measureLabel);
   let draft = null;
   let editingItemId = null; // 正在修改的那一項；新增時是 null
+  let pickedType = false; // 這次打開後，使用者自己按過餐別
 
   const showItemError = (message) => showMessage("item-error", message);
   const showError = (message) => showMessage("editor-error", message);
@@ -67,6 +68,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     key.textContent = type;
     key.addEventListener("click", () => {
       draft.mealType = type;
+      pickedType = true;
       changed();
       renderMealType();
     });
@@ -76,6 +78,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
 
   function renderMealType() {
     for (const key of typeKeys) key.setAttribute("aria-checked", String(key.textContent === draft.mealType));
+    if (!Number.isFinite(draft.at)) return; // 日期時間清空時，等填好再說
     const byTime = diary.defaultMealType(draft.at);
     const hint = $("type-hint");
     const picked = draft.mealType !== byTime;
@@ -95,7 +98,9 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
   }
 
   function openItemForm(item = null) {
+    changed();
     form.reset();
+    markInvalid([]);
     showItemError("");
     showError("");
     editingItemId = item?.id ?? null;
@@ -120,6 +125,16 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     }));
   }
 
+  // 錯的那幾格標紅：名稱空白、數字無法解讀或是負數
+  function markInvalid(names) {
+    for (const input of form.querySelectorAll("input")) input.setAttribute("aria-invalid", String(names.includes(input.name)));
+  }
+  function invalidFields(fields) {
+    const bad = fields.name === "" ? ["name"] : [];
+    for (const { key } of NUTRIENTS) if (!(fields[key] >= 0)) bad.push(key);
+    return bad;
+  }
+
   function readItemForm() {
     return { name: form.elements.name.value.trim(), portion: form.elements.portion.value.trim(), ...readNutrients() };
   }
@@ -135,13 +150,19 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
       $("open-item-form").focus();
     } catch (err) {
       showItemError(err.message);
+      markInvalid(invalidFields(readItemForm()));
     }
   });
   form.addEventListener("input", () => {
+    changed();
     showItemError("");
+    markInvalid([]);
     renderTotals();
   });
-  $("item-cancel").addEventListener("click", closeItemForm);
+  $("item-cancel").addEventListener("click", () => {
+    closeItemForm();
+    $("open-item-form").focus();
+  });
   $("open-item-form").addEventListener("click", () => openItemForm());
 
   // ---------- 食物清單 ----------
@@ -175,6 +196,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
       changed();
       if (editingItemId === item.id) closeItemForm();
       else renderDraft();
+      $("open-item-form").focus();
     });
     li.append(text, kcal, edit, del);
     return li;
@@ -195,10 +217,20 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
 
     const request = ++previewRequest; // 打字很快時，只用最後一次的結果
     const target = draft;
-    const day = await diary.previewDayKcal({ mealId: draft.id ?? null, at: draft.at, kcal: totals.kcal });
-    if (request !== previewRequest || target !== draft) return;
-    const isToday = new Date(draft.at).toDateString() === new Date().toDateString();
     const preview = $("day-preview");
+    if (!Number.isFinite(draft.at)) {
+      preview.textContent = "";
+      return;
+    }
+    let day;
+    try {
+      day = await diary.previewDayKcal({ mealId: draft.id ?? null, at: draft.at, kcal: totals.kcal });
+    } catch {
+      if (request === previewRequest) preview.textContent = "";
+      return;
+    }
+    if (request !== previewRequest || target !== draft) return;
+    const isToday = diary.isToday(draft.at);
     const amount = document.createElement("b");
     amount.className = "n";
     amount.textContent = day.kcal.toLocaleString("zh-TW");
@@ -319,6 +351,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
   // 修改日期時間：儲存後這一餐會移到新的那一天；依時間的預設餐別和那一天的預告也跟著變。
   $("meal-at").addEventListener("change", (event) => {
     draft.at = fromLocalInputValue(event.target.value);
+    if (!draft.id && !pickedType && Number.isFinite(draft.at)) draft.mealType = diary.defaultMealType(draft.at);
     changed();
     renderMealType();
     renderTotals();
@@ -346,6 +379,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     try {
       await diary.saveMeal(draft);
       showError("");
+      $("editor-title").textContent = "修改這一餐";
       showSaved(true);
       $("back-to-day").focus();
       await onDone();
@@ -377,11 +411,13 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
   // formOpen：一打開就展開空白的食物表單（手寫新增一餐）
   function open(newDraft, { formOpen = false } = {}) {
     paused = false;
+    pickedType = false;
     draft = newDraft;
     const isExisting = Boolean(draft.id);
     $("editor-title").textContent = isExisting ? "修改這一餐" : "新增一餐";
-    const isToday = new Date(draft.at).toDateString() === new Date().toDateString();
+    const isToday = diary.isToday(draft.at);
     $("editor-back").textContent = isToday ? "‹ 今天" : "‹ 返回";
+    $("back-to-day").textContent = isToday ? "回到今天" : "返回那一天";
     $("meal-at").value = toLocalInputValue(draft.at);
     showError("");
     showSaved(false);

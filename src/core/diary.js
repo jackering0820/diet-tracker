@@ -96,6 +96,11 @@ export function createDiary({ storage, clock, analyzer }) {
       await storage.delete(WATER, id);
     },
 
+    // 某個時間（毫秒時間戳）是不是今天；無效的時間不是今天
+    isToday(at) {
+      return Number.isFinite(at) && dayKeyOf(new Date(at)) === todayKey();
+    },
+
     // 依時間的預設餐別（at 是毫秒時間戳）
     defaultMealType(at) {
       return defaultMealType(new Date(at));
