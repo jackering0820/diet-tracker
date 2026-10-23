@@ -77,8 +77,17 @@
 
 每張票的 PR 內文都有 Summary／Evidence／Merge Danger，審查後的修正也寫在裡面；細節看 PR，不在這裡重複。
 
+### 2026-10-23：改版後的收尾
+- [x] 卡片改成半透明，往下捲也看得到星空：[PR #46](https://github.com/jackering0820/diet-tracker/pull/46)
+- [x] 拿掉網頁裡所有小圖示（便當、相機等）：[PR #47](https://github.com/jackering0820/diet-tracker/pull/47)
+- [x] `/improve-codebase-architecture`：報告在 `C:UsersUserAppDataLocalTemparchitecture-review-20261023-092349.html`（暫存資料夾）。5 個候選，選了候選 1（加深「今天畫面的讀取」）＋候選 2（儲存接縫從最新往回讀、讀夠就停），grilling 第 1 輪的 Q1～Q5 **還沒回答**
+- [x] **新 App 圖示上線**：[PR #48](https://github.com/jackering0820/diet-tracker/pull/48)，純白線條畫的立體 U 形碗、深色底，快取 v19
+  - 畫法參考 Hydra 標誌（https://logobook.com/logo/hydra/ ）的「線條立體方塊」，但圖形是原創的。Hydra 是別家公司的商標，**不能直接拿來當圖示**（repo 和網站都是公開的）
+  - 先用 `/prototype` 比較三種版本（方碗、寬口碗、高杯，可在手機上看：https://claude.ai/artifact/R4SY4LjggyeevTUWmbEgvb ），選了方碗，再依使用者要求拿掉星星和光暈；原型和結論在 `prototype/app-icon` 分支，不合併
+  - 產生圖示的程式不在 repo 裡（在暫存資料夾）；要改圖示時可以參考 `prototype/app-icon` 分支的 `gen3.mjs`，用 Edge 無頭模式把 SVG 截成 PNG
+
 ## 下一步（請照這個順序）
-1. **在 iPhone 上跑一次完整的手動清單**（正式網址；App 完全關掉再打開，確認已經是灰藍色星空的新版，快取 v18）：
+1. **在 iPhone 上跑一次完整的手動清單**（正式網址；App 完全關掉再打開，確認已經是灰藍色星空的新版，快取 v19）：
    - [ ] 打開後 1 秒內可以操作；捲動順暢；放著 5 分鐘不發燙
    - [ ] 開飛航模式也能打開
    - [ ] 星空：打開 App 時飛進來、加水和記一餐時轉動約 2.5 秒後停下、平常靜止；轉動順不順
@@ -89,8 +98,10 @@
    - [ ] 用**真的**金鑰拍照分析一次，完成後出現估算便條（金鑰只在手機上操作，**絕對不要貼進對話**）
    - [ ] 匯出備份選「儲存到檔案」出現卷軸收據；按取消出現取消畫面；卷軸在 iPhone 寬度下緞帶沒有變形
    - [ ] 設定頁的步進器好按、數字鍵盤正確、從「檔案」匯入時出現畫面內確認
+   - [ ] **新 App 圖示**：iPhone 只在「加入主畫面」那一刻存圖示，所以要先用 Safari 打開一次正式網址（抓到 v19）→ 長按舊圖示「移除 App → 從主畫面移除」→ Safari「分享 → 加入主畫面」；確認主畫面是線條 U 形碗、打開時的啟動畫面是深色
+   - [ ] 卡片半透明時，往下捲還看得到星空、字仍然清楚（#46）
 2. **都沒問題就關閉 #20**（拆票規則：父 issue 由使用者決定什麼時候關）
-3. **處理延後的效能問題**（見下方「延後處理的項目 → 功能與效能」的 2026-10 新增項目）：建議先用 `/improve-codebase-architecture` 看一次，再決定要開哪些票
+3. **處理延後的效能問題**：架構檢視已經做完（見上方 2026-10-23），接著回答候選 1＋2 grilling 第 1 輪的 Q1～Q5（新的日記核心操作 `getDayOverview(dayKey)`、歷史一次讀整段、儲存接縫 `scanNewestFirst`、照片先不拆、測試透過 `setup()` 並在瀏覽器數讀取次數），問題原文在上個 session 的對話紀錄裡；問完再用 `/to-tickets` 拆票
 
 ## 開發過程中我做的決定（不在 `decisions.md` 裡的）
 - 熱量目標是**上限**，蛋白質、蔬菜、喝水是**下限**
@@ -180,11 +191,14 @@
 - **原型用來回答一個問題**：星空要不要加 3D 和 RGB，用三個方案並排、在手機上看再決定；原型放在不合併的分支，App 裡照票重寫，不直接搬原型的程式
 - **會連外的功能用假的 `fetch` 測**：AI 分析的 9 種錯誤和成功，都在瀏覽器裡把 `fetch` 換成假的來測，完全不連真正的 API、也不用真的金鑰
 - **分支晚合併會衝突**：好幾張票同時開分支，都改今天畫面最下方，合併時要先把最新的 main 合進來、兩邊都保留、再重新測一次
+- **素材的授權要先想**：使用者想直接用別家公司的標誌當圖示時，不能照做（公開網站），改成參考畫法、自己設計
+- **iPhone 主畫面圖示不會跟著網站更新**：要移除後重新「加入主畫面」
 - **審查也會漏掉／誤報**：審查報告是建議，要對照程式和實際操作判斷；例如步進器的格子規則、「‹ 返回」的用詞，是審查後自己做的決定
 
 ## 建議使用的 skills（給下一個 session）
 - iPhone 手動清單是使用者自己做的，下一個 session 先問結果、記錄在這份文件
-- `mattpocock-skills:improve-codebase-architecture`：改版後重新找值得整理的地方，特別是上面的效能問題
+- `mattpocock-skills:grilling`：繼續候選 1＋2 的 grilling（第 1 輪 Q1～Q5 等使用者回答）
+- `mattpocock-skills:improve-codebase-architecture`：報告已經有了；決定時用它的 `codebase-design` 用語（module、interface、depth、seam）
 - `mattpocock-skills:to-tickets`：決定要處理哪些效能問題後拆成票
 - `mattpocock-skills:implement`（`/implement #N`）：會叫用 `tdd` 和 `code-review`
 - `mattpocock-skills:tdd`：只在日記核心的公開操作寫測試；畫面層的變更用內建瀏覽器實際操作確認
