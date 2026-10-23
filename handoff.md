@@ -50,31 +50,47 @@
 - [x] **建立 `CONTEXT.md`**（名詞表）：指標（Measure）、營養（Nutrient）、目標（Goal）、上限／下限、達標狀態
 - [x] 重構完成：[PR #18](https://github.com/jackering0820/diet-tracker/pull/18)，測試 80 個。每一項指標的名稱、單位、格式、目標設定都集中在 `src/core/measures.js`；設定頁和編輯一餐的輸入欄位改由目錄產生；「蔬菜份數」統一改成「蔬菜」
 
-### 2026-10-15～22：觀星書房改版（進行中）
+### 2026-10-15～23：觀星書房改版（#20 的 12 張票全部完成）
 - [x] 修正 `hidden` 屬性被 `display` 蓋掉的錯誤（備份提醒一直顯示）：[PR #19](https://github.com/jackering0820/diet-tracker/pull/19)
 - [x] 在 Claude 畫布設計新外觀「觀星書房」（K 列 14 張可操作的畫板）：https://claude.ai/artifact/UonorcQfozXprgyyost16U
-  - 產生畫板的程式在 `C:\Users\User\Desktop\Claude\code.install mod\k-row-generator`（`node build.js`，說明在它的 README.md）
+  - 產生畫板的程式在 `C:UsersUserDesktopClaudecode.install modk-row-generator`（`node build.js`，說明在它的 README.md）
 - [x] `/grill-me` 討論怎麼套用到網站（26 題），決定寫在 `decisions.md` 的「觀星書房改版」段落
-- [x] `/to-spec` → [#20 改版規格書](https://github.com/jackering0820/diet-tracker/issues/20)
-- [x] `/to-tickets` → 11 張票 #21～#31，都是 #20 的子 issue，用 GitHub 內建的 blocked-by 串起來
+- [x] `/to-spec` → [#20 改版規格書](https://github.com/jackering0820/diet-tracker/issues/20)；`/to-tickets` → #21～#31（#20 的子 issue，用 blocked-by 串起來）
+- [x] `/prototype` 比較星空的三個方案（原型在 `prototype/sky-motion` 分支，不合併；可以在手機上看：https://claude.ai/artifact/X4XVoLp6Y4xxQXvur4aTQi），選了方案 2 → 新增 #37
+- [x] 拿掉今天畫面的備份提醒（[PR #41](https://github.com/jackering0820/diet-tracker/pull/41)，沒有對應的票，決定寫在 `decisions.md`）
+- [ ] **#20 本身還沒關**：iPhone 手動清單確認沒問題後再關
 
 | 票 | 功能 | PR | 測試數（累計） |
 |---|---|---|---|
 | [#21](https://github.com/jackering0820/diet-tracker/issues/21) | 目標四捨五入（存的數字＝看到的數字） | [#32](https://github.com/jackering0820/diet-tracker/pull/32) | 84 |
 | [#22](https://github.com/jackering0820/diet-tracker/issues/22) | 地基：冷色外觀、WebGL 夜空、鍵帽按鍵、快取清單測試 | [#33](https://github.com/jackering0820/diet-tracker/pull/33) | 86 |
+| [#23](https://github.com/jackering0820/diet-tracker/issues/23) | 分頁與網址（`#today`、`#history`、`#settings`、`#day/日期`） | [#34](https://github.com/jackering0820/diet-tracker/pull/34) | 89 |
+| [#24](https://github.com/jackering0820/diet-tracker/issues/24) | 今天：星盤卡與喝水面板（星座點亮數） | [#35](https://github.com/jackering0820/diet-tracker/pull/35) | 94 |
+| [#25](https://github.com/jackering0820/diet-tracker/issues/25) | 今天：吃了什麼貨架與記一餐按鍵 | [#36](https://github.com/jackering0820/diet-tracker/pull/36) | 95 |
+| [#37](https://github.com/jackering0820/diet-tracker/issues/37) | 星空：3D 空間、RGB 光暈與灰藍色天空 | [#38](https://github.com/jackering0820/diet-tracker/pull/38) | 95 |
+| [#26](https://github.com/jackering0820/diet-tracker/issues/26) | 最近吃過與再記一次 | [#39](https://github.com/jackering0820/diet-tracker/pull/39) | 100 |
+| [#27](https://github.com/jackering0820/diet-tracker/issues/27) | 歷史：一週一排的星星卡片（四項全達標） | [#40](https://github.com/jackering0820/diet-tracker/pull/40) | 102 |
+| [#28](https://github.com/jackering0820/diet-tracker/issues/28) | 設定頁（步進器、備份摘要、畫面內確認匯入） | [#42](https://github.com/jackering0820/diet-tracker/pull/42) | 108 |
+| [#29](https://github.com/jackering0820/diet-tracker/issues/29) | 編輯一餐：全螢幕與食物清單（即時總計、熱量預告） | [#43](https://github.com/jackering0820/diet-tracker/pull/43) | 112 |
+| [#30](https://github.com/jackering0820/diet-tracker/issues/30) | 編輯一餐：AI 分析狀態（App 裡已經沒有瀏覽器確認視窗） | [#44](https://github.com/jackering0820/diet-tracker/pull/44) | 112 |
+| [#31](https://github.com/jackering0820/diet-tracker/issues/31) | 匯出備份：卷軸收據（卷軸素材授權已確認） | [#45](https://github.com/jackering0820/diet-tracker/pull/45) | 112 |
 
-- 還沒做：#23 分頁與網址 → #24～#31（今天、最近吃過、歷史、設定、編輯一餐、AI 分析狀態、匯出備份）。先後順序看每張票的 blocked-by
-- #22 審查後刻意不改的：按鍵的「不是鍵帽」清單在 CSS 寫了 3 次（文字型按鈕）；危險按鍵用畫布上的淡玫瑰紅 #FF9DB0；開啟「減少動態效果」時，分析中的轉圈圖示會停住（文字還在）
+每張票的 PR 內文都有 Summary／Evidence／Merge Danger，審查後的修正也寫在裡面；細節看 PR，不在這裡重複。
 
 ## 下一步（請照這個順序）
-1. **在 iPhone 上跑 #22 的手動清單**（正式網址，App 完全關掉再打開，確認已換成冷色外觀）：
-   - [ ] 打開後 1 秒內可以操作
-   - [ ] 捲動順暢
-   - [ ] 放著 5 分鐘不發燙
-   - [ ] 開飛航模式也能打開（快取版本已升到 v14）
-   - [ ] 按下按鍵看得到下沉和回彈（iPhone Safari 需要 touchstart 監聽，已加上，但只在電腦上測過）
-   - [ ] 「設定 → 輔助使用 → 動作 → 減少動態效果」開啟時沒有漣漪和彈跳
-2. **`/implement #23`**（分頁與網址），流程同下方「每張票的流程」
+1. **在 iPhone 上跑一次完整的手動清單**（正式網址；App 完全關掉再打開，確認已經是灰藍色星空的新版，快取 v18）：
+   - [ ] 打開後 1 秒內可以操作；捲動順暢；放著 5 分鐘不發燙
+   - [ ] 開飛航模式也能打開
+   - [ ] 星空：打開 App 時飛進來、加水和記一餐時轉動約 2.5 秒後停下、平常靜止；轉動順不順
+   - [ ] 按鍵按下去有下沉和回彈（iPhone Safari 需要 touchstart 監聽，已加上，只在電腦上測過）
+   - [ ] 「設定 → 輔助使用 → 動作 → 減少動態效果」開啟時沒有漣漪、彈跳、星空轉動
+   - [ ] 從歷史點一天，往右滑回到歷史；捲動時頂端縮成標題列不閃動
+   - [ ] 兩個拍照入口（下一餐卡片、底部「拍照記〇〇」）都能選照片；底部固定列在瀏海機型的位置
+   - [ ] 用**真的**金鑰拍照分析一次，完成後出現估算便條（金鑰只在手機上操作，**絕對不要貼進對話**）
+   - [ ] 匯出備份選「儲存到檔案」出現卷軸收據；按取消出現取消畫面；卷軸在 iPhone 寬度下緞帶沒有變形
+   - [ ] 設定頁的步進器好按、數字鍵盤正確、從「檔案」匯入時出現畫面內確認
+2. **都沒問題就關閉 #20**（拆票規則：父 issue 由使用者決定什麼時候關）
+3. **處理延後的效能問題**（見下方「延後處理的項目 → 功能與效能」的 2026-10 新增項目）：建議先用 `/improve-codebase-architecture` 看一次，再決定要開哪些票
 
 ## 開發過程中我做的決定（不在 `decisions.md` 裡的）
 - 熱量目標是**上限**，蛋白質、蔬菜、喝水是**下限**
@@ -101,7 +117,7 @@
 - 餐別直接用「早餐」等中文字儲存，以後想改顯示名稱要處理舊資料（檢視後判斷：除非真的要改名，否則不做）
 - ~~「熱量、蛋白質…」的名稱、狀態對照表散在好幾個檔案~~ → **已解決**（PR #18：指標目錄和狀態目錄）
 - `mealRow`／`itemRow` 建立列表的寫法重複；表單讀數字的寫法在兩個檔案重複（檢視後判斷：前者只是外觀；後者其實是兩條不同的業務規則，空白當 0、空白當未設定，可以搬到核心）
-- 編輯視窗的 `setAnalysisState` 有 6 個選項，可以整理成一個「分析狀態」（候選 #2，Strong：裡面有 4 條沒有測試的業務規則）
+- ~~編輯視窗的 `setAnalysisState` 有 6 個選項~~ → **#30 已整理成一個分析狀態**（閒置／分析中／錯誤／加了照片）；但狀態本身仍在畫面層、沒有自動測試（候選 #2 的「搬進核心」還沒做）
 - 儲存轉接器的整批寫入用 `"clear"`、`"put"` 字串區分（候選 #5）
 - `diary.js` 越來越大（約 22 個操作），設定表的格式在 8 個地方被直接讀取（候選 #4，檢視時新發現）
 - PR #18 審查時決定**維持原樣**的：狀態目錄用「－」代表沒有圖示（Q10）、圖示放在核心（Q4）、「是不是上限」的判斷出現在兩個地方
@@ -116,9 +132,21 @@
 - 可以把紀錄改到未來的時間（沒有檢查）
 - 本機開發判斷沒有包含 `[::1]` 和 `*.localhost`
 
+**2026-10 觀星書房改版時審查提過、刻意先不做的（效能優先處理）**
+- **「最近吃過」每次畫今天都讀出所有餐點（含照片）**，再排序找最近的 20 個（`recentMeals`，#26）；加一杯水也會觸發。資料多了會變慢，可以改成只讀最近的
+- **設定頁的「資料量」每次打開都把整份日記（含照片）匯出一次**來算位元組數（#28）；照片多時會慢。檔案大小要精確就得組出整份備份，可以改成快取或估算
+- **今天畫面每次重新整理都多讀「本週」7 天**（#27，已改成和其他資料同時讀）
+- 匯出收據要整份備份內容回到畫面層才能算摘要（Feature Envy，#31）
+- 卷軸圖片的緞帶落在九宮格中間會被拉長的區域，寬螢幕可能變形（#31，要在手機上看）
+- 「拍照記〇〇」的餐別文字不會自己更新（App 一直開著跨過時間邊界時，要切換畫面才更新；實際存的餐別是對的）
+- 卡片和按鍵還是深藍色，在灰藍色天空上比較搶眼（#37，設計選擇）
+- 「吃了什麼」保留了五格營養總數（設計稿沒有，但這是唯一看得到碳水和脂肪的地方，#25）
+- 設計稿的分析中骨架線沒有做（規格只要求變淡鎖住，#30）
+- 「一天」的字串、畫面自己判斷是不是今天 → **#29 已改成由日記核心的 `isToday` 判斷**（編輯一餐的部分）
+
 ## 之後可以改進的地方
 - **加 GitHub Actions（CI）**：每次推送自動跑 `npm test`，PR 上就會有檢查結果
-- ~~**跑 `/improve-codebase-architecture`**~~ → 已跑過一次，完成候選 #1。下一個建議是**候選 #2「分析狀態模型」**（Strong）
+- **再跑一次 `/improve-codebase-architecture`**：上次完成候選 #1。改版後 `app.js`（今天畫面）和 `meal-editor.js`（編輯一餐）都變大很多，加上上面的效能問題，值得重新檢視
 - ~~**補 `CONTEXT.md`（名詞表）**~~ → **已建立**（5 個名詞）。還可以補上「日記核心」「草稿」「補記」等詞，之後用 `/grill-with-docs` 或 `domain-modeling` 一邊討論一邊加
 - **AI 費用控制**：目前沒設定 `effort`（思考深度）；可以試試調低，比較準確度和費用；或預設改用 Haiku 5.5
 - **第一版刻意不做的功能**（見 `decisions.md`）：提醒通知、趨勢圖表、依身高體重計算目標、多人使用
@@ -148,11 +176,19 @@
 - **外觀要在瀏覽器實際量**：夜空一開始完全沒畫出來（畫布還隱藏時量到的寬度是 0），自動測試抓不到，是在瀏覽器量畫布大小才發現
 - **內建瀏覽器的面板沒顯示時不會繪製畫面**：關掉視窗、動畫、transition 都會卡住，看起來像壞掉；先截一張圖讓它畫一次，再判斷
 - **決定改了要回頭更新 `decisions.md`**：#22 審查時發現第 69 行還寫「膠囊按鈕特效拿掉」，和後來的鍵帽設計衝突，已更新並註明取代原因
+- **合併前等審查結果**：#23、#29 都是在推上去時審查剛好回來，抓到真的錯誤（例如存好後再修改會默默丟掉內容）；所以改成先開 PR，等審查修好再合併
+- **原型用來回答一個問題**：星空要不要加 3D 和 RGB，用三個方案並排、在手機上看再決定；原型放在不合併的分支，App 裡照票重寫，不直接搬原型的程式
+- **會連外的功能用假的 `fetch` 測**：AI 分析的 9 種錯誤和成功，都在瀏覽器裡把 `fetch` 換成假的來測，完全不連真正的 API、也不用真的金鑰
+- **分支晚合併會衝突**：好幾張票同時開分支，都改今天畫面最下方，合併時要先把最新的 main 合進來、兩邊都保留、再重新測一次
+- **審查也會漏掉／誤報**：審查報告是建議，要對照程式和實際操作判斷；例如步進器的格子規則、「‹ 返回」的用詞，是審查後自己做的決定
 
 ## 建議使用的 skills（給下一個 session）
-- `mattpocock-skills:implement`（`/implement #23`）：會叫用 `tdd` 和 `code-review`
+- iPhone 手動清單是使用者自己做的，下一個 session 先問結果、記錄在這份文件
+- `mattpocock-skills:improve-codebase-architecture`：改版後重新找值得整理的地方，特別是上面的效能問題
+- `mattpocock-skills:to-tickets`：決定要處理哪些效能問題後拆成票
+- `mattpocock-skills:implement`（`/implement #N`）：會叫用 `tdd` 和 `code-review`
 - `mattpocock-skills:tdd`：只在日記核心的公開操作寫測試；畫面層的變更用內建瀏覽器實際操作確認
-- `mattpocock-skills:code-review`：固定點用 `main`，規格是該張票加上 #20
+- `mattpocock-skills:code-review`：固定點用 `main`，規格是該張票（觀星書房的票再加上 #20）
 - `mattpocock-skills:pr`：寫 PR 內文（Summary／Evidence／Merge Danger，內文寫 `Closes #N`）
 - `anthropic-skills:built-in-browser`：在內建瀏覽器開 `diet-tracker`（port 8787）並用手機尺寸檢查
 - 畫面對照畫布 K 列時用 Artifact 工具讀 https://claude.ai/artifact/UonorcQfozXprgyyost16U
