@@ -26,15 +26,16 @@ function download(file) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000); // 等瀏覽器開始下載後再釋放
 }
 
-// 匯出並交給手機儲存。回傳 { saved, name }；使用者在分享選單按取消時 saved 是 false，
+// 匯出並交給手機儲存。回傳 { saved, name, text }（text 是備份檔的內容，用來算備份摘要）；使用者在分享選單按取消時 saved 是 false，
 // 這時不標記為已備份，「上次匯出」不會更新。
 export async function saveBackup(diary) {
-  const file = new File([await diary.exportBackup()], backupFileName(), { type: "application/json" });
+  const text = await diary.exportBackup();
+  const file = new File([text], backupFileName(), { type: "application/json" });
   if (canShareFile(file)) {
     try {
       await navigator.share({ files: [file], title: file.name });
     } catch (err) {
-      if (err.name === "AbortError") return { saved: false, name: file.name };
+      if (err.name === "AbortError") return { saved: false, name: file.name, text };
       download(file); // 分享失敗（不是使用者取消）時改用下載
     }
   } else {
@@ -42,5 +43,5 @@ export async function saveBackup(diary) {
   }
   // 一般下載無法知道使用者有沒有真的存好，只能當作已儲存。
   await diary.markExported();
-  return { saved: true, name: file.name };
+  return { saved: true, name: file.name, text };
 }
