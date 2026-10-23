@@ -50,15 +50,15 @@
 - [x] **建立 `CONTEXT.md`**（名詞表）：指標（Measure）、營養（Nutrient）、目標（Goal）、上限／下限、達標狀態
 - [x] 重構完成：[PR #18](https://github.com/jackering0820/diet-tracker/pull/18)，測試 80 個。每一項指標的名稱、單位、格式、目標設定都集中在 `src/core/measures.js`；設定頁和編輯一餐的輸入欄位改由目錄產生；「蔬菜份數」統一改成「蔬菜」
 
-### 2026-10-15～23：觀星書房改版（#20 的 12 張票全部完成）
+### 2026-10-15～23：觀星書房改版（#20 的 12 張票全部完成，#20 已關閉）
 - [x] 修正 `hidden` 屬性被 `display` 蓋掉的錯誤（備份提醒一直顯示）：[PR #19](https://github.com/jackering0820/diet-tracker/pull/19)
 - [x] 在 Claude 畫布設計新外觀「觀星書房」（K 列 14 張可操作的畫板）：https://claude.ai/artifact/UonorcQfozXprgyyost16U
-  - 產生畫板的程式在 `C:UsersUserDesktopClaudecode.install modk-row-generator`（`node build.js`，說明在它的 README.md）
+  - 產生畫板的程式在 `C:\Users\User\Desktop\Claude\code.install mod\k-row-generator`（`node build.js`，說明在它的 README.md）
 - [x] `/grill-me` 討論怎麼套用到網站（26 題），決定寫在 `decisions.md` 的「觀星書房改版」段落
 - [x] `/to-spec` → [#20 改版規格書](https://github.com/jackering0820/diet-tracker/issues/20)；`/to-tickets` → #21～#31（#20 的子 issue，用 blocked-by 串起來）
 - [x] `/prototype` 比較星空的三個方案（原型在 `prototype/sky-motion` 分支，不合併；可以在手機上看：https://claude.ai/artifact/X4XVoLp6Y4xxQXvur4aTQi），選了方案 2 → 新增 #37
 - [x] 拿掉今天畫面的備份提醒（[PR #41](https://github.com/jackering0820/diet-tracker/pull/41)，沒有對應的票，決定寫在 `decisions.md`）
-- [ ] **#20 本身還沒關**：iPhone 手動清單確認沒問題後再關
+- [x] **iPhone 手動清單全部沒問題，#20 已關閉**（2026-10-23；清單內容見 [#20 的關閉留言](https://github.com/jackering0820/diet-tracker/issues/20)）
 
 | 票 | 功能 | PR | 測試數（累計） |
 |---|---|---|---|
@@ -80,7 +80,7 @@
 ### 2026-10-23：改版後的收尾
 - [x] 卡片改成半透明，往下捲也看得到星空：[PR #46](https://github.com/jackering0820/diet-tracker/pull/46)
 - [x] 拿掉網頁裡所有小圖示（便當、相機等）：[PR #47](https://github.com/jackering0820/diet-tracker/pull/47)
-- [x] `/improve-codebase-architecture`：報告在 `C:UsersUserAppDataLocalTemparchitecture-review-20261023-092349.html`（暫存資料夾）。5 個候選，選了候選 1（加深「今天畫面的讀取」）＋候選 2（儲存接縫從最新往回讀、讀夠就停），grilling 第 1 輪的 Q1～Q5 **還沒回答**
+- [x] `/improve-codebase-architecture`：報告在 `C:\Users\User\AppData\Local\Temp\architecture-review-20261023-092349.html`（暫存資料夾）。5 個候選，選了候選 1（加深「今天畫面的讀取」）＋候選 2（儲存接縫從最新往回讀、讀夠就停），grilling 第 1 輪的 Q1～Q5 **還沒回答**
 - [x] **新 App 圖示上線**：[PR #48](https://github.com/jackering0820/diet-tracker/pull/48)，線條畫的立體 U 形碗（第一版是深色底白線，快取 v19）
   - 畫法參考 Hydra 標誌（https://logobook.com/logo/hydra/ ）的「線條立體方塊」，但圖形是原創的。Hydra 是別家公司的商標，**不能直接拿來當圖示**（repo 和網站都是公開的）
   - 先用 `/prototype` 比較三種版本（方碗、寬口碗、高杯，可在手機上看：https://claude.ai/artifact/R4SY4LjggyeevTUWmbEgvb ），選了方碗，再依使用者要求拿掉星星和光暈；原型和結論在 `prototype/app-icon` 分支，不合併
@@ -88,21 +88,7 @@
   - 產生圖示的程式不在 repo 裡（在暫存資料夾）；要改圖示時可以參考 `prototype/app-icon` 分支的 `gen3.mjs`，用 Edge 無頭模式把 SVG 截成 PNG
 
 ## 下一步（請照這個順序）
-1. **在 iPhone 上跑一次完整的手動清單**（正式網址；App 完全關掉再打開，確認已經是灰藍色星空的新版，快取 v20）：
-   - [ ] 打開後 1 秒內可以操作；捲動順暢；放著 5 分鐘不發燙
-   - [ ] 開飛航模式也能打開
-   - [ ] 星空：打開 App 時飛進來、加水和記一餐時轉動約 2.5 秒後停下、平常靜止；轉動順不順
-   - [ ] 按鍵按下去有下沉和回彈（iPhone Safari 需要 touchstart 監聽，已加上，只在電腦上測過）
-   - [ ] 「設定 → 輔助使用 → 動作 → 減少動態效果」開啟時沒有漣漪、彈跳、星空轉動
-   - [ ] 從歷史點一天，往右滑回到歷史；捲動時頂端縮成標題列不閃動
-   - [ ] 兩個拍照入口（下一餐卡片、底部「拍照記〇〇」）都能選照片；底部固定列在瀏海機型的位置
-   - [ ] 用**真的**金鑰拍照分析一次，完成後出現估算便條（金鑰只在手機上操作，**絕對不要貼進對話**）
-   - [ ] 匯出備份選「儲存到檔案」出現卷軸收據；按取消出現取消畫面；卷軸在 iPhone 寬度下緞帶沒有變形
-   - [ ] 設定頁的步進器好按、數字鍵盤正確、從「檔案」匯入時出現畫面內確認
-   - [ ] **新 App 圖示**：iPhone 只在「加入主畫面」那一刻存圖示，所以要先用 Safari 打開一次正式網址（抓到 v20）→ 長按舊圖示「移除 App → 從主畫面移除」→ Safari「分享 → 加入主畫面」；確認主畫面是白底黑線的 U 形碗
-   - [ ] 卡片半透明時，往下捲還看得到星空、字仍然清楚（#46）
-2. **都沒問題就關閉 #20**（拆票規則：父 issue 由使用者決定什麼時候關）
-3. **處理延後的效能問題**：架構檢視已經做完（見上方 2026-10-23），接著回答候選 1＋2 grilling 第 1 輪的 Q1～Q5（新的日記核心操作 `getDayOverview(dayKey)`、歷史一次讀整段、儲存接縫 `scanNewestFirst`、照片先不拆、測試透過 `setup()` 並在瀏覽器數讀取次數），問題原文在上個 session 的對話紀錄裡；問完再用 `/to-tickets` 拆票
+1. **處理延後的效能問題**：架構檢視已經做完（見上方 2026-10-23），接著回答候選 1＋2 grilling 第 1 輪的 Q1～Q5（新的日記核心操作 `getDayOverview(dayKey)`、歷史一次讀整段、儲存接縫 `scanNewestFirst`、照片先不拆、測試透過 `setup()` 並在瀏覽器數讀取次數），問題原文在上個 session 的對話紀錄裡；問完再用 `/to-tickets` 拆票
 
 ## 開發過程中我做的決定（不在 `decisions.md` 裡的）
 - 熱量目標是**上限**，蛋白質、蔬菜、喝水是**下限**
@@ -116,6 +102,7 @@
 - 儲存目標或 AI 設定後，顯示「✓ 已儲存」（#23 起設定是分頁，不是彈出視窗）
 
 ## iPhone 上確認過的事
+- [x] 觀星書房改版的完整手動清單（效能、離線、星空動畫、鍵帽回饋、減少動態效果、滑動返回、拍照入口、真的金鑰分析、匯出收據與取消、設定頁、新 App 圖示、半透明卡片）都沒問題（2026-10-23）
 - [x] #3～#9 的功能、真的 API 金鑰拍一餐（金鑰只在手機上操作，**絕對不要貼進對話**）都已在 iPhone 上測過（觀星書房討論後回報）
 - [ ] **待觀察**：文件寫額度用完是 HTTP 402。如果哪天用到每月 5 美元上限，卻看到「分析失敗（錯誤代碼 400）」，要回報，補上分類
 
@@ -197,7 +184,6 @@
 - **審查也會漏掉／誤報**：審查報告是建議，要對照程式和實際操作判斷；例如步進器的格子規則、「‹ 返回」的用詞，是審查後自己做的決定
 
 ## 建議使用的 skills（給下一個 session）
-- iPhone 手動清單是使用者自己做的，下一個 session 先問結果、記錄在這份文件
 - `mattpocock-skills:grilling`：繼續候選 1＋2 的 grilling（第 1 輪 Q1～Q5 等使用者回答）
 - `mattpocock-skills:improve-codebase-architecture`：報告已經有了；決定時用它的 `codebase-design` 用語（module、interface、depth、seam）
 - `mattpocock-skills:to-tickets`：決定要處理哪些效能問題後拆成票
