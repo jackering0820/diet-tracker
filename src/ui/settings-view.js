@@ -3,7 +3,8 @@
 import { MODEL_OPTIONS } from "../core/ai-settings.js";
 import { byId as $, showMessage } from "./dom.js";
 import { GOAL_MEASURES, formatMeasure } from "../core/measures.js";
-import { saveBackup } from "./backup.js";
+import { createBackupReceipt } from "./backup-receipt.js";
+import { formatKilobytes } from "./backup.js";
 
 const GOALS_DIRTY = "有變更還沒儲存";
 
@@ -184,16 +185,15 @@ export function createSettings({ diary }) {
   async function renderBackupInfo() {
     await renderLastExport();
     const { days, bytes } = diary.backupSummary(await diary.exportBackup());
-    $("data-amount").textContent = `${days} 天・${Math.max(1, Math.round(bytes / 1024)).toLocaleString("zh-TW")} KB`;
+    $("data-amount").textContent = `${days} 天・${formatKilobytes(bytes)}`;
   }
 
+  // 匯出：交給分享選單儲存，之後顯示卷軸收據（或取消畫面）；每次匯出後更新上次匯出
+  const receipt = createBackupReceipt({ diary, onDone: renderLastExport });
   $("export-backup").addEventListener("click", async () => {
     clearMessages();
     try {
-      const { saved, name } = await saveBackup(diary);
-      await renderLastExport();
-      if (saved) showMessage("backup-saved", `✓ 已匯出 ${name}`);
-      else showMessage("backup-error", "已取消，備份沒有存下來");
+      await receipt.exportAndShow();
     } catch (err) {
       showMessage("backup-error", `匯出失敗：${err.message}`);
     }

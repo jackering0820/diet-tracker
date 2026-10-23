@@ -289,5 +289,55 @@
       </div>
     </div>
   </dialog>
+  <!-- 匯出備份的結果：完成時是卷軸收據，在分享選單按取消時是取消畫面 -->
+  <dialog id="backup-receipt" class="fullscreen" aria-labelledby="receipt-heading">
+    <div class="editor">
+      <div class="editor-top">
+        <button type="button" id="receipt-back" class="link back-button">‹ 設定</button>
+        <p id="receipt-heading" class="top-title">匯出備份</p>
+      </div>
+      <p id="receipt-error" class="error" role="alert" tabindex="-1" hidden></p>
+
+      <div id="receipt-done">
+        <div class="result-hero">
+          <span class="result-icon ok" aria-hidden="true">✓</span>
+          <div><h2 id="receipt-title">備份完成</h2><p id="receipt-time" class="n"></p></div>
+        </div>
+        <section class="receipt" aria-label="備份摘要">
+          <p class="receipt-head">飲食紀錄備份</p>
+          <p id="receipt-stamp-time" class="receipt-time n"></p>
+          <p class="lrow"><span>紀錄天數</span><span class="lead" aria-hidden="true"></span><b id="receipt-days" class="n"></b></p>
+          <p class="lrow"><span>餐點</span><span class="lead" aria-hidden="true"></span><b id="receipt-meals" class="n"></b></p>
+          <p class="lrow"><span>照片</span><span class="lead" aria-hidden="true"></span><b id="receipt-photos" class="n"></b></p>
+          <p class="lrow"><span>喝水</span><span class="lead" aria-hidden="true"></span><b id="receipt-water" class="n"></b></p>
+          <p class="lrow"><span>檔案大小</span><span class="lead" aria-hidden="true"></span><b id="receipt-size" class="n"></b></p>
+          <p id="receipt-file" class="receipt-file n"></p>
+          <div class="stamp" aria-hidden="true"><span>封存</span></div>
+        </section>
+        <div class="editor-dock">
+          <div class="confirm-buttons">
+            <button type="button" id="receipt-home">回到今天</button>
+            <button type="button" id="receipt-again" class="secondary">⬇︎ 再匯出一次</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="receipt-cancelled" hidden>
+        <div class="result-hero">
+          <span class="result-icon cancelled" aria-hidden="true">✕</span>
+          <div><h2>已取消</h2><p>沒有產生備份，原本的資料不受影響</p></div>
+        </div>
+        <section class="card">
+          <p class="receipt-note">在分享選單選「儲存到檔案」，或傳到雲端硬碟，才會產生備份檔。</p>
+        </section>
+        <div class="editor-dock">
+          <div class="confirm-buttons">
+            <button type="button" id="receipt-retry">⬇︎ 重新匯出</button>
+            <button type="button" id="receipt-to-settings" class="secondary">回到設定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
 </body>
 </html>
