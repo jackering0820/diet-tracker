@@ -292,9 +292,10 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     }
 
     const quiet = !busy && analysis !== "error";
-    $("ai-notice").hidden = !(quiet && draft.source === "ai");
+    $("ai-notice").hidden = !(quiet && analysis !== "added" && draft.source === "ai");
     $("photos-added").hidden = analysis !== "added";
-    $("manual-hint").hidden = !(quiet && draft.photos.length === 0);
+    // 手寫新增一餐、還沒有照片時，提示可以直接輸入或加照片
+    $("manual-hint").hidden = !(quiet && !draft.id && draft.photos.length === 0);
     $("reanalyze-confirm").hidden = !askingReanalyze;
     $("reanalyze").hidden = !(quiet && draft.photos.length > 0) || askingReanalyze;
 
@@ -302,17 +303,17 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     $("save-meal").disabled = busy;
     form.inert = busy;
     $("item-list").inert = busy;
-    $("item-list").classList.toggle("locked", busy);
     $("add-photos-label").inert = busy;
-    $("add-photos-label").classList.toggle("locked", busy);
     $("open-item-form").disabled = busy;
   }
 
   // 錯誤的訊息、要不要前往設定、能不能重試，都由日記核心的錯誤目錄決定；畫面只照著顯示。
-  // 不是分析錯誤（例如程式錯誤）時，顯示通用訊息並允許重試。
+  // 錯誤目錄以外的錯誤只有兩種，都不用前往設定：
+  //   程式錯誤：顯示通用訊息，可以重試
+  //   照片讀不出來：照片沒有加進去，重試也只會分析舊照片，所以不能重試（訊息會請使用者重新選擇照片）
+  const otherError = (message, retryable) => ({ message, needsSettings: false, retryable });
   function analysisFailure(err) {
-    if (err instanceof AnalysisError) return err;
-    return { message: "分析失敗，請稍後再試", needsSettings: false, retryable: true };
+    return err instanceof AnalysisError ? err : otherError("分析失敗，請稍後再試", true);
   }
 
   // 改成手動輸入：收起錯誤，照片和餐別都保留，直接展開食物表單。
@@ -322,19 +323,28 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
   });
 
   // 用 AI 分析草稿的照片。分析期間關掉或換了別的草稿，結果就不再更新畫面。
+  // 開著的食物表單只鎖住、不清空：分析結果取代的是清單，不會蓋掉正在輸入的內容。
   async function analyze() {
     const target = draft;
-    if (!form.hidden) closeItemForm(); // 結果會取代整個清單，開著的表單沒有意義
     setAnalysis("busy");
+    $("analysis-busy").focus();
     try {
       await diary.analyzeDraft(target);
       if (draft !== target) return;
+      // 正在修改的那一項被分析結果取代了：表單裡的內容改成「新增」
+      if (editingItemId && !draft.items.some((i) => i.id === editingItemId)) {
+        editingItemId = null;
+        $("item-form-title").textContent = "新增食物";
+        $("item-submit").textContent = "加入這一項";
+      }
       setAnalysis("idle");
       changed();
       renderDraft();
+      $(form.hidden ? "open-item-form" : "item-submit").focus();
     } catch (err) {
       if (draft !== target) return;
       setAnalysis("error", analysisFailure(err));
+      $("analysis-error").focus();
     }
   }
   $("retry-analysis").addEventListener("click", analyze);
@@ -364,8 +374,8 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
       if (draft.items.length === 0) await analyze();
       else setAnalysis("added");
     } catch (err) {
-      // 照片讀不出來（不是 AI 的錯誤）：照片已經加進去的話可以重試
-      setAnalysis("error", { message: err.message, needsSettings: false, retryable: draft.photos.length > 0 });
+      setAnalysis("error", otherError(err.message, false));
+      $("analysis-error").focus();
     } finally {
       event.target.value = "";
     }

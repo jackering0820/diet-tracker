@@ -674,12 +674,12 @@ dialog.fullscreen .editor { min-height: 100%; display: flex; flex-direction: col
 /* AI 的估算便條：羊皮紙 */
 .slip { display: flex; gap: 10px; margin: 0; padding: 12px 14px; border-radius: 6px; background: var(--text); color: #1F2630; font-size: 13px; line-height: 1.6; transform: rotate(-0.5deg); box-shadow: 0 10px 20px -12px rgb(0 0 0 / 0.8); }
 .analysis-note { margin: 0; font-size: 13px; color: var(--muted); }
-/* 分析中：照片上一道光線掃過；食物清單和加照片變淡鎖住 */
+/* 分析中：照片上一道光線掃過（食物清單和加照片鎖住時，[inert] 讓它們變淡） */
 .photo-shelf .cover { position: relative; }
 .scan { position: absolute; left: 0; right: 0; top: -30%; height: 30%; display: none; background: linear-gradient(180deg, rgb(111 211 255 / 0), rgb(111 211 255 / 0.4) 80%, rgb(224 246 255 / 0.95)); mix-blend-mode: screen; pointer-events: none; }
 .scanning .scan { display: block; animation: scan 1.6s ease-in-out infinite; }
 @keyframes scan { from { top: -30%; } to { top: 100%; } }
-.locked { opacity: 0.5; }
+
 .button-like.small { display: inline-flex; margin-top: 12px; padding: 0 16px; font-size: 15px; }
 [inert] { opacity: 0.5; }
 

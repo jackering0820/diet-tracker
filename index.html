@@ -205,16 +205,16 @@
           </label>
         </div>
         <!-- AI 分析的狀態：分析中、錯誤、完成的估算便條、加了照片、沒有照片的提示、重新分析的確認 -->
-        <div class="analysis" role="status">
-          <div id="analysis-busy" class="aicard" hidden>
+        <div class="analysis">
+          <div id="analysis-busy" class="aicard" role="status" tabindex="-1" hidden>
             <span class="hourglass" aria-hidden="true">⏳</span><b id="analysis-busy-text"></b>
           </div>
-          <div id="analysis-error" class="aicard aierr" hidden>
+          <div id="analysis-error" class="aicard aierr" role="alert" tabindex="-1" hidden>
             <p class="aierr-msg"><span aria-hidden="true">⚠️</span><span id="analysis-error-text"></span></p>
             <div class="aibtns">
-              <button type="button" id="go-settings" class="small">前往設定</button>
-              <button type="button" id="retry-analysis" class="secondary small">重試</button>
-              <button type="button" id="switch-to-manual" class="secondary small">改成手動輸入（保留照片）</button>
+              <button type="button" id="go-settings">前往設定</button>
+              <button type="button" id="retry-analysis" class="secondary">重試</button>
+              <button type="button" id="switch-to-manual" class="secondary">改成手動輸入（保留照片）</button>
             </div>
           </div>
           <p id="ai-notice" class="slip" hidden><span aria-hidden="true">⚠️</span><span>AI 的數字是估算，可能有 20～30% 誤差，請檢查並修正後再儲存。</span></p>
@@ -223,11 +223,11 @@
           <div id="reanalyze-confirm" class="aicard confirm-card" role="alertdialog" aria-labelledby="reanalyze-question" hidden>
             <p id="reanalyze-question">重新分析會取代目前的食物清單（包含你修改過的內容），確定嗎？</p>
             <div class="aibtns">
-              <button type="button" id="reanalyze-yes" class="small">重新分析</button>
-              <button type="button" id="reanalyze-no" class="secondary small">不要</button>
+              <button type="button" id="reanalyze-yes">重新分析</button>
+              <button type="button" id="reanalyze-no" class="secondary">不要</button>
             </div>
           </div>
-          <button type="button" id="reanalyze" class="secondary small" hidden>重新分析</button>
+          <button type="button" id="reanalyze" class="secondary" hidden>重新分析</button>
         </div>
       </section>
 
