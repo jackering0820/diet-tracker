@@ -7,7 +7,7 @@ import { ANALYSIS_ERRORS, AnalysisError } from "./analysis-error.js";
 import { buildBackup, parseBackup, summarizeBackup } from "./backup.js";
 import { constellationLit, validateWaterMl } from "./water.js";
 import { DEFAULT_MODEL, isBlankKey, keyStatus, normalizeKey, validateModel } from "./ai-settings.js";
-import { WATER_MEASURE } from "./measures.js";
+import { WATER_MEASURE, roundMeasure } from "./measures.js";
 
 const WATER = "water";
 const MEALS = "meals";
@@ -96,6 +96,16 @@ export function createDiary({ storage, clock, analyzer }) {
       await storage.delete(WATER, id);
     },
 
+    // 某個時間（毫秒時間戳）是不是今天；無效的時間不是今天
+    isToday(at) {
+      return Number.isFinite(at) && dayKeyOf(new Date(at)) === todayKey();
+    },
+
+    // 依時間的預設餐別（at 是毫秒時間戳）
+    defaultMealType(at) {
+      return defaultMealType(new Date(at));
+    },
+
     // at：補記時指定的時間（毫秒時間戳），沒給就是現在。餐別依這個時間預設。
     newMealDraft({ at = clock.now().getTime(), items, photos } = {}) {
       validateAt(at);
@@ -106,6 +116,16 @@ export function createDiary({ storage, clock, analyzer }) {
       const meal = draft.toRecord();
       await storage.put(MEALS, meal);
       return meal;
+    },
+
+    // 存了這一餐之後，那一天的熱量和上限：mealId 是正在修改的那一餐（新增時是 null），kcal 是這一餐的熱量。
+    // 修改時不重複算原本的這一餐；沒設定熱量上限時 goal 和 overBy 都是 null。
+    async previewDayKcal({ mealId, at, kcal }) {
+      const { from, to } = dayRange(dayKeyOf(new Date(at)));
+      const others = (await storage.listByTime(MEALS, from, to)).filter((m) => m.id !== mealId);
+      const total = roundMeasure("kcal", others.reduce((sum, m) => sum + sumNutrients(m.items).kcal, 0) + kcal);
+      const goal = (await getGoals()).kcal;
+      return { kcal: total, goal, overBy: goal === null ? null : Math.max(0, total - goal) };
     },
 
     // 用 AI 分析草稿的照片，結果放進草稿的食物項目（還沒儲存）。

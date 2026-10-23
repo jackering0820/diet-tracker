@@ -244,7 +244,7 @@ function renderWeek(week) {
 function renderMealShelf(day, isToday, isNew) {
   const { meals, nutritionTotals } = day;
   $("meal-hint").textContent = meals.length ? `${meals.length} 餐・${formatWithUnit("kcal", nutritionTotals.kcal)}` : "還沒有紀錄";
-  const nextType = diary.newMealDraft({ at: timeForNewRecord() }).mealType;
+  const nextType = diary.defaultMealType(timeForNewRecord());
   nextMealCard.querySelector(".t").textContent = nextType;
   nextMealCard.querySelector(".ghost span").textContent = nextType.charAt(0);
   nextMealCard.setAttribute("aria-label", `記下一餐：${nextType}，拍照`);

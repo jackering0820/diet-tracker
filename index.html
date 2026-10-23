@@ -187,60 +187,87 @@
     </section>
   </main>
 
-  <dialog id="meal-editor" aria-labelledby="editor-title">
+  <!-- 編輯一餐：全螢幕（同一個對話框，草稿和檢查都在日記核心） -->
+  <dialog id="meal-editor" class="fullscreen" aria-labelledby="editor-title">
     <div class="editor">
-      <h2 id="editor-title">新增一餐</h2>
-
-      <div class="two-columns">
-        <label class="field">
-          <span>餐別</span>
-          <select id="meal-type"></select>
-        </label>
-        <label class="field">
-          <span>日期時間</span>
-          <input id="meal-at" type="datetime-local">
-        </label>
+      <div class="editor-top">
+        <button type="button" id="editor-back" class="link back-button">‹ 今天</button>
+        <h2 id="editor-title">新增一餐</h2>
       </div>
 
-      <div id="draft-photos" class="photo-strip" hidden></div>
-      <label id="add-photos-label" class="button-like secondary small">
-        📷 加照片
-        <input id="add-photos" type="file" accept="image/*" multiple hidden>
-      </label>
-      <p id="analysis-status" class="analysis-status" role="status" hidden></p>
-      <div id="analysis-actions" class="row" hidden>
-        <button type="button" id="go-settings" hidden>前往設定</button>
-        <button type="button" id="reanalyze" class="secondary" hidden>重新分析</button>
-        <button type="button" id="switch-to-manual" class="secondary" hidden>改成手動輸入（保留照片）</button>
-      </div>
-      <p id="ai-notice" class="notice" hidden>⚠️ AI 的數字是估算，可能有 20～30% 誤差，請檢查並修正後再儲存。</p>
-
-      <h3>食物</h3>
-      <ul id="item-list" class="entries"></ul>
-      <p id="items-empty" class="empty">還沒有食物，請在下方新增</p>
-
-      <form id="item-form" class="item-form" novalidate>
-        <h3 id="item-form-title">新增食物</h3>
-        <label class="field"><span>名稱</span><input name="name" placeholder="例如 雞腿便當"></label>
-        <label class="field"><span>份量</span><input name="portion" placeholder="例如 一個、大杯微糖"></label>
-        <!-- 每一項營養的輸入欄位：由指標目錄產生 -->
-        <div id="nutrient-fields" class="nutrient-inputs"></div>
-        <p id="item-error" class="error" role="alert" hidden></p>
-        <div class="row">
-          <button type="submit" id="item-submit">加入這一項</button>
-          <button type="button" id="item-cancel" class="secondary" hidden>取消修改</button>
+      <section class="editor-sec" aria-labelledby="photos-title">
+        <div class="sec-h"><h3 id="photos-title">照片</h3><span id="photo-count" class="hint n"></span></div>
+        <div class="shelf photo-shelf">
+          <div id="draft-photos" class="photo-strip"></div>
+          <label id="add-photos-label" class="cover ghost add-photo">
+            <span aria-hidden="true">＋</span>加照片
+            <input id="add-photos" type="file" accept="image/*" multiple class="sr-only">
+          </label>
         </div>
-      </form>
+        <p id="analysis-status" class="analysis-status" role="status" hidden></p>
+        <div id="analysis-actions" class="row" hidden>
+          <button type="button" id="go-settings" hidden>前往設定</button>
+          <button type="button" id="reanalyze" class="secondary" hidden>重新分析</button>
+          <button type="button" id="switch-to-manual" class="secondary" hidden>改成手動輸入（保留照片）</button>
+        </div>
+        <p id="ai-notice" class="notice" hidden>⚠️ AI 的數字是估算，可能有 20～30% 誤差，請檢查並修正後再儲存。</p>
+      </section>
 
-      <h3>這餐總計</h3>
-      <dl id="draft-totals" class="nutrition"></dl>
+      <section class="editor-sec" aria-labelledby="type-title">
+        <h3 id="type-title">餐別</h3>
+        <!-- 四個鍵帽，選中的那一個維持按下去 -->
+        <div id="meal-types" class="type-keys" role="radiogroup" aria-labelledby="type-title" aria-describedby="type-hint"></div>
+        <p id="type-hint" class="type-hint"></p>
+      </section>
 
-      <p id="editor-error" class="error" role="alert" hidden></p>
+      <label class="field editor-sec"><span>日期時間</span><input id="meal-at" type="datetime-local"></label>
 
-      <div class="editor-actions">
-        <button type="button" id="save-meal">儲存這一餐</button>
-        <button type="button" id="close-editor" class="secondary">取消</button>
-        <button type="button" id="delete-meal" class="danger" hidden>刪除這一餐</button>
+      <section class="editor-sec" aria-labelledby="items-title">
+        <div class="sec-h"><h3 id="items-title">食物</h3><span id="item-count" class="hint n"></span></div>
+        <ul id="item-list" class="items"></ul>
+        <p id="items-empty" class="empty">還沒有食物，請在下方新增</p>
+        <button type="button" id="open-item-form" class="secondary wide">＋ 新增食物</button>
+        <form id="item-form" class="item-form" novalidate hidden>
+          <h3 id="item-form-title">新增食物</h3>
+          <label class="field"><span>名稱</span><input name="name" placeholder="例如 雞腿便當"></label>
+          <label class="field"><span>份量</span><input name="portion" placeholder="例如 一個、大杯微糖"></label>
+          <!-- 每一項營養的輸入欄位：由指標目錄產生 -->
+          <div id="nutrient-fields" class="nutrient-inputs"></div>
+          <p id="item-error" class="error" role="alert" hidden></p>
+          <div class="confirm-buttons">
+            <button type="submit" id="item-submit">加入這一項</button>
+            <button type="button" id="item-cancel" class="secondary">取消</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="editor-sec" aria-labelledby="totals-title">
+        <h3 id="totals-title">這餐總計</h3>
+        <!-- 打字時就即時更新，括號裡是還沒加入的那一項帶來的變化 -->
+        <dl id="draft-totals" class="meal-totals" aria-live="polite"></dl>
+        <p id="day-preview" class="day-preview"></p>
+      </section>
+
+      <div id="delete-area" class="editor-sec delete-area" hidden>
+        <button type="button" id="delete-meal" class="link delete-link">刪除這一餐</button>
+        <div id="delete-confirm" class="confirm" role="alertdialog" aria-labelledby="delete-question" hidden>
+          <p id="delete-question">確定要刪除這一餐嗎？</p>
+          <div class="confirm-buttons">
+            <button type="button" id="delete-yes" class="danger">刪除</button>
+            <button type="button" id="delete-no" class="secondary">不要</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部固定：儲存、取消；存好之後換成「回到今天」 -->
+      <div class="editor-dock">
+        <p id="editor-error" class="error" role="alert" hidden></p>
+        <p id="editor-saved" class="form-status" role="status" hidden>✓ 已儲存這一餐</p>
+        <div id="editor-actions" class="confirm-buttons">
+          <button type="button" id="save-meal">儲存這一餐</button>
+          <button type="button" id="close-editor" class="secondary">取消</button>
+        </div>
+        <button type="button" id="back-to-day" class="wide" hidden>回到今天</button>
       </div>
     </div>
   </dialog>

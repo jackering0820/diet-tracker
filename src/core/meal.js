@@ -83,6 +83,18 @@ export function createMealDraft({ id, at, mealType, items = [], photos = [], sou
       return sumNutrients(this.items);
     },
 
+    // 這餐總計的預覽：把還開著的食物表單也算進去（fields 是表單的營養數字，itemId 是正在修改的那一項，新增時是 null）。
+    // 打到一半、無法解讀或負數的數字先當 0；真正加入時才照規則檢查。不會改到草稿。
+    previewTotals(fields, itemId) {
+      if (!fields) return this.totals();
+      const typed = Object.fromEntries(NUTRIENTS.map(({ key }) => {
+        const value = fields[key];
+        return [key, Number.isFinite(value) && value > 0 ? value : 0];
+      }));
+      const items = itemId ? this.items.map((i) => (i.id === itemId ? typed : i)) : [...this.items, typed];
+      return sumNutrients(items);
+    },
+
     // 用 AI 分析的結果取代食物項目；每一項都經過和手動輸入相同的檢查。
     applyAnalysis(items) {
       this.items = items.map((fields) => newItem(fields));

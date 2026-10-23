@@ -149,3 +149,10 @@ test("有一項未設定、超過、未達標，或整天無紀錄時，都不�
     assert.equal((await diary.getDaySummary(diary.todayKey())).allAchieved, false, name);
   }
 });
+
+test("某個時間是不是今天：照日記核心的時間判斷", () => {
+  const { diary } = setup(new Date(2026, 9, 11, 0, 30));
+  assert.equal(diary.isToday(new Date(2026, 9, 11, 23, 59).getTime()), true);
+  assert.equal(diary.isToday(new Date(2026, 9, 10, 23, 59).getTime()), false);
+  assert.equal(diary.isToday(NaN), false, "無效的時間不是今天");
+});
