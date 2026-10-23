@@ -584,20 +584,6 @@ dialog.sheet[open] { animation: sheet-up 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
 }
 .photo-strip { display: flex; gap: 8px; overflow-x: auto; margin-top: 12px; }
 .photo-strip img { height: 96px; border-radius: 10px; flex: none; }
-.analysis-status { margin: 12px 0 0; font-weight: 600; }
-.analysis-status.busy::before {
-  content: "";
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin-right: 8px;
-  vertical-align: -2px;
-  border: 2px solid var(--border);
-  border-top-color: var(--highlight);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 /* 編輯一餐：全螢幕 */
 dialog.fullscreen {
   width: 100%;
@@ -673,10 +659,27 @@ dialog.fullscreen .editor { min-height: 100%; display: flex; flex-direction: col
 .editor-dock .error, .editor-dock .form-status { margin: 0 0 8px; text-align: center; }
 .editor-dock .wide { margin-top: 0; }
 
-#analysis-actions { margin-top: 8px; }
-#analysis-actions button { flex: 1; }
-.notice { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--field); color: var(--muted); font-size: 14px; }
-.analysis-status.error { color: var(--danger); font-weight: 400; }
+/* AI 分析的狀態：分析中、錯誤、估算便條、提示、重新分析的確認 */
+.analysis { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 14px; }
+.analysis:not(:has(> :not([hidden]))) { display: none; }
+.aicard { align-self: stretch; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 18px; background: rgb(0 0 0 / 0.25); }
+.aicard p { margin: 0; }
+.hourglass { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 48px; height: 48px; border-radius: 50%; background: rgb(111 211 255 / 0.14); font-size: 22px; }
+.aierr, .confirm-card { flex-direction: column; align-items: stretch; }
+.aierr { border-color: rgb(255 157 176 / 0.45); background: rgb(255 92 122 / 0.12); }
+.aierr-msg { display: flex; gap: 10px; font-size: 14px; font-weight: 600; line-height: 1.55; }
+.confirm-card p { font-size: 14px; font-weight: 600; line-height: 1.55; }
+.aibtns { display: flex; flex-wrap: wrap; gap: 8px; }
+.aibtns button { padding: 0 16px; }
+/* AI 的估算便條：羊皮紙 */
+.slip { display: flex; gap: 10px; margin: 0; padding: 12px 14px; border-radius: 6px; background: var(--text); color: #1F2630; font-size: 13px; line-height: 1.6; transform: rotate(-0.5deg); box-shadow: 0 10px 20px -12px rgb(0 0 0 / 0.8); }
+.analysis-note { margin: 0; font-size: 13px; color: var(--muted); }
+/* 分析中：照片上一道光線掃過（食物清單和加照片鎖住時，[inert] 讓它們變淡） */
+.photo-shelf .cover { position: relative; }
+.scan { position: absolute; left: 0; right: 0; top: -30%; height: 30%; display: none; background: linear-gradient(180deg, rgb(111 211 255 / 0), rgb(111 211 255 / 0.4) 80%, rgb(224 246 255 / 0.95)); mix-blend-mode: screen; pointer-events: none; }
+.scanning .scan { display: block; animation: scan 1.6s ease-in-out infinite; }
+@keyframes scan { from { top: -30%; } to { top: 100%; } }
+
 .button-like.small { display: inline-flex; margin-top: 12px; padding: 0 16px; font-size: 15px; }
 [inert] { opacity: 0.5; }
 
