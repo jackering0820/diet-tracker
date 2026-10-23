@@ -1,6 +1,6 @@
 // Service worker：讓 App 外殼在沒有網路時也能打開。
 // 策略是「網路優先」：有網路就拿最新版並更新快取，沒網路才用快取。
-const CACHE = "diet-tracker-v19";
+const CACHE = "diet-tracker-v20";
 const SHELL = [
   "./",
   "index.html",
