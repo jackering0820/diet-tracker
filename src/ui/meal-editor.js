@@ -251,71 +251,106 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
       const img = document.createElement("img");
       img.src = src;
       img.alt = `這一餐的第 ${i + 1} 張照片`;
-      cover.append(img);
+      const scan = document.createElement("span");
+      scan.className = "scan"; // 分析中時，一道光線掃過照片
+      scan.setAttribute("aria-hidden", "true");
+      cover.append(img, scan);
       return cover;
     }));
     $("photo-count").textContent = draft.photos.length ? `${draft.photos.length} 張` : "";
-    $("ai-notice").hidden = draft.source !== "ai";
+    renderAnalysis();
   }
 
-  // isError：分析失敗，顯示「改成手動輸入」；retryLabel：重試按鈕的文字。
-  function setAnalysisState({ busy = false, message = "", isError = false, needsSettings = false, canRetry = false, retryLabel = "重新分析" }) {
-    $("analysis-status").textContent = message;
-    $("analysis-status").hidden = !message;
-    $("analysis-status").classList.toggle("busy", busy);
-    $("analysis-status").classList.toggle("error", isError);
-    $("go-settings").hidden = !needsSettings;
-    $("reanalyze").hidden = !canRetry;
-    $("reanalyze").textContent = retryLabel;
-    $("switch-to-manual").hidden = !isError;
-    $("analysis-actions").hidden = !needsSettings && !canRetry && !isError;
-    $("save-meal").disabled = busy;
+  // AI 分析的狀態：
+  //   idle   沒有在分析（打開時、從設定回來）
+  //   busy   分析中：食物清單、儲存、加照片、新增食物都鎖住
+  //   error  分析失敗：錯誤卡片，按鍵照錯誤目錄（前往設定、重試），「改成手動輸入」每一種錯誤都有
+  //   added  已經有食物時又加了照片：提示可以重新分析
+  // 估算便條跟著草稿的來源（AI 的結果）；沒有照片時有一行提示。
+  let analysis = "idle";
+  let analysisError = null;
+  let askingReanalyze = false;
+
+  function setAnalysis(state, error = null) {
+    analysis = state;
+    analysisError = error;
+    askingReanalyze = false;
+    renderAnalysis();
+  }
+
+  function renderAnalysis() {
+    const busy = analysis === "busy";
+    $("analysis-busy").hidden = !busy;
+    $("analysis-busy-text").textContent = `分析中…（${draft.photos.length} 張照片）`;
+    $("draft-photos").classList.toggle("scanning", busy);
+
+    $("analysis-error").hidden = analysis !== "error";
+    if (analysisError) {
+      $("analysis-error-text").textContent = analysisError.message;
+      $("go-settings").hidden = !analysisError.needsSettings;
+      $("retry-analysis").hidden = !analysisError.retryable;
+    }
+
+    const quiet = !busy && analysis !== "error";
+    $("ai-notice").hidden = !(quiet && draft.source === "ai");
+    $("photos-added").hidden = analysis !== "added";
+    $("manual-hint").hidden = !(quiet && draft.photos.length === 0);
+    $("reanalyze-confirm").hidden = !askingReanalyze;
+    $("reanalyze").hidden = !(quiet && draft.photos.length > 0) || askingReanalyze;
+
     // 分析中鎖住食物的輸入和列表：結果回來時會取代整個清單，避免使用者的輸入被蓋掉。
+    $("save-meal").disabled = busy;
     form.inert = busy;
     $("item-list").inert = busy;
+    $("item-list").classList.toggle("locked", busy);
     $("add-photos-label").inert = busy;
+    $("add-photos-label").classList.toggle("locked", busy);
     $("open-item-form").disabled = busy;
   }
 
-  // 訊息、要不要前往設定、能不能重試，都由日記核心的錯誤決定；畫面只照著顯示。
+  // 錯誤的訊息、要不要前往設定、能不能重試，都由日記核心的錯誤目錄決定；畫面只照著顯示。
   // 不是分析錯誤（例如程式錯誤）時，顯示通用訊息並允許重試。
-  function showAnalysisError(err) {
-    const isAnalysisError = err instanceof AnalysisError;
-    setAnalysisState({
-      message: isAnalysisError ? err.message : "分析失敗，請稍後再試",
-      isError: true,
-      needsSettings: isAnalysisError && err.needsSettings,
-      canRetry: isAnalysisError ? err.retryable : true,
-      retryLabel: "重試",
-    });
+  function analysisFailure(err) {
+    if (err instanceof AnalysisError) return err;
+    return { message: "分析失敗，請稍後再試", needsSettings: false, retryable: true };
   }
 
-  // 改成手動輸入：收起錯誤訊息，照片和餐別都保留，直接開始輸入第一項食物。
+  // 改成手動輸入：收起錯誤，照片和餐別都保留，直接展開食物表單。
   $("switch-to-manual").addEventListener("click", () => {
-    setAnalysisState({ canRetry: draft.photos.length > 0 });
+    setAnalysis("idle");
     openItemForm();
   });
 
   // 用 AI 分析草稿的照片。分析期間關掉或換了別的草稿，結果就不再更新畫面。
   async function analyze() {
     const target = draft;
-    setAnalysisState({ busy: true, message: `分析中…（${target.photos.length} 張照片）` });
+    if (!form.hidden) closeItemForm(); // 結果會取代整個清單，開著的表單沒有意義
+    setAnalysis("busy");
     try {
       await diary.analyzeDraft(target);
       if (draft !== target) return;
-      setAnalysisState({});
+      setAnalysis("idle");
       changed();
       renderDraft();
     } catch (err) {
       if (draft !== target) return;
-      showAnalysisError(err);
+      setAnalysis("error", analysisFailure(err));
     }
   }
+  $("retry-analysis").addEventListener("click", analyze);
 
-  // 重新分析會取代目前的食物清單（包含已經修正過的），先確認。
+  // 重新分析會取代目前的食物清單（包含已經修正過的）：已經有食物時先在畫面內確認。
   $("reanalyze").addEventListener("click", () => {
-    if (draft.items.length > 0 && !confirm("重新分析會取代目前的食物清單（包含你修改過的內容），確定嗎？")) return;
-    analyze();
+    if (draft.items.length === 0) return analyze();
+    askingReanalyze = true;
+    renderAnalysis();
+    $("reanalyze-no").focus();
+  });
+  $("reanalyze-yes").addEventListener("click", analyze);
+  $("reanalyze-no").addEventListener("click", () => {
+    askingReanalyze = false;
+    renderAnalysis();
+    $("reanalyze").focus();
   });
 
   // 追加照片到同一餐：還沒有食物就直接分析，已經有食物就讓使用者決定要不要重新分析。
@@ -327,9 +362,10 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
       changed();
       renderPhotos();
       if (draft.items.length === 0) await analyze();
-      else setAnalysisState({ message: "已加入照片。按「重新分析」可以依全部照片更新食物清單。", canRetry: true });
+      else setAnalysis("added");
     } catch (err) {
-      setAnalysisState({ message: err.message, isError: true, canRetry: draft.photos.length > 0 });
+      // 照片讀不出來（不是 AI 的錯誤）：照片已經加進去的話可以重試
+      setAnalysis("error", { message: err.message, needsSettings: false, retryable: draft.photos.length > 0 });
     } finally {
       event.target.value = "";
     }
@@ -423,7 +459,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     showSaved(false);
     $("delete-confirm").hidden = true;
     $("delete-meal").hidden = false;
-    setAnalysisState({});
+    setAnalysis("idle");
     renderMealType();
     closeItemForm();
     renderPhotos();
@@ -449,7 +485,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
     resume() {
       if (!paused) return;
       paused = false;
-      setAnalysisState({ canRetry: draft.photos.length > 0 });
+      setAnalysis("idle");
       dialog.showModal();
     },
   };
