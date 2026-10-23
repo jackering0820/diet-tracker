@@ -49,7 +49,7 @@
     </section>
 
     <section class="card" aria-labelledby="meals-title">
-      <div class="sec-h"><h2 id="meals-title">🍱 吃了什麼</h2><span id="meal-hint" class="hint n"></span></div>
+      <div class="sec-h"><h2 id="meals-title">吃了什麼</h2><span id="meal-hint" class="hint n"></span></div>
       <dl id="nutrition-totals" class="nutrition"></dl>
       <!-- 依時間排序的每一餐，可以橫向滑動；今天最後一格是「下一餐」 -->
       <div id="meal-list" class="shelf meal-shelf" role="group" aria-label="這一天的每一餐，點一下可以修改">
@@ -63,7 +63,7 @@
     </section>
 
     <section class="card" aria-labelledby="water-title">
-      <h2 id="water-title">💧 喝水</h2>
+      <h2 id="water-title">喝水</h2>
       <div class="big">
         <b id="water-total" class="n">0</b><span id="water-goal" class="n"> ml</span>
         <span id="mini-constellation" class="mini-constellation" aria-hidden="true"></span>
@@ -92,23 +92,23 @@
 
     <!-- 最近吃過：只在今天顯示，點一張卡片再記一次 -->
     <section id="recent-section" class="card" aria-labelledby="recent-title" hidden>
-      <div class="sec-h"><h2 id="recent-title">🔁 最近吃過</h2><span class="hint">點一下再記一次</span></div>
+      <div class="sec-h"><h2 id="recent-title">最近吃過</h2><span class="hint">點一下再記一次</span></div>
       <div id="recent-list" class="shelf" role="group" aria-label="最近吃過的餐點"></div>
     </section>
 
     <!-- 本週：最近七天的小卡，點一天打開那一天（只在今天顯示） -->
     <section id="week-section" class="card" aria-labelledby="week-title" hidden>
-      <div class="sec-h"><h2 id="week-title">📅 本週</h2><a class="more" href="#history">歷史 ›</a></div>
+      <div class="sec-h"><h2 id="week-title">本週</h2><a class="more" href="#history">歷史 ›</a></div>
       <div id="week-list" class="shelf"></div>
     </section>
 
     <!-- 底部固定：拍照記一餐、手寫 -->
     <div class="dock">
       <label class="button-like">
-        <span id="snap-meal-label">📷 拍照記一餐</span>
+        <span id="snap-meal-label">拍照記一餐</span>
         <input type="file" accept="image/*" multiple class="sr-only" data-meal-photos>
       </label>
-      <button type="button" id="add-meal" class="secondary">✍️ 手寫</button>
+      <button type="button" id="add-meal" class="secondary">手寫</button>
     </div>
   </main>
 
@@ -143,7 +143,7 @@
     <section class="card" aria-labelledby="ai-title">
       <h2 id="ai-title">AI 分析</h2>
       <form id="ai-form" class="settings-form" novalidate>
-        <p class="keyrow"><span>🔑 目前的金鑰</span><span id="key-status" class="n"></span></p>
+        <p class="keyrow"><span>目前的金鑰</span><span id="key-status" class="n"></span></p>
         <label class="field">
           <span id="key-label">貼上 API 金鑰</span>
           <!-- 刻意不用 type="password"：避免 iCloud 鑰匙圈等密碼管理工具把金鑰當密碼儲存或自動填入。
@@ -167,9 +167,9 @@
         <p class="lrow"><span>資料量</span><span class="lead" aria-hidden="true"></span><span id="data-amount" class="n"></span></p>
       </div>
       <div id="backup-buttons" class="backup-buttons">
-        <button type="button" id="export-backup">⬇︎ 匯出備份</button>
+        <button type="button" id="export-backup">匯出備份</button>
         <label class="button-like secondary">
-          ⬆︎ 匯入備份
+          匯入備份
           <input id="import-backup" type="file" accept="application/json,.json" class="sr-only">
         </label>
       </div>
@@ -207,17 +207,17 @@
         <!-- AI 分析的狀態：分析中、錯誤、完成的估算便條、加了照片、沒有照片的提示、重新分析的確認 -->
         <div class="analysis">
           <div id="analysis-busy" class="aicard" role="status" tabindex="-1" hidden>
-            <span class="hourglass" aria-hidden="true">⏳</span><b id="analysis-busy-text"></b>
+            <b id="analysis-busy-text"></b>
           </div>
           <div id="analysis-error" class="aicard aierr" role="alert" tabindex="-1" hidden>
-            <p class="aierr-msg"><span aria-hidden="true">⚠️</span><span id="analysis-error-text"></span></p>
+            <p class="aierr-msg"><span id="analysis-error-text"></span></p>
             <div class="aibtns">
               <button type="button" id="go-settings">前往設定</button>
               <button type="button" id="retry-analysis" class="secondary">重試</button>
               <button type="button" id="switch-to-manual" class="secondary">改成手動輸入（保留照片）</button>
             </div>
           </div>
-          <p id="ai-notice" class="slip" hidden><span aria-hidden="true">⚠️</span><span>AI 的數字是估算，可能有 20～30% 誤差，請檢查並修正後再儲存。</span></p>
+          <p id="ai-notice" class="slip" hidden><span>AI 的數字是估算，可能有 20～30% 誤差，請檢查並修正後再儲存。</span></p>
           <p id="photos-added" class="analysis-note" hidden>已加入照片。按「重新分析」可以依全部照片更新食物清單。</p>
           <p id="manual-hint" class="analysis-note" hidden>沒有照片也可以：直接在下面輸入食物。加了照片就能讓 AI 估算。</p>
           <div id="reanalyze-confirm" class="aicard confirm-card" role="alertdialog" aria-labelledby="reanalyze-question" hidden>
@@ -280,7 +280,7 @@
       <!-- 底部固定：儲存、取消；存好之後換成「回到今天」 -->
       <div class="editor-dock">
         <p id="editor-error" class="error" role="alert" hidden></p>
-        <p id="editor-saved" class="form-status" role="status" hidden>✓ 已儲存這一餐</p>
+        <p id="editor-saved" class="form-status" role="status" hidden>已儲存這一餐</p>
         <div id="editor-actions" class="confirm-buttons">
           <button type="button" id="save-meal">儲存這一餐</button>
           <button type="button" id="close-editor" class="secondary">取消</button>
@@ -300,7 +300,6 @@
 
       <div id="receipt-done">
         <div class="result-hero">
-          <span class="result-icon ok" aria-hidden="true">✓</span>
           <div><h2 id="receipt-title">備份完成</h2><p id="receipt-time" class="n"></p></div>
         </div>
         <section class="receipt" aria-label="備份摘要">
@@ -317,14 +316,13 @@
         <div class="editor-dock">
           <div class="confirm-buttons">
             <button type="button" id="receipt-home">回到今天</button>
-            <button type="button" id="receipt-again" class="secondary">⬇︎ 再匯出一次</button>
+            <button type="button" id="receipt-again" class="secondary">再匯出一次</button>
           </div>
         </div>
       </div>
 
       <div id="receipt-cancelled" hidden>
         <div class="result-hero">
-          <span class="result-icon cancelled" aria-hidden="true">✕</span>
           <div><h2>已取消</h2><p>沒有產生備份，原本的資料不受影響</p></div>
         </div>
         <section class="card">
@@ -332,7 +330,7 @@
         </section>
         <div class="editor-dock">
           <div class="confirm-buttons">
-            <button type="button" id="receipt-retry">⬇︎ 重新匯出</button>
+            <button type="button" id="receipt-retry">重新匯出</button>
             <button type="button" id="receipt-to-settings" class="secondary">回到設定</button>
           </div>
         </div>

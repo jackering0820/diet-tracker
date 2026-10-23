@@ -650,7 +650,7 @@ dialog.fullscreen .editor { min-height: 100%; display: flex; flex-direction: col
 .delete-link { color: var(--danger); }
 .delete-area .confirm { text-align: left; }
 
-/* 底部固定：儲存這一餐、取消；存好之後「✓ 已儲存這一餐」和「回到今天」 */
+/* 底部固定：儲存這一餐、取消；存好之後「已儲存這一餐」和「回到今天」 */
 .editor-dock {
   position: sticky;
   bottom: 0;
@@ -666,7 +666,6 @@ dialog.fullscreen .editor { min-height: 100%; display: flex; flex-direction: col
 .analysis:not(:has(> :not([hidden]))) { display: none; }
 .aicard { align-self: stretch; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 18px; background: rgb(0 0 0 / 0.25); }
 .aicard p { margin: 0; }
-.hourglass { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 48px; height: 48px; border-radius: 50%; background: rgb(111 211 255 / 0.14); font-size: 22px; }
 .aierr, .confirm-card { flex-direction: column; align-items: stretch; }
 .aierr { border-color: rgb(255 157 176 / 0.45); background: rgb(255 92 122 / 0.12); }
 .aierr-msg { display: flex; gap: 10px; font-size: 14px; font-weight: 600; line-height: 1.55; }
@@ -707,13 +706,10 @@ dialog.fullscreen .editor { min-height: 100%; display: flex; flex-direction: col
 .stamp { position: absolute; right: -2px; bottom: -8px; display: flex; align-items: center; justify-content: center; width: 70px; height: 70px; border: 2px solid var(--highlight); border-radius: 50%; background: rgb(30 136 229 / 0.18); color: var(--star); transform: rotate(-9deg); opacity: 0.9; }
 .stamp span { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border: 1px solid var(--highlight); border-radius: 50%; font-size: 15px; font-weight: 900; letter-spacing: 0.1em; }
 
-/* 匯出結果的標題：打勾或叉叉 */
+/* 匯出結果的標題 */
 .result-hero { display: flex; align-items: center; gap: 12px; margin: 14px 0 22px; }
 .result-hero h2 { margin: 0; font-size: 26px; font-weight: 800; }
 .result-hero p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
-.result-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px; border-radius: 50%; font-size: 22px; font-weight: 700; }
-.result-icon.ok { background: rgb(62 230 176 / 0.16); color: var(--success); }
-.result-icon.cancelled { background: rgb(255 157 176 / 0.16); color: var(--danger); }
 .receipt-note { margin: 0; font-size: 14px; line-height: 1.7; }
 #backup-receipt .editor-dock { margin-top: 28px; }
 .top-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--muted); }

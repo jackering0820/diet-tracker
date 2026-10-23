@@ -404,7 +404,7 @@ export function createMealEditor({ diary, onDone, onOpenSettings }) {
   });
 
   // ---------- 儲存、刪除、離開 ----------
-  // 存好之後畫面換成「✓ 已儲存這一餐」和「回到今天」；之後又改了什麼，就換回儲存按鍵。
+  // 存好之後畫面換成「已儲存這一餐」和「回到今天」；之後又改了什麼，就換回儲存按鍵。
   function showSaved(saved) {
     $("editor-saved").hidden = !saved;
     $("back-to-day").hidden = !saved;
